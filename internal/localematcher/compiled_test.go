@@ -1,6 +1,11 @@
 package localematcher
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	cldrlocale "github.com/agentable/go-intl/internal/cldr/locale"
+)
 
 func TestMatcherMatchesLegacyFunctions(t *testing.T) {
 	t.Parallel()
@@ -209,6 +214,20 @@ func TestLanguageRegionAliasUsesLocaleSubtagGrammar(t *testing.T) {
 			got, ok := languageRegionAlias(tc.loc)
 			if got != tc.want || ok != tc.ok {
 				t.Fatalf("languageRegionAlias(%q) = %q, %v; want %q, %v", tc.loc, got, ok, tc.want, tc.ok)
+			}
+		})
+	}
+}
+
+func TestMatcherConcurrentDistinctRequests(t *testing.T) {
+	t.Parallel()
+	matcher := NewMatcher([]string{"en", "nb", "de"}, cldrlocale.Maximize)
+	for i := range 64 {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+			got := matcher.Match([]string{fmt.Sprintf("nn-x-%06d", i)}, "en", AlgorithmBestFit)
+			if got.Locale != "nb" || got.DataLocale != "nb" {
+				t.Fatalf("Match = %#v, want nb", got)
 			}
 		})
 	}

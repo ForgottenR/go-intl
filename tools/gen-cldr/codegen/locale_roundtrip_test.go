@@ -3,6 +3,8 @@ package codegen
 import (
 	"testing"
 
+	"github.com/agentable/go-intl/locale"
+
 	cldrlocale "github.com/agentable/go-intl/internal/cldr/locale"
 	"github.com/agentable/go-intl/tools/gen-cldr/extract"
 )
@@ -53,18 +55,6 @@ func TestLocaleKernelRoundTrip(t *testing.T) {
 		if lang != triple.Lang || scr != triple.Script || reg != triple.Region {
 			t.Errorf("MaximizeSubtags(%q) = %q, %q, %q; want %q, %q, %q",
 				key, lang, scr, reg, triple.Lang, triple.Script, triple.Region)
-		}
-	}
-
-	// Likely-subtags minimize rows.
-	for triple, minimized := range likely.Minimize {
-		min, _, _, ok := cldrlocale.MinimizeSubtags(triple.Lang, triple.Script, triple.Region)
-		if !ok {
-			t.Errorf("MinimizeSubtags(%q,%q,%q) = false, want true", triple.Lang, triple.Script, triple.Region)
-			continue
-		}
-		if min != minimized {
-			t.Errorf("MinimizeSubtags(%q,%q,%q) = %q, want %q", triple.Lang, triple.Script, triple.Region, min, minimized)
 		}
 	}
 
@@ -165,10 +155,6 @@ func TestSubtagTripleHelpers(t *testing.T) {
 	t.Parallel()
 
 	triple := extract.SubtagTriple{Lang: "en", Script: "Latn", Region: "US"}
-	if got, want := subtagTripleKey(triple), "en-Latn-US"; got != want {
-		t.Fatalf("subtagTripleKey(%#v) = %q, want %q", triple, got, want)
-	}
-
 	table := NewStringTable()
 	var e blobEncoder
 	appendSubtagTriple(&e, table, triple)
@@ -204,4 +190,23 @@ func splitDash(s string) []string {
 	}
 	out = append(out, s[start:])
 	return out
+}
+
+func TestLocaleMinimizeSupportedProfile(t *testing.T) {
+	t.Parallel()
+	input := loadRoundTripSource(t)
+	for _, tag := range input.profile {
+		loc, err := locale.Parse(tag)
+		if err != nil {
+			t.Errorf("Parse(%q): %v", tag, err)
+			continue
+		}
+		min := loc.Minimize()
+		if got, want := min.Maximize().BaseName(), loc.Maximize().BaseName(); got != want {
+			t.Errorf("%s minimizes to %s: maximal LSR = %s, want %s", tag, min, got, want)
+		}
+		if got := min.Minimize(); !got.Equal(min) {
+			t.Errorf("%s: minimize(%s) = %s", tag, min, got)
+		}
+	}
 }

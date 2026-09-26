@@ -56,21 +56,19 @@ func (l Locale) Variants() []string
 > - **`*Locale` pointer type**: Violates SPEC 00 §1 value type preference; `Equal` / `String` uses value semantics to be clearer.
 > - **PHP style flat field struct** (put `language` / `script` / `region` / `calendar` / `hourCycle` all `string`): Give up the parsing ability of `language.Tag`.
 
-### 1.2 Field type selection
+### 1.2 Canonical keyword state
 
-| Field | Type | Default zero value meaning |
-|------|------|-------------|
-| `Calendar` | `string` | `""` = not specified, formatter takes region default |
-| `Collation` | `string` | `""` = Not specified |
-| `HourCycle` | `string` | `""` = not specified, formatter takes region default |
-| `CaseFirst` | `string` | `""` = not specified; `"false"` literal is a legal value (spec mandatory) |
-| `Numeric` | `bool` | `false` = spec default (numeric collation is not enabled) |
-| `NumberingSystem` | `string` | `""` = not specified, formatter takes locale default |
-| `FirstDayOfWeek` | `string` | `""` = not specified, formatter takes region default |
+The private extension state owns one canonical keyword map and Unicode attributes.
+Map presence distinguishes an absent key from a present empty type; string output,
+getters and candidate lists project that same state. It is built only during
+construction and is immutable afterwards, so copied Locale values remain safe.
 
-> **Why locale state uses `Numeric bool` not `*bool`**: What the reader needs is a resolved property value; the omitted vs explicit false of the constructor boundary is expressed by `Options.Numeric *bool` and does not leak to the `Locale` value object.
->
-> **Rejected `Locale.Numeric *bool`**: Saving constructor presence state in a read-only value leaves the getter caller saddled with nil branches.
+String getters return the type, using `""` for both absent and present-empty values
+as the existing Go bridge. `Numeric()` is true only for a present empty `kn` type
+(the canonical spelling of `true`); absent, `false`, and unknown types return false.
+`String()` retains the distinction, and candidate lists return a singleton for a
+present keyword even when its type is empty. Constructor option pointers separately
+distinguish omission from an explicit option value.
 
 ---
 
@@ -163,15 +161,15 @@ fmt.Println(loc2.String())   // "ja-u-ca-japanese"
 
 ### 2.3 Construction phase verification
 
-`Parse` / `New` **MUST** perform spec verification on the 7 extended fields:
+`Parse` validates tag syntax and retains every canonical Unicode keyword, including unknown legal types and keys with an empty type. It does not apply constructor-option enums to tags. `New` validates only explicit options before replacing those keywords:
 
 | Field | Validation Rules |
 |------|---------|
 | `Language` / `Script` / `Region` | When the pointer is non-nil: the explicit string must be non-empty and form a valid BCP 47 language identifier with the retained subtags |
-| `Calendar` | When the pointer is non-nil: the explicit string must be non-empty and match BCP 47 type sub-tag syntax (2–8 characters alphanumeric); **does not** verify whether it exists in CLDR (formatter layer is responsible) |
+| `Calendar` | When the pointer is non-nil: the explicit string must be non-empty and match Unicode type syntax (one or more 3–8 character alphanumeric subtags); **does not** verify whether it exists in CLDR (formatter layer is responsible) |
 | `Collation` | When the pointer is non-nil: same as above |
-| `HourCycle` | When the pointer is non-nil: required ∈ {`"h11"`, `"h12"`, `"h23"`, `"h24"`} |
-| `CaseFirst` | When the pointer is non-nil: must ∈ {`"upper"`, `"lower"`, `"false"`} |
+| `HourCycle` | When the pointer is non-nil: an exact, case-sensitive member of {`"h11"`, `"h12"`, `"h23"`, `"h24"`} |
+| `CaseFirst` | When the pointer is non-nil: an exact, case-sensitive member of {`"upper"`, `"lower"`, `"false"`} |
 | `Numeric` | `nil` means omitted; non-nil `true` writes `-u-kn`; non-nil `false` writes `-u-kn-false` |
 | `NumberingSystem` | When the pointer is non-nil: the explicit string must be non-empty and match BCP 47 type subtag syntax |
 | `FirstDayOfWeek` | When the pointer is non-nil: the explicit string must be non-empty and ∈ {`"mon"`, `"tue"`, `"wed"`, `"thu"`, `"fri"`, `"sat"`, `"sun"`, `"0"`, `"1"`, `"2"`, `"3"`, `"4"`, `"5"`, `"6"`, `"7"`}; option values normalize through ECMA-402 `WeekdayToUValue`. `Parse` does not perform this option coercion on BCP 47 input. |
@@ -201,7 +199,7 @@ func (l Locale) String() string
 1. **subtag order**:`language[-script][-region][-variants...]` (given by `language.Tag.String()`).
 2. **`-u-` extended keys in dictionary order**: `ca` < `co` < `fw` < `hc` < `kf` < `kn` < `nu`.
 3. **`-u-` extended value lowercase** (`Calendar="GREGORY"` output `-u-ca-gregory`).
-4. **Empty internal extension fields are not output**; constructor option pointers with explicit `""` are rejected before `String()` canonicalization.
+4. **Absent keywords are omitted; present empty types remain as bare keys**, for example `en-u-ca`; constructor option pointers with explicit `""` are rejected before `String()` canonicalization.
 5. **Numeric=true outputs `-u-kn`** (no value table true, consistent with spec); explicit Numeric=false outputs `-u-kn-false`; omitted Numeric does not output.
 6. **CaseFirst=`"false"` outputs `-u-kf-false`** (literal legal value).
 7. **Key-aware Unicode type canonicalization** follows pinned CLDR BCP47 data after syntax validation (`ca=islamicc` → `islamic-civil`, `ms=imperial` → `uksystem`).
@@ -274,30 +272,25 @@ Call example:
 ```go
 loc := mustLocale("zh-Hant")
 fmt.Println(loc.Maximize().String())  // "zh-Hant-TW"
-fmt.Println(loc.Maximize().Minimize().String())  // "zh-Hant"
+fmt.Println(loc.Maximize().Minimize().String())  // "zh-TW"
 ```
 
 ### 4.2 Implementation strategy
 
-`Maximize` / `Minimize` **MUST** use the generated CLDR `cldrlocale.MaximizeSubtags` / `cldrlocale.MinimizeSubtags` tables in `internal/cldr/locale` (see [SPEC 50 §6](./50-cldr-data.md#6-data-access-api)). They do **not** call `language.Tag.LikelyScript()` / `LikelyRegion()`, and there is no `internal/cldr/likely_subtags.go` patch layer.
+Both operations consume the pinned `cldrlocale.MaximizeSubtags` data. Maximize
+uses CLDR fallback order while preserving explicit language, script and region.
+Minimize first obtains that maximal LSR, then tries its language alone,
+language-region, and language-script. The first candidate that maximizes to the
+same LSR wins; otherwise the maximal LSR remains. This selects the stable
+region-preferred policy, for example `zh-Hant-TW` and `zh-Hant` both become
+`zh-TW`. The maximal language is used even when the original input was `und`.
 
-Strategy:
-
-1. `Maximize` splits the tag into `(language, script, region)` via `internal/localeid`, looks the triple up in `cldrlocale.MaximizeSubtags`, and replaces only those three subtags through `internal/localeid.ReplaceLanguageSubtags`. Unknown triples leave the tag unchanged. Variants and every extension, including transformed and private-use extensions, retain canonical order and spelling.
-2. `Minimize` is a deliberate **two-tier** lookup, not two competing algorithms:
-   - Tier 1 is the precomputed CLDR `cldrlocale.MinimizeSubtags` table for known subtag triples.
-   - Tier 2 is the general ECMA-402 `RemoveLikelySubtags` trial: it maximizes the input, then tries the `language`, `language+region`, and `language+script` candidates and keeps the first whose maximized language/script/region triple equals the input's maximized triple. Suffixes do not participate in that comparison and are restored unchanged on the selected triple.
-   Both tiers are driven by the same generated CLDR data (Tier 2 through `Maximize`), so they are consistent by construction and cannot drift; the two-tier design is documented in `locale/canonical.go`.
-3. Conformance is verified against generated-reference `tests/likely-subtags.test.ts` fixtures.
-
-> **Why**:
-> 1. **Generated CLDR data** - The maximize/minimize tables are generated from pinned CLDR `likelySubtags.json`, keeping them aligned with the CLDR 48.1.0 conformance baseline rather than the possibly-lagging `x/text` built-in tables.
-> 2. **One data source** - Driving Tier 2 through `Maximize` keeps both minimize tiers on the same generated table; collapsing them would drop the authoritative precomputed table for modest gain.
-> 3. **Conformance takes priority** - SPEC 00 §2 requires byte-level fixture consistency, and the fixture is the truth table.
->
-> **Rejected**:
-> - **Depend on `language.Tag.LikelyScript()` / `LikelyRegion()`**: its data version is not the go-intl CLDR pin, so fixtures would force accepted divergence.
-> - **Self-implemented likelySubtags algorithm**: Violates CLAUDE.md "no reinventing locale parsing".
+This follows ICU's candidate-equivalence algorithm in
+`.references/node/deps/icu-small/source/common/loclikelysubtags.cpp` rather than
+an inverse map chosen by source-key sort order. Sharing CLDR input alone does
+not make two minimization algorithms equivalent. There is no separate generated
+minimize table. Variants and all extensions are copied unchanged; only LSR changes.
+The implementation does not use x/text's separate likely-subtag data.
 
 ### 4.3 Extended fields reserved
 
@@ -405,7 +398,7 @@ region := l.Maximize().Tag.Region().String() // Example: "SA"
 
 ### 5.4 Explicit Calendar fields take precedence
 
-If `Locale.Calendar()` is non-empty, `GetCalendars()` **MUST** return a single-element list (spec behavior).
+If the calendar keyword is present, `GetCalendars()` returns that type as a singleton, including an empty type. The same presence rule applies to collation, hour-cycle and numbering-system candidate lists. String getters retain their Go zero-value bridge for absent/empty; `String()` and candidate lists preserve presence.
 
 ```go
 loc := mustLocale("en-US-u-ca-buddhist")
@@ -544,7 +537,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 - ❌ Don't: Write `parseBCP47(s string)` yourself.
 
 - **Reimplement or fork the likelySubtags algorithm**: reinvent maximize/minimize instead of consuming generated CLDR data.
-- ✅ Do: call the generated `cldrlocale.MaximizeSubtags` / `cldrlocale.MinimizeSubtags` tables (regenerated from pinned CLDR `likelySubtags.json`).
+- ✅ Do: use generated `cldrlocale.MaximizeSubtags` data and prove minimal candidates by maximize equivalence.
 - ❌ Don't: depend on `language.Tag.LikelyScript()` / `LikelyRegion()` (data version is not the go-intl CLDR pin) or hand-maintain a `likely_subtags.go` patch layer.
 
 - **Construction period panic**: Violation of CLAUDE.md "no panic in production code".
@@ -572,7 +565,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 - ❌ Don't: Add `cachedCalendars []string` + `sync.Once` to the `Locale` struct.
 
 - **`String()` output is non-canonical** (not in dictionary order, not key-aware canonicalized): destroys round-trip.
-- ✅ Do: `ca=islamicc` → `islamic-civil`, preserve the same spelling under unrelated keys, order `-u-` keys lexicographically, and omit empty fields.
+- ✅ Do: `ca=islamicc` → `islamic-civil`, preserve the same spelling under unrelated keys, order `-u-` keys lexicographically, and retain present empty keyword types.
 - ❌ Don't: Directly `fmt.Sprintf("%s-u-ca-%s-hc-%s", base, cal, hc)`.
 
 ---
@@ -595,14 +588,14 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 - [ ] If parsing fails, an error with `errors.Is(err, gointl.ErrInvalidValue)` being true is returned.
 - [ ] Canonicalizes Unicode types by key from pinned CLDR BCP47 data: `ca=islamicc` → `islamic-civil`, `ms=imperial` → `uksystem`; `co=islamic-civil` remains unchanged and malformed `ca=gregorian` is rejected before lookup.
 - [ ] `Parse("en-US-u-fw-0")` rejects malformed tag syntax, while `Options{FirstDayOfWeek: gointl.String("0")}` normalizes to `-u-fw-sun`; tag parsing never applies constructor-option coercion.
-- [ ] The 7 extended fields are spec checked during construction (§2.3 table).
+- [ ] Tag types are grammar-checked; the §2.3 option rules apply only to explicit options.
 - [ ] Explicit empty string option values (`Calendar`, `Collation`, `HourCycle`, `CaseFirst`, `NumberingSystem`, `FirstDayOfWeek`, and language identifier overrides) return invalid-option errors instead of being treated as omitted.
 
 ### String round trip
 
 - [ ] `(Locale).String()` output canonical BCP 47:
 - `-u-` extended keys are in lexicographic order (`ca` < `co` < `fw` < `hc` < `kf` < `kn` < `nu`).
-- Empty internal fields are omitted; omitted `Numeric` is not output; explicit `Numeric=true` is output as `-u-kn`; explicit `Numeric=false` is output as `-u-kn-false`.
+- Absent keywords are omitted; present empty types are preserved; omitted `Numeric` is not output; explicit `Numeric=true` is output as `-u-kn`; explicit `Numeric=false` is output as `-u-kn-false`.
 - Key-aware alias normalization (`Calendar="islamicc"` outputs `-u-ca-islamic-civil`).
 - [ ] `Parse(loc.String()).Equal(loc) == true`(round-trip).
 - [ ] `MarshalText` / `UnmarshalText` implements `encoding.TextMarshaler` / `TextUnmarshaler`.
@@ -610,7 +603,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 ### Maximize / Minimize
 
 - [ ] `(Locale).Maximize() Locale` uses the pinned generated CLDR likely-subtag table and preserves caller-supplied subtags.
-- [ ] `(Locale).Minimize() Locale` is the inverse of Maximize.
+- [ ] `(Locale).Minimize() Locale` is idempotent, preserves maximal LSR, and uses the region-preferred candidate order.
 - [ ] generated-reference `tests/likely-subtags.test.ts` and `tests/minimize.test.ts` All fixtures pass in `locale/canonical_test.go`.
 - [ ] `Maximize` / `Minimize` and language/script/region constructor overrides preserve variants, transformed extensions, modeled and unmodeled Unicode extension content, and private use while replacing only language/script/region.
 
@@ -618,7 +611,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 
 - [ ] Simple fields (7 extended fields) are pre-parsed during construction in `Parse` / `New` (§5.1 table).
 - [ ] Candidate list methods do not cache results into the struct. `GetCollations` projects the explicit locale collation as a singleton or returns nil; the other candidate-list methods read their owning generated data on each call. `GetTimeZones` uses explicit-region `internal/tz` records, including the full Canadian projection and `IN` → `Asia/Kolkata`.
-- [ ] When explicit `Calendar` is not empty, `GetCalendars()` returns a single-element list.
+- [ ] When the calendar keyword is present, `GetCalendars()` returns a single-element list, including an empty type.
 - [ ] `WeekInfo` / `TextInfo` type signature is consistent with §5.2.
 
 ### Equality
@@ -674,3 +667,8 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 ---
 
 > This SPEC is a maintenance record for `locale.Locale`. A new ECMA-402 extension key (the spec rarely adds a new `-u-` key) triggers this SPEC revision; `x/text/language` behavior changes are exposed via fixture failures.
+
+Calendar preference identifiers are canonicalized at generation, not repaired
+by runtime parsing. `GetCalendars` retains region/world fallback, filters the
+generated preference against supported calendars, and uses `gregory` when that
+intersection is empty. Explicit `ca` presence bypasses that list selection.

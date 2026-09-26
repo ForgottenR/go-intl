@@ -18,8 +18,12 @@ func TestUnifiedConformanceFixtures(t *testing.T) {
 		if err := json.Unmarshal(fixture.Input, &input); err != nil {
 			t.Fatal(err)
 		}
-		loc, err := Parse(input)
-		if testcontract.AssertErrorCode(t, "Parse("+input+")", err, fixture.ErrorCode, func(code string) error {
+		var opts Options
+		if err := json.Unmarshal(fixture.Options, &opts, json.MatchCaseInsensitiveNames(true)); err != nil {
+			t.Fatal(err)
+		}
+		loc, err := New(input, opts)
+		if testcontract.AssertErrorCode(t, "New("+input+")", err, fixture.ErrorCode, func(code string) error {
 			return conformanceLocaleError(t, code)
 		}) {
 			return
@@ -78,5 +82,5 @@ func jsonEqual(a, b []byte) bool {
 func conformanceLocaleError(t *testing.T, code string) error {
 	t.Helper()
 
-	return testcontract.IntlErrorCode(t, "locale", code, "invalid_value")
+	return testcontract.IntlErrorCode(t, "locale", code, "invalid_value", "invalid_option")
 }

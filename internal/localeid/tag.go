@@ -9,15 +9,11 @@ import (
 func Parts(tag language.Tag) (lang, script, region string) {
 	base, scr, reg := tag.Raw()
 	lang = base.String()
-	if !scr.IsPrivateUse() {
-		if s := scr.String(); s != "Zzzz" {
-			script = s
-		}
+	if s := scr.String(); s != "Zzzz" {
+		script = s
 	}
-	if !reg.IsPrivateUse() {
-		if r := reg.String(); r != "ZZ" {
-			region = r
-		}
+	if r := reg.String(); r != "ZZ" {
+		region = r
 	}
 	return lang, script, region
 }

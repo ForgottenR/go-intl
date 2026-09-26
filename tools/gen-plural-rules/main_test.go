@@ -456,7 +456,7 @@ func TestReadCLDRVersion(t *testing.T) {
 	t.Run("beside plurals", func(t *testing.T) {
 		t.Parallel()
 		dir := t.TempDir()
-		if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"version":"99.9.9"}`), 0o666); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"cldr-core","version":"99.9.9"}`), 0o666); err != nil {
 			t.Fatal(err)
 		}
 		got, err := readCLDRVersion(filepath.Join(dir, "plurals.json"))
@@ -471,7 +471,7 @@ func TestReadCLDRVersion(t *testing.T) {
 	t.Run("one directory up (real layout)", func(t *testing.T) {
 		t.Parallel()
 		root := t.TempDir()
-		if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"version":"48.1.0"}`), 0o666); err != nil {
+		if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"name":"cldr-core","version":"48.1.0"}`), 0o666); err != nil {
 			t.Fatal(err)
 		}
 		supplemental := filepath.Join(root, "supplemental")
@@ -493,4 +493,38 @@ func TestReadCLDRVersion(t *testing.T) {
 			t.Fatal("readCLDRVersion did not error on missing package.json")
 		}
 	})
+}
+
+func TestPluralInputVersionsMustAgree(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, cardinal, ranges string
+		fail                   bool
+	}{
+		{"matching copies", `{"name":"cldr-core","version":"48.1.0"}`, `{"name":"cldr-core","version":"48.1.0"}`, false},
+		{"mixed versions", `{"name":"cldr-core","version":"48.1.0"}`, `{"name":"cldr-core","version":"47.0.0"}`, true},
+		{"wrong name", `{"name":"wrong","version":"48.1.0"}`, `{"name":"cldr-core","version":"48.1.0"}`, true},
+		{"missing metadata", `{"name":"cldr-core","version":"48.1.0"}`, "", true},
+		{"invalid JSON", `{"name":"cldr-core","version":"48.1.0"}`, "{", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			paths := []string{filepath.Join(root, "a", "supplemental", "plurals.json"), filepath.Join(root, "b", "supplemental", "pluralRanges.json")}
+			for i, meta := range []string{tc.cardinal, tc.ranges} {
+				if err := os.MkdirAll(filepath.Dir(paths[i]), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if meta != "" {
+					if err := os.WriteFile(filepath.Join(root, string(rune('a'+i)), "package.json"), []byte(meta), 0o644); err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			_, err := validatePluralInputVersions(paths[0], paths[1])
+			if (err != nil) != tc.fail {
+				t.Fatalf("validatePluralInputVersions error = %v, fail=%v", err, tc.fail)
+			}
+		})
+	}
 }

@@ -3,7 +3,6 @@ package codegen
 import (
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/agentable/go-intl/tools/gen-cldr/cldr"
 	"github.com/agentable/go-intl/tools/gen-cldr/extract"
@@ -22,8 +21,6 @@ import (
 //     and localeIndex from it.
 //   - _maximizeBlob:      likely-subtags maximize rows, sorted by key, each a
 //     (key, lang, script, region) StringRef quad for binary search.
-//   - _minimizeBlob:      likely-subtags minimize rows, sorted by
-//     (lang, script, region), each a (lang, script, region, minimized) quad.
 //   - _directionBlob:     known script directions, sorted by script, each a
 //     (script, rtl) pair. UNKNOWN and missing source values are absent.
 //   - _numberingBlob:     the non-latn default-numbering-system overrides as a
@@ -62,16 +59,6 @@ func encodeLocaleKernel(input RuntimeInput, table *StringTable) ([]byte, error) 
 		}
 	})
 
-	var minimize blobEncoder
-	minTriples := slices.SortedFunc(maps.Keys(input.LikelySubtags.Minimize), func(a, b extract.SubtagTriple) int {
-		return strings.Compare(subtagTripleKey(a), subtagTripleKey(b))
-	})
-	appendCountedSlice(&minimize, minTriples, func(triple extract.SubtagTriple) {
-		minimized := input.LikelySubtags.Minimize[triple]
-		appendSubtagTriple(&minimize, table, triple)
-		minimize.appendStringRef(table.Add(minimized))
-	})
-
 	var numbering blobEncoder
 	numberingLocales := localeNumberingOverrideLocales(input.Numbers)
 	if err := numbering.appendLocaleDeltaRecords(numberingLocales, localeIndex, func(locale string) {
@@ -101,7 +88,6 @@ func encodeLocaleKernel(input RuntimeInput, table *StringTable) ([]byte, error) 
 	return renderPayloadFile("cldrlocale", table,
 		payloadBlob{"_localeBlob", locales.bytes()},
 		payloadBlob{"_maximizeBlob", maximize.bytes()},
-		payloadBlob{"_minimizeBlob", minimize.bytes()},
 		payloadBlob{"_directionBlob", direction.bytes()},
 		payloadBlob{"_numberingBlob", numbering.bytes()},
 		payloadBlob{"_hourCycleBlob", hourCycle.bytes()},
@@ -114,10 +100,6 @@ func appendSubtagTriple(e *blobEncoder, table *StringTable, triple extract.Subta
 	e.appendStringRef(table.Add(triple.Lang))
 	e.appendStringRef(table.Add(triple.Script))
 	e.appendStringRef(table.Add(triple.Region))
-}
-
-func subtagTripleKey(triple extract.SubtagTriple) string {
-	return triple.Lang + "-" + triple.Script + "-" + triple.Region
 }
 
 // localeNumberingOverrideLocales returns the locales whose default numbering

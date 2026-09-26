@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/agentable/go-intl/internal/localeid"
 )
 
 const worldRegion = "001"
@@ -214,7 +216,23 @@ func loadCalendarPreference(root string) (map[string][]string, error) {
 	}
 	out := make(map[string][]string, len(doc.Supplemental.CalendarPreferenceData))
 	for region, calendars := range doc.Supplemental.CalendarPreferenceData {
-		out[preferenceRegionKey(region)] = calendars
+		canonical := make([]string, len(calendars))
+		for i, calendar := range calendars {
+			// CLDR legacy calendar names are not Unicode locale type spellings.
+			value := calendar
+			switch value {
+			case "gregorian":
+				value = "gregory"
+			case "ethiopic-amete-alem":
+				value = "ethioaa"
+			}
+			value, ok := localeid.CanonicalUnicodeType("ca", value)
+			if !ok {
+				return nil, fmt.Errorf("%s region %s: invalid calendar %q", path, region, calendar)
+			}
+			canonical[i] = value
+		}
+		out[preferenceRegionKey(region)] = canonical
 	}
 	return out, nil
 }

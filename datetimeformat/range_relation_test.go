@@ -67,7 +67,7 @@ func TestDateTimeFormatRangeDateRecordUsesPresenceAndSemanticValues(t *testing.T
 		start := time.Date(2026, time.March, 8, 0, 0, 0, 0, time.UTC)
 		end := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
 
-		if got, single := mustFormatRange(t, format, start, end), format.Format(start); got == single {
+		if got, single := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got == single {
 			t.Fatalf("FormatRange() = single endpoint %q for distinct semantic months", got)
 		}
 		assertRangePartsHaveEndpoints(t, mustFormatRangeToParts(t, format, start, end))
@@ -126,7 +126,7 @@ func TestDateTimeFormatRangeDateRecordUsesPresenceAndSemanticValues(t *testing.T
 		start := time.Date(2026, time.May, 10, 0, 0, 0, 0, time.UTC)
 		end := time.Date(2026, time.March, 8, 0, 0, 0, 0, time.UTC)
 
-		if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+		if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 			t.Fatalf("FormatRange() = %q, want first endpoint %q", got, want)
 		}
 		assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))
@@ -147,7 +147,7 @@ func TestDateTimeFormatRangeCollapsesWhenSelectedHourRecordMakesLowerFieldsIrrel
 	start := time.Date(2026, time.May, 8, 9, 5, 0, 0, time.UTC)
 	end := time.Date(2026, time.May, 8, 9, 55, 30, 0, time.UTC)
 
-	if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+	if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 		t.Fatalf("FormatRange() = %q, want first endpoint %q", got, want)
 	}
 	assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))
@@ -222,7 +222,7 @@ func TestDateTimeFormatRangeTimeRecordUsesLocalizedSemanticValues(t *testing.T) 
 		start := time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC)
 		end := time.Date(2026, time.May, 8, 9, 7, 6, 199_000_000, time.UTC)
 
-		if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+		if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 			t.Fatalf("FormatRange() = %q, want equal-at-precision endpoint %q", got, want)
 		}
 		assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))
@@ -244,7 +244,7 @@ func TestDateTimeFormatRangeTimeRecordUsesLocalizedSemanticValues(t *testing.T) 
 		start := time.Date(2026, time.May, 8, 9, 7, 1, 0, time.UTC)
 		end := time.Date(2026, time.May, 8, 9, 7, 59, 0, time.UTC)
 
-		if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+		if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 			t.Fatalf("FormatRange() = %q, want selected-format endpoint %q", got, want)
 		}
 		assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))
@@ -265,7 +265,7 @@ func TestDateTimeFormatRangeTimeRecordUsesLocalizedSemanticValues(t *testing.T) 
 		start := time.Date(2026, time.November, 1, 5, 30, 0, 0, time.UTC)
 		end := time.Date(2026, time.November, 1, 6, 30, 0, 0, time.UTC)
 
-		if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+		if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 			t.Fatalf("FormatRange() = %q, want repeated local time %q", got, want)
 		}
 		assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))
@@ -286,7 +286,7 @@ func TestDateTimeFormatRangeTimeRecordUsesLocalizedSemanticValues(t *testing.T) 
 		start := time.Date(2026, time.May, 8, 9, 7, 1, 0, time.UTC)
 		end := time.Date(2026, time.May, 8, 9, 7, 59, 0, time.UTC)
 
-		if got, want := mustFormatRange(t, format, start, end), format.Format(start); got != want {
+		if got, want := mustFormatRange(t, format, start, end), mustDateFormat(t, format, start); got != want {
 			t.Fatalf("FormatRange() = %q, want first date-time endpoint %q", got, want)
 		}
 		assertRangePartsShared(t, mustFormatRangeToParts(t, format, start, end))

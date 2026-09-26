@@ -324,14 +324,11 @@ func (m *Matcher) findBestMatch(requested []string, threshold int) bestMatchResu
 // Example: "zh-Hant-TW" → ["zh-Hant-TW", "zh-Hant", "zh"]
 func getFallbackCandidates(maximized string) []string
 
-// cachedMatchingDistance evaluates the generated profile once per tuple and
-// memoizes the result on the compiled Matcher.
-func (m *Matcher) cachedMatchingDistance(desired, supported, maximizedDesired, maximizedSupported string) int
 ```
 
 > **Why `findBestMatch` is not exported**: It is a compiled matcher implementation detail. Public callers only need the selected `Result`; exposing the candidate-distance internals would freeze a non-ECMA-402 detail.
 >
-> **Why matching distance memoizes on `Matcher` with `sync.Map`**: Repeated calculation of the same requested/supported/maximized tuple appears during constructor-heavy workloads and supported-locale filtering. Per-matcher ownership keeps cache entries aligned with the injected maximizer and supported-locale profile while remaining race-safe and private.
+> **Request lifetime**: Supported-locale indexes and the compiled distance profile are immutable. Request maximization is reused within one call. A private atomic single-result cache retains only the most recent non-exact, single-locale request of at most 256 bytes, with a cloned key. Multi-locale and longer requests are never retained. No request-history map or public cache API exists.
 
 ### 3.4 Generated language-matching profile
 
@@ -364,12 +361,20 @@ same-language fallback.
 
 ### 3.5 Measured profile cost
 
-On Apple M5 Pro / Go 1.27.0, the pinned source JSON is 55,261 bytes and the
-generated typed profile is 26,682 bytes. Three benchmark samples measured raw
-JSON loading at 1.80–2.41 ms with about 238 KB allocated, profile compilation
-at 0.29–0.37 ms with about 109 KB allocated, and cached distance lookup at
-143–183 ns with zero allocations. These observations compare shapes and explain
-the chosen boundary; they are not CI thresholds.
+On Apple M5 Pro / Go 1.27.0, a temporary retained-heap probe using
+10,000 distinct `nn-x-%06d` requests against `en/nb/de` measured 12,504,368
+additional bytes with the former unbounded maps. The bounded implementation
+measured -22,944 bytes after GC (background allocation noise, not a negative
+memory cost). Permanent request state is now structurally bounded to one short
+key and result.
+
+`BenchmarkMatcherRequests` covers exact, repeated, and distinct requests.
+The map baseline measured 181 ns / 1.78 µs / 61.0 µs respectively. Removing
+all cross-call reuse made repeated requests 78.9 µs, motivating the one-entry
+cache. A bounded-cache sample under concurrent build load measured
+351 ns / 504 ns / 423 µs with 32 / 32 / 1,471 B per operation. These samples
+explain the lifecycle decision; they are neither controlled performance ratios
+nor CI thresholds. Distinct requests still perform the full distance scan.
 
 ---
 
@@ -393,8 +398,9 @@ d. If r.extension is not undefined:
         i.  requestedValue := UnicodeExtensionValue(r.extension, key)
 ii. If requestedValue ∈ keyLocaleData, and (key does not need to be normalized or requestedValue has been normalized),
             value := requestedValue;supportedExtensionAddition := "-" + key + "-" + value
-e. If options[key] is not undefined and ∈ keyLocaleData,
-override value(options priority > extension)
+e. If options[key] differs from value and ∈ keyLocaleData,
+   override value and clear supportedExtensionAddition.
+   An equal supported option preserves the requested extension.
    f. result[key]:= value
    g. supportedExtension += supportedExtensionAddition
 7. If supportedExtension != "-u":
@@ -759,25 +765,13 @@ for ... { /* Tier 3 */ }
 
 > **Why**: Tier 2 distance is heuristic (subtag position × 10), while Tier 3 uses the active bounded matching distance plus request-order and derived-fallback penalties. The two are not the same scale.
 
-### 9.7 ❌ Don’t skip matcher-owned memoization in matching distance
+### 9.7 Keep request reuse bounded
 
-```go
-// ❌ Error: recompute the same distance tuple repeatedly.
-func (m *Matcher) cachedMatchingDistance(d, s, md, ms string) int {
-    return m.distanceProfile.distance(md, ms)
-}
-
-// ✅ Correct: matcher-owned sync.Map memoize.
-func (m *Matcher) cachedMatchingDistance(d, s, md, ms string) int {
-    key := [4]string{d, s, md, ms}
-    if v, ok := m.distanceCache.Load(key); ok { return v.(int) }
-    dist := m.distanceProfile.distance(md, ms)
-    m.distanceCache.Store(key, dist)
-    return dist
-}
-```
-
-> **Why**: Tier 3 compares every requested locale with every supported locale. Memoization removes repeated tuple work across constructors without creating public cache controls.
+Do not retain arbitrary requested locales or distance tuples in process-lifetime
+maps. Reuse maximization inside a call and at most one short single-request
+result across calls. The finite supported set owns all other permanent state.
+Concurrent callers publish immutable result records atomically; correctness does
+not depend on which request occupies the cache.
 
 ### 9.8 ❌ Do not compare strings for equivalence `Result`
 
@@ -812,7 +806,7 @@ if res1.Locale == res2.Locale { /* ... */ }
 - [ ] `BestFitMatcher(requested, supported, defaultLocale) Result` implements the three-tier algorithm (Tier 1 exact / Tier 2 maximize+truncation / Tier 3 ordered CLDR distance).
 - [ ] `findBestMatch` resets `lowestDistance = +Inf` on Tier 3 entry (not mixed with Tier 2 heuristics).
 - [ ] `getFallbackCandidates(maximized)` output `["zh-Hant-TW","zh-Hant","zh"]` (right-to-left subtag truncation).
-- [ ] `cachedMatchingDistance` uses matcher-owned `sync.Map` memoization for the same desired/supported/maximized tuple.
+- [ ] Request history cannot grow matcher state: reuse is per-call plus one key of at most 256 bytes.
 - [ ] `DefaultMatchingThreshold = 838`(Generated reference verbatim).
 - [ ] The generated profile round-trips 378 ordered rules, four variables with containment expansion, six paradigm locales, distance values, and `oneway`; malformed source fails generation.
 - [ ] Related-language, one-way, region-variable, paradigm, and threshold witnesses pass without skips or hand-written pair overrides.
@@ -851,7 +845,7 @@ if res1.Locale == res2.Locale { /* ... */ }
 
 ### Performance
 
-- [ ] Matcher benchmarks report compile and cached-lookup telemetry without imposing numeric CI thresholds.
+- [ ] Matcher benchmarks report compile and exact/repeated/distinct request telemetry without imposing numeric CI thresholds.
 - [ ] `sync.Map` memoize has no race (`-race` passes) under concurrent 10 goroutines.
 
 ### Boundary with `language.Matcher`

@@ -165,6 +165,7 @@ func TestParseString(t *testing.T) {
 		{name: "negative zero", in: "-0", want: "0", form: Finite, negative: true},
 		{name: "NaN", in: "NaN", want: "NaN", form: NaN},
 		{name: "positive infinity", in: "Infinity", want: "Infinity", form: Infinite},
+		{name: "explicit positive infinity", in: "+Infinity", want: "Infinity", form: Infinite},
 		{name: "negative infinity", in: "-Infinity", want: "-Infinity", form: Infinite, negative: true},
 	}
 	for _, tc := range tests {
@@ -188,8 +189,13 @@ func TestParseString(t *testing.T) {
 func TestParseStringInvalid(t *testing.T) {
 	t.Parallel()
 
-	_, err := ParseString("not a number")
-	if !errors.Is(err, ErrInvalidDecimal) {
-		t.Fatalf("err = %v, want errors.Is(ErrInvalidDecimal)", err)
+	for _, input := range []string{"not a number", "inf", "-inf", "nan", "sNaN", "NaN42"} {
+		t.Run(input, func(t *testing.T) {
+			t.Parallel()
+			_, err := ParseString(input)
+			if !errors.Is(err, ErrInvalidDecimal) {
+				t.Fatalf("ParseString(%q) error = %v, want ErrInvalidDecimal", input, err)
+			}
+		})
 	}
 }

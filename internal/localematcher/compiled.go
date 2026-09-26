@@ -2,7 +2,8 @@ package localematcher
 
 import (
 	"math"
-	"sync"
+	"strings"
+	"sync/atomic"
 )
 
 const derivedFallbackDistancePenalty = 80
@@ -11,7 +12,6 @@ const derivedFallbackDistancePenalty = 80
 // supported locale data.
 type Matcher struct {
 	supported             []string
-	noExtension           []string
 	maximized             []string
 	derived               []bool
 	exact                 map[string]string
@@ -19,8 +19,13 @@ type Matcher struct {
 	maximizedByLocale     map[string]string
 	maximizer             Maximizer
 	distanceProfile       compiledLanguageMatchingProfile
-	distanceCache         sync.Map
-	maximizedRequested    sync.Map
+	lastMatch             atomic.Pointer[singleMatch]
+}
+
+// singleMatch bounds reuse to one short request, independent of request history.
+type singleMatch struct {
+	requested string
+	result    bestMatchResult
 }
 
 // NewMatcher compiles supported locale data for repeated constructor locale
@@ -30,7 +35,6 @@ func NewMatcher(supported []string, maximizer Maximizer) *Matcher {
 	available := availableLocalesFor(supported, maximizer)
 	m := &Matcher{
 		supported:             make([]string, len(available)),
-		noExtension:           make([]string, len(available)),
 		maximized:             make([]string, len(available)),
 		derived:               make([]bool, len(available)),
 		exact:                 make(map[string]string, len(available)),
@@ -43,7 +47,6 @@ func NewMatcher(supported []string, maximizer Maximizer) *Matcher {
 		noExtensionLocale, _ := removeUnicodeExtension(loc.locale)
 		maximizedLocale := m.maximizer(noExtensionLocale)
 		m.supported[i] = loc.locale
-		m.noExtension[i] = noExtensionLocale
 		m.maximized[i] = maximizedLocale
 		m.derived[i] = loc.derived
 		m.exact[noExtensionLocale] = loc.locale
@@ -105,7 +108,7 @@ func (m *Matcher) bestFit(requested []string, defaultLocale string) Result {
 		noExtensionRequested[i] = noExtensionLocale
 		requestedExtensions[i] = extension
 	}
-	result := m.findBestMatch(noExtensionRequested, DefaultMatchingThreshold)
+	result := m.matchRequested(noExtensionRequested)
 	if result.matchedSupported == "" {
 		return m.defaultResult(defaultLocale)
 	}
@@ -115,6 +118,22 @@ func (m *Matcher) bestFit(requested []string, defaultLocale string) Result {
 		extension = requestedExtension
 	}
 	return Result{Locale: noExtensionLocale, DataLocale: m.dataLocale(noExtensionLocale), Extension: extension, Distance: result.distance}
+}
+
+func (m *Matcher) matchRequested(requested []string) bestMatchResult {
+	// Exact matches already avoid maximization and distance work.
+	if len(requested) != 1 || len(requested[0]) > 256 {
+		return m.findBestMatch(requested, DefaultMatchingThreshold)
+	}
+	if original, ok := m.exact[requested[0]]; ok {
+		return bestMatchResult{matchedSupported: original}
+	}
+	if cached := m.lastMatch.Load(); cached != nil && cached.requested == requested[0] {
+		return cached.result
+	}
+	result := m.findBestMatch(requested, DefaultMatchingThreshold)
+	m.lastMatch.Store(&singleMatch{requested: strings.Clone(requested[0]), result: result})
+	return result
 }
 
 func (m *Matcher) findBestMatch(requested []string, threshold int) bestMatchResult {
@@ -131,8 +150,14 @@ func (m *Matcher) findBestMatch(requested []string, threshold int) bestMatchResu
 		}
 	}
 
+	var smallMaximized [4]string
+	maximizedRequested := smallMaximized[:]
+	if len(requested) > len(smallMaximized) {
+		maximizedRequested = make([]string, len(requested))
+	}
 	for i, desired := range requested {
 		maximized := m.maximize(desired)
+		maximizedRequested[i] = maximized
 		if maximized == desired {
 			continue
 		}
@@ -160,10 +185,10 @@ func (m *Matcher) findBestMatch(requested []string, threshold int) bestMatchResu
 	}
 
 	lowestDistance = math.MaxInt
-	for i, desired := range requested {
-		maximizedDesired := m.maximize(desired)
+	for i := range requested {
+		maximizedDesired := maximizedRequested[i]
 		for j, supportedLocale := range m.supported {
-			distance := m.cachedMatchingDistance(desired, m.noExtension[j], maximizedDesired, m.maximized[j]) + i*40
+			distance := m.distanceProfile.distance(maximizedDesired, m.maximized[j]) + i*40
 			if m.derived[j] {
 				distance += derivedFallbackDistancePenalty
 			}
@@ -183,12 +208,7 @@ func (m *Matcher) maximize(locale string) string {
 	if maximized, ok := m.maximizedByLocale[locale]; ok {
 		return maximized
 	}
-	if maximized, ok := m.maximizedRequested.Load(locale); ok {
-		return maximized.(string)
-	}
-	maximized := m.maximizer(locale)
-	actual, _ := m.maximizedRequested.LoadOrStore(locale, maximized)
-	return actual.(string)
+	return m.maximizer(locale)
 }
 
 func (m *Matcher) dataLocale(availableLocale string) string {
@@ -200,14 +220,4 @@ func (m *Matcher) dataLocale(availableLocale string) string {
 
 func (m *Matcher) defaultResult(defaultLocale string) Result {
 	return Result{Locale: defaultLocale, DataLocale: m.dataLocale(defaultLocale)}
-}
-
-func (m *Matcher) cachedMatchingDistance(desired, supported, maximizedDesired, maximizedSupported string) int {
-	key := [4]string{desired, supported, maximizedDesired, maximizedSupported}
-	if v, ok := m.distanceCache.Load(key); ok {
-		return v.(int)
-	}
-	distance := m.distanceProfile.distance(maximizedDesired, maximizedSupported)
-	m.distanceCache.Store(key, distance)
-	return distance
 }

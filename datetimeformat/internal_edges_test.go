@@ -65,7 +65,7 @@ func TestDateTimeFormatPatternLiteralEdges(t *testing.T) {
 	}
 
 	empty := DateTimeFormat{}
-	if got := empty.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)); got != nil {
+	if got, err := empty.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)); got != nil || err != nil {
 		t.Fatalf("FormatToParts() without selected pattern = %#v, want nil", got)
 	}
 }
@@ -99,7 +99,7 @@ func TestDateTimeFormatShortComponentDateTimePattern(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(short date+time fields) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
 	if got != "5/8/26, 9:07 AM" {
 		t.Fatalf("Format(short date+time fields) = %q, want short connector pattern", got)
 	}

@@ -177,13 +177,42 @@ func FromBigInt(n *big.Int) Decimal
 // (Avoid IEEE-754 binary errors)
 func FromFloat64(f float64) Decimal
 
-// ParseString is parsed from the ECMA-402 StringNumericLiteral grammar (§6.4.1).
+// ParseString parses finite decimal backend input and explicit special tokens.
 //   - "NaN" → NaNValue
 //   - "Infinity" / "+Infinity" / "-Infinity" → ±PosInfinity
-// - Other decimal / hexadecimal / binary / octal → Finite
-// - Illegal → Return ErrInvalidDecimal
+//   - Finite decimal → exact finite value, including a negative-zero sign
+//   - Backend special aliases (inf, nan, sNaN, NaN payloads) → ErrInvalidDecimal
+//   - Malformed input → ErrInvalidDecimal
 func ParseString(s string) (Decimal, error)
 ```
+
+The backend parser must never return an apd special form wrapped as a finite
+Decimal. Intl string grammar and host-boundary normalization belong to
+`internal/ecma402.ParseDecimalInput`, not to this backend constructor. Public
+`numberformat.Decimal` and `pluralrules.Decimal` expose malformed input as a
+structured `ErrInvalidValue`, preserving the input and formatter owner.
+
+`ParseDecimalInput` owns StringNumericLiteral: ECMAScript whitespace and line
+terminators (not Go's broader IsSpace), empty input as zero, unsigned radix
+integers, signed decimals and exponents, and canonical Infinity tokens. The
+explicit `NaN` bridge remains supported. Numeric separators, signed radix
+literals and backend special aliases are rejected.
+
+String values normalize only at the RoundMVResult extremes: absolute values
+at or above `2^1024 - 2^970` become infinity; values at or below `2^-1075`
+become zero, retaining the original sign. Exact midpoint comparisons use
+integer-derived decimals. Huge exponents are classified before backend
+construction, without allocating powers proportional to the exponent. All
+other finite mathematical values keep their input precision. BigInt bypasses
+this string normalization. NumberFormat formats infinity and signed zero;
+PluralRules Select returns other for non-finite values and SelectRange keeps
+its operation-owned NaN rejection.
+
+Evidence: `.references/ecma402/spec/numberformat.html` StringIntlMV and
+ToIntlMathematicalValue, `.references/node/deps/v8/src/objects/js-number-format.cc`,
+`internal/ecma402/string_numeric.go`, `internal/ecma402/decimal_test.go`, and
+`decimal_input_test.go`. FormatJS's Decimal wrapper is a comparison reference,
+not the authority for grammar or midpoint handling.
 
 > **Why integer constructors live in `internal/decimal`**: NumberFormat and PluralRules both expose typed `Int`, `Uint`, and `BigInt` bridges. The exact conversion rule belongs to the decimal owner, so signed, unsigned, nil BigInt, and copied BigInt storage cannot drift between formatter packages.
 >

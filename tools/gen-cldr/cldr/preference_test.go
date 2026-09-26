@@ -4,6 +4,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -50,9 +51,9 @@ func TestLoadPreferenceData(t *testing.T) {
 			},
 		},
 		Calendar: map[string][]string{
-			"001":      {"gregorian"},
-			"IR":       {"persian", "gregorian"},
-			"US-POSIX": {"gregorian"},
+			"001":      {"gregory"},
+			"IR":       {"persian", "gregory"},
+			"US-POSIX": {"gregory"},
 		},
 	}
 	assertPreferenceData(t, "loadPreferenceData()", got, want)
@@ -271,8 +272,8 @@ func TestLoadCalendarPreferenceCanonicalizesRegions(t *testing.T) {
 		t.Fatalf("loadCalendarPreference() error = %v", err)
 	}
 	want := map[string][]string{
-		"001":      {"gregorian"},
-		"US-POSIX": {"gregorian"},
+		"001":      {"gregory"},
+		"US-POSIX": {"gregory"},
 	}
 	if !maps.EqualFunc(got, want, slices.Equal) {
 		t.Fatalf("loadCalendarPreference() = %#v, want %#v", got, want)
@@ -369,5 +370,16 @@ func assertPreferenceData(t *testing.T, name string, got, want PreferenceData) {
 		!maps.Equal(got.Week, want.Week) ||
 		!maps.EqualFunc(got.Calendar, want.Calendar, slices.Equal) {
 		t.Fatalf("%s = %#v, want %#v", name, got, want)
+	}
+}
+
+func TestCalendarPreferenceRejectsMalformedType(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	path := filepath.Join(root, "cldr-core", "supplemental", "calendarPreferenceData.json")
+	mustWriteFile(t, path, `{"supplemental":{"calendarPreferenceData":{"001":["not_a_calendar"]}}}`)
+	_, err := loadCalendarPreference(root)
+	if err == nil || !strings.Contains(err.Error(), path) || !strings.Contains(err.Error(), "not_a_calendar") {
+		t.Fatalf("loadCalendarPreference error = %v, want path and invalid identifier", err)
 	}
 }

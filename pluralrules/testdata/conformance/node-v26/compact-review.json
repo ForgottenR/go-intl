@@ -1,0 +1,46 @@
+[
+  {
+    "id": "pluralrules-node-v26-8-1-compact-fr-1200000",
+    "source": "node:v26.8.1:pluralrules:compact-review",
+    "locale": "fr",
+    "feature": "select",
+    "options": {
+      "notation": "compact"
+    },
+    "input": 1200000,
+    "expected": "many"
+  },
+  {
+    "id": "pluralrules-node-v26-8-1-compact-fr-234500000",
+    "source": "node:v26.8.1:pluralrules:compact-review",
+    "locale": "fr",
+    "feature": "select",
+    "options": {
+      "notation": "compact"
+    },
+    "input": 234500000,
+    "expected": "many"
+  },
+  {
+    "id": "pluralrules-node-v26-8-1-standard-fr-1200000",
+    "source": "node:v26.8.1:pluralrules:compact-review",
+    "locale": "fr",
+    "feature": "select",
+    "options": {
+      "notation": "standard"
+    },
+    "input": 1200000,
+    "expected": "other"
+  },
+  {
+    "id": "pluralrules-node-v26-8-1-standard-fr-234500000",
+    "source": "node:v26.8.1:pluralrules:compact-review",
+    "locale": "fr",
+    "feature": "select",
+    "options": {
+      "notation": "standard"
+    },
+    "input": 234500000,
+    "expected": "other"
+  }
+]

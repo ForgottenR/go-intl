@@ -88,37 +88,16 @@ func TestLanguageRegionFallbackUsesBooleanBoundary(t *testing.T) {
 	}
 }
 
-func TestLanguageBaseAndRegionUsesLocaleSubtagGrammar(t *testing.T) {
+func TestLanguageCompositionKeepsComponents(t *testing.T) {
 	t.Parallel()
-
-	display := styledNames{
-		long: map[string]string{
-			"en":      "English",
-			"en-Latn": "Latin English",
-		},
-	}
-	tests := []struct {
-		name       string
-		parts      []string
-		wantBase   string
-		wantRegion string
-		wantOK     bool
-	}{
-		{name: "alpha region", parts: []string{"en", "US"}, wantBase: "English", wantRegion: "US", wantOK: true},
-		{name: "numeric region", parts: []string{"en", "419"}, wantBase: "English", wantRegion: "419", wantOK: true},
-		{name: "script before region", parts: []string{"en", "Latn", "US"}, wantBase: "Latin English", wantRegion: "US", wantOK: true},
-		{name: "invalid region", parts: []string{"en", "12x"}, wantBase: "English", wantOK: true},
-		{name: "unknown language", parts: []string{"fr", "US"}},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			base, region, ok := languageBaseAndRegion(display, "long", tc.parts)
-			if base != tc.wantBase || region != tc.wantRegion || ok != tc.wantOK {
-				t.Fatalf("languageBaseAndRegion(%v) = %q, %q, %v; want %q, %q, %v", tc.parts, base, region, ok, tc.wantBase, tc.wantRegion, tc.wantOK)
-			}
-		})
+	for _, tc := range []struct{ code, want string }{
+		{"en-Cyrl", "English (Cyrillic)"},
+		{"en-Latn-US", "American English (Latin)"},
+	} {
+		got, ok := Of("en", "language", "long", "dialect", tc.code, true)
+		if !ok || got != tc.want {
+			t.Errorf("Of(%q)=%q,%v want %q", tc.code, got, ok, tc.want)
+		}
 	}
 }
 

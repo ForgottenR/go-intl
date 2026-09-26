@@ -160,3 +160,24 @@ func TestResolveLocale(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveLocaleSameValueOption(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ name, ca, nu, want string }{
+		{"equal", "buddhist", "thai", "th-u-ca-buddhist-nu-thai"},
+		{"mixed", "gregory", "thai", "th-u-nu-thai"},
+		{"unsupported", "unknown", "thai", "th-u-ca-buddhist-nu-thai"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := ResolveLocale(ResolveOptions{
+				Algorithm: AlgorithmLookup, Supported: []string{"th"}, Requested: []string{"th-u-ca-buddhist-nu-thai"}, DefaultLocale: "th",
+				RelevantExtensionKeys: []string{"ca", "nu"}, OptionValues: []Option{{Key: "ca", Value: tc.ca}, {Key: "nu", Value: tc.nu}},
+				LocaleData: testLocaleData{"th": {"ca": {"gregory", "buddhist"}, "nu": {"latn", "thai"}}},
+			})
+			if got.Locale != tc.want {
+				t.Fatalf("locale = %q, want %q", got.Locale, tc.want)
+			}
+		})
+	}
+}

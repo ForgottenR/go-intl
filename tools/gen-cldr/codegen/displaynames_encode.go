@@ -33,6 +33,7 @@ func encodeDisplayNames(input RuntimeInput, table *StringTable) ([]byte, error) 
 	})
 
 	territory := encodeStyledLocales(table, func(d cldr.DisplayNames) cldr.StyledNames { return d.Territories }, data)
+	variant := encodeStyledLocales(table, func(d cldr.DisplayNames) cldr.StyledNames { return d.Variants }, data)
 	script := encodeStyledLocales(table, func(d cldr.DisplayNames) cldr.StyledNames { return d.Scripts }, data)
 	calendar := encodeStyledLocales(table, func(d cldr.DisplayNames) cldr.StyledNames { return d.Calendars }, data)
 	field := encodeStyledLocales(table, func(d cldr.DisplayNames) cldr.StyledNames { return d.DateTimeFields }, data)
@@ -44,6 +45,7 @@ func encodeDisplayNames(input RuntimeInput, table *StringTable) ([]byte, error) 
 		payloadBlob{"_dnLanguageBlob", language.bytes()},
 		payloadBlob{"_dnTerritoryBlob", territory.bytes()},
 		payloadBlob{"_dnScriptBlob", script.bytes()},
+		payloadBlob{"_dnVariantBlob", variant.bytes()},
 		payloadBlob{"_dnCalendarBlob", calendar.bytes()},
 		payloadBlob{"_dnDateTimeFieldBlob", field.bytes()},
 		payloadBlob{"_dnSupportedBlob", supported.bytes()},
@@ -66,6 +68,7 @@ func encodeLanguageDisplayNames(e *blobEncoder, d cldr.DisplayNames, table *Stri
 	encodeStyledNames(e, d.Languages.Dialect, table)
 	encodeStyledNames(e, d.Languages.Standard, table)
 	e.appendStringRef(table.Add(d.LocalePattern))
+	e.appendStringRef(table.Add(d.LocaleSeparator))
 }
 
 // encodeStyledNames serializes a StyledNames as three string maps in

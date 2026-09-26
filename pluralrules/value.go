@@ -32,7 +32,9 @@ func BigInt(v *big.Int) Value {
 	return Value{numeric: ecma402.BigIntNumericValue(v)}
 }
 
-// Decimal parses an ECMA-402 decimal-string bridge value.
+// Decimal parses an Intl numeric string, retaining exact finite precision.
+// Empty or whitespace-only input is zero; unsigned radix integers are accepted.
+// String range extremes become signed infinity or zero. Malformed input returns an error.
 func Decimal(s string) (Value, error) {
 	d, err := ecma402.ParseDecimalInput(s)
 	if err != nil {

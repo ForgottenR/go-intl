@@ -31,13 +31,13 @@ func TestPreferenceAccessors(t *testing.T) {
 	if got, want := MinimalDaysInFirstWeek("DE"), 4; got != want {
 		t.Fatalf("MinimalDaysInFirstWeek(DE) = %d, want %d", got, want)
 	}
-	if got, want := CalendarPreference("TH"), []string{"buddhist", "gregorian"}; !reflect.DeepEqual(got, want) {
+	if got, want := CalendarPreference("TH"), []string{"buddhist", "gregory"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("CalendarPreference(TH) = %#v, want %#v", got, want)
 	}
 	if !HasCalendarPreference("TH") || HasCalendarPreference("ZZ") {
 		t.Fatalf("HasCalendarPreference(TH/ZZ) = %v/%v, want true/false", HasCalendarPreference("TH"), HasCalendarPreference("ZZ"))
 	}
-	if got, want := CalendarPreference("ZZ"), []string{"gregorian"}; !reflect.DeepEqual(got, want) {
+	if got, want := CalendarPreference("ZZ"), []string{"gregory"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("CalendarPreference(ZZ) = %#v, want %#v", got, want)
 	}
 	if !HasWeekPreference("US") || HasWeekPreference("ZZ") {

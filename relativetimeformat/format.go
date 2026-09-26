@@ -96,11 +96,11 @@ func compileRelativeTimeFields(raw cldrrelativetime.RelativeTimeFields, style St
 	for _, unit := range relativeTimeUnits {
 		field, ok := selectRelativeTimeField(raw, unit, style)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("relativetimeformat: CLDR relative-time unit %s style %s missing after long fallback", unit, style)
 		}
 		compiled, err := compileRelativeTimeField(field)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("relativetimeformat: CLDR relative-time unit %s style %s: %w", unit, style, err)
 		}
 		out[unit] = compiled
 	}
@@ -128,11 +128,11 @@ func selectRelativeTimeField(fields cldrrelativetime.RelativeTimeFields, unit Un
 func compileRelativeTimeField(field cldrrelativetime.RelativeTimeField) (relativeTimeField, error) {
 	future, err := compileRelativeTimePatternSet(field.Future)
 	if err != nil {
-		return relativeTimeField{}, err
+		return relativeTimeField{}, fmt.Errorf("future: %w", err)
 	}
 	past, err := compileRelativeTimePatternSet(field.Past)
 	if err != nil {
-		return relativeTimeField{}, err
+		return relativeTimeField{}, fmt.Errorf("past: %w", err)
 	}
 	return relativeTimeField{
 		future:   future,
@@ -142,6 +142,9 @@ func compileRelativeTimeField(field cldrrelativetime.RelativeTimeField) (relativ
 }
 
 func compileRelativeTimePatternSet(patterns map[string]string) (relativeTimePatternSet, error) {
+	if patterns[pluralrules.Other.String()] == "" {
+		return relativeTimePatternSet{}, fmt.Errorf("missing CLDR other pattern")
+	}
 	other, err := compileRelativeTimePattern(patterns[pluralrules.Other.String()])
 	if err != nil {
 		return relativeTimePatternSet{}, err

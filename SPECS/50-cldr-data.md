@@ -59,7 +59,7 @@ Each semantic domain is a Go package under `internal/cldr/<domain>/` with a gene
 | `relativetime` | `cldr-dates-full/main/<locale>/dateFields.json` | long/short/narrow relative and relativeTime patterns for year/quarter/month/week/day/hour/minute/second |
 | `displaynames` | `cldr-localenames-full/main/<locale>/*.json` (+ currency names imported from the `currency` domain) | language / region / script / calendar / dateTimeField display names |
 | `plural` | `cldr-core/supplemental/plurals.json` + `ordinals.json` + `pluralRanges.json` | cardinal rules, ordinal rules, pluralRanges (emitted by SPEC 40 codegen; this SPEC only fixes the package location and that it passes the data-shape gate) |
-| `locale` (kernel) | `cldr-core` `availableLocales.json` / `likelySubtags.json` / `scriptMetadata.json` / `timeData.json` / `weekData.json` / `calendarPreferenceData.json` | locale registry (`und` at index 0), likely subtags (maximize/minimize), known script directions, hour-cycle/week/calendar preferences, numbering data, manifest, version |
+| `locale` (kernel) | `cldr-core` `availableLocales.json` / `likelySubtags.json` / `scriptMetadata.json` / `timeData.json` / `weekData.json` / `calendarPreferenceData.json` | locale registry (`und` at index 0), likely-subtag maximize data, known script directions, hour-cycle/week/calendar preferences, numbering data, manifest, version |
 
 Three private identity products are emitted directly to their runtime owners:
 
@@ -123,7 +123,7 @@ MUST rules:
 | Identifier | Source | Remarks |
 |------------|--------|---------|
 | Currency (ISO 4217 + precision) | CLDR `currencyData.json` | Do **not** add an independent ISO 4217 table or `bojanz/currency` (separate CLDR-derived table, drifts with `internal/cldr/VERSION`) |
-| Time zone (IANA zone) | pinned official IANA Zone/Link archive + CLDR BCP47 `timezone.json` primary metadata + Go `time/tzdata` transitions + CLDR display data | `internal/tz` owns legal identifiers/primary/regions and transitions; `internal/cldr/timezone` owns localized names/metazones only |
+| Time zone (IANA zone) | pinned official IANA Zone/Link archive + CLDR BCP47 `timezone.json` primary metadata + Go `time.LoadLocation` transitions (embedded fallback) + CLDR display data | `internal/tz` owns legal identifiers/primary/regions and delegates transition lookup to Go; `internal/cldr/timezone` owns localized names/metazones only |
 | Sanctioned unit identifiers | ECMA-402 hardcode in `internal/ecma402/numberformat/constants.go` | Spec list is authoritative; CLDR provides the schema, not the sanctioned list |
 
 > **Why**: Currency precision belongs to the pinned CLDR baseline; a second CLDR-derived table would need independent verification. Sanctioned units are normative, so the spec list, not CLDR detection, is authoritative.
@@ -359,7 +359,7 @@ MUST rules:
 ### 5.7 Likely-subtag source validation
 
 `tools/gen-cldr/extract.ExtractLikelySubtags` validates the pinned CLDR source
-before producing maximize/minimize records. Keys must be fully consumed
+before producing maximize records. Keys must be fully consumed
 language, language-script, language-region, or language-script-region forms;
 values must be full language-script-region triples. Both sides reuse
 `internal/localeid` subtag validators and canonicalizers. Empty, misplaced,
@@ -383,7 +383,6 @@ type Locale uint16
 func ResolveLocale(tag language.Tag) (Locale, bool)
 func AvailableLocales() []string
 func MaximizeSubtags(language, script, region string) (lang, scr, reg string, ok bool)
-func MinimizeSubtags(language, script, region string) (lang, scr, reg string, ok bool)
 func Version() VersionInfo
 func Manifest() ManifestInfo
 
@@ -584,7 +583,7 @@ CLDR supplemental day-period rules cover languages beyond the kernel locale regi
 ### Cross-SPEC
 
 - [SPEC 00 §5.3 — Data strategy](./00-vision-and-scope.md#53-data-strategy)
-- [SPEC 10 §Maximize / Minimize](./10-locale.md) — consumes `MaximizeSubtags` / `MinimizeSubtags`.
+- [SPEC 10 §Maximize / Minimize](./10-locale.md) — uses `MaximizeSubtags` for maximization and candidate-equivalent minimization.
 - [SPEC 11 §BestFitMatcher](./11-locale-matching.md) — matcher receives supported locales and maximizers from formatter constructors.
 - [SPEC 20 §Currency Data](./20-numberformat.md) — consumes `currency` domain accessors.
 - [SPEC 30 §DateTimeFormat Core](./30-datetimeformat.md) — consumes `date` domain accessors.
@@ -595,3 +594,21 @@ CLDR supplemental day-period rules cover languages beyond the kernel locale regi
 ---
 
 > This SPEC is the maintenance record of the CLDR data layer. Version-pin changes trigger a SPEC revision; the active locale list is maintained in `tools/locale-profile.json` (no SPEC revision); volume changes are reviewed through `task build:size`.
+
+### Calendar preference identifiers
+
+The generator adapts legacy CLDR calendar identifiers (`gregorian` → `gregory`,
+`ethiopic-amete-alem` → `ethioaa`) and validates/canonicalizes Unicode types
+before encoding calendar preferences. Invalid identifiers report the source
+path, region and value. Locale consumes these canonical values directly and
+filters against actual supported calendars; an empty supported intersection
+still returns the Gregorian fallback. Explicit locale calendar keywords retain
+their own presence semantics.
+
+Generation input integrity: `tools/gen-cldr/cldr.CrossCheck` validates the name and pinned version in `package.json` for every required CLDR package before writing output. `tools/gen-plural-rules` validates `cldr-core` identity and equal nonempty versions beside cardinal, ordinal, and range inputs, including separate source directories. Package metadata proves release identity, not the integrity of individual JSON bytes.
+
+The selected profile retains every currency name/symbol row from its pinned
+`cldr-numbers-full/main/<locale>/currencies.json`. The narrow supported-currency
+index is derived from those name keys alone; `currencyData.json` precision
+exceptions cannot add membership. DisplayNames language data carries CLDR
+variant names and the locale separator alongside the locale pattern.

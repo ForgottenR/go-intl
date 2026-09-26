@@ -2,7 +2,7 @@
 //
 //	locales, _ := locale.ParseList("en-US")
 //	format, _ := datetimeformat.New(locales, datetimeformat.Options{})
-//	out := format.Format(time.Now())
+//	out, err := format.Format(time.Now())
 //	_ = out
 //
 // See README.md for usage examples and SPECS/30-datetimeformat.md for the contract.

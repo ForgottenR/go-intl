@@ -1,7 +1,10 @@
 package codegen
 
 import (
+	"slices"
 	"testing"
+
+	"github.com/agentable/go-intl/tools/gen-cldr/cldr"
 
 	"github.com/agentable/go-intl/internal/cldr/currency"
 	"github.com/agentable/go-intl/tools/gen-cldr/extract"
@@ -60,4 +63,20 @@ func TestCurrencyRoundTrip(t *testing.T) {
 	wantCodes := supportedCurrencyValues(data)
 	gotCodes := currency.SupportedCodes()
 	assertStringSliceEqual(t, "SupportedCodes", gotCodes, wantCodes)
+}
+
+func TestSupportedCurrencyMembershipDoesNotDependOnFractions(t *testing.T) {
+	t.Parallel()
+	data := extract.CurrencyData{
+		Fractions:  map[string]cldr.CurrencyFraction{"DEFAULT": {}, "AAA": {}},
+		Currencies: map[string]cldr.Currencies{"en": {"USD": {Canonical: "US dollar"}, "XXX": {Canonical: "unknown currency"}}},
+	}
+	want := []string{"USD", "XXX"}
+	if got := supportedCurrencyValues(data); !slices.Equal(got, want) {
+		t.Fatalf("members = %v, want %v", got, want)
+	}
+	data.Fractions["ZZZ"] = cldr.CurrencyFraction{Digits: 3}
+	if got := supportedCurrencyValues(data); !slices.Equal(got, want) {
+		t.Fatalf("fraction-only membership = %v, want %v", got, want)
+	}
 }

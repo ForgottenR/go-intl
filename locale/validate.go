@@ -19,36 +19,8 @@ const (
 	localeRegionExpected             = "a well-formed BCP 47 region subtag"
 	localeHourCycleExpected          = `one of "h11", "h12", "h23", "h24"`
 	localeCaseFirstExpected          = `one of "upper", "lower", "false"`
-	localeFirstDayExpected           = "a weekday name or number from 0 through 7"
+	localeFirstDayExpected           = "a Unicode locale type or weekday number from 0 through 7"
 )
-
-func (l *Locale) validate() error {
-	if err := normalizeOption(&l.ext.calendar, "calendar", localeUnicodeTypeExpected, normalizeUnicodeTypeForKey("ca")); err != nil {
-		return err
-	}
-	if err := normalizeOption(&l.ext.collation, "collation", localeUnicodeTypeExpected, normalizeUnicodeTypeForKey("co")); err != nil {
-		return err
-	}
-	if err := normalizeOption(&l.ext.numberingSystem, "numberingSystem", localeUnicodeTypeExpected, normalizeUnicodeTypeForKey("nu")); err != nil {
-		return err
-	}
-	if err := normalizeOption(&l.ext.hourCycle, "hourCycle", localeHourCycleExpected, normalizeHourCycle); err != nil {
-		return err
-	}
-	if err := normalizeOption(&l.ext.caseFirst, "caseFirst", localeCaseFirstExpected, normalizeCaseFirst); err != nil {
-		return err
-	}
-	return normalizeOption(&l.ext.firstDayOfWeek, "firstDayOfWeek", localeFirstDayExpected, normalizeFirstDayOfWeek)
-}
-
-func normalizeOption(dst *string, name, expected string, normalize func(string) (string, error)) error {
-	normalized, err := normalize(*dst)
-	if err != nil {
-		return invalidLocaleOptionExpected(name, *dst, expected, err)
-	}
-	*dst = normalized
-	return nil
-}
 
 func invalidLocaleOptionExpected(name, value, expected string, err error) error {
 	return intlerr.NewInvalidOptionExpected("locale", name, value, "", expected, err)
@@ -107,13 +79,6 @@ func normalizeUnicodeType(key, value string) (string, error) {
 }
 
 func normalizeHourCycle(value string) (string, error) {
-	if value == "" {
-		return "", nil
-	}
-	value, err := normalizeUnicodeType("hc", value)
-	if err != nil {
-		return "", err
-	}
 	switch value {
 	case "h11", "h12", "h23", "h24":
 		return value, nil
@@ -122,13 +87,6 @@ func normalizeHourCycle(value string) (string, error) {
 }
 
 func normalizeCaseFirst(value string) (string, error) {
-	if value == "" {
-		return "", nil
-	}
-	value, err := normalizeUnicodeType("kf", value)
-	if err != nil {
-		return "", err
-	}
 	switch value {
 	case "upper", "lower", "false":
 		return value, nil
@@ -137,20 +95,10 @@ func normalizeCaseFirst(value string) (string, error) {
 }
 
 func normalizeFirstDayOfWeek(value string) (string, error) {
-	if value == "" {
-		return "", nil
-	}
 	if canonical, ok := canonicalFirstDay(value); ok {
 		return canonical, nil
 	}
-	value, err := normalizeUnicodeType("fw", value)
-	if err != nil {
-		return "", err
-	}
-	if canonical, ok := canonicalFirstDay(value); ok {
-		return canonical, nil
-	}
-	return "", errInvalidLocaleOptionValue
+	return normalizeUnicodeType("fw", value)
 }
 
 func canonicalFirstDay(value string) (string, bool) {

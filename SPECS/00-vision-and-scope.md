@@ -64,7 +64,7 @@ Reference roles:
 | Native-engine witness | Settles implementation-defined observable output, runtime edge cases, and backend-capability boundaries. |
 | CLDR data | Owns locale, calendar, numbering, currency, unit, list, relative-time, display-name, plural, and time-zone display content. |
 | IANA + CLDR time-zone identity | Official IANA source owns Zone/Link legality and `zone.tab` region membership; CLDR BCP47 timezone records own ECMA/ICU primary selection and rename state. |
-| Go `time/tzdata` | Owns the transition bytes used to resolve offsets and DST for generated named identifiers. |
+| Go `time.LoadLocation` | Owns transition lookup from ZONEINFO, host paths, GOROOT, then embedded `time/tzdata` fallback. |
 
 ### 2.2 Reference hygiene
 
@@ -77,7 +77,7 @@ Only reference trees with compatible root licensing and direct project value bel
 3. **Implementation gaps need an exit.** Any retained gap must state current behavior, rationale, `review_after`, and the concrete removal path in the owning SPEC.
 4. **Generated references are readable evidence**, useful for algorithm shape and fixture extraction, but not a product dependency.
 5. **Native-engine witnesses break observable-behavior ties** when ECMA-402 leaves behavior implementation-defined or when runtime output is the compatibility target.
-6. **Each data fact has one oracle.** Use pinned CLDR for localized data, the pinned IANA/CLDR composite registry for time-zone identity and primary records, and Go `time/tzdata` for transitions. Do not use display coverage or host loadability as identifier truth.
+6. **Each data fact has one oracle.** Use pinned CLDR for localized data, the pinned IANA/CLDR composite registry for time-zone identity and primary records, and Go `time.LoadLocation` for transitions (including its embedded fallback). Do not use display coverage or host loadability as identifier truth.
 7. **No local convenience beats native ownership.** Go typed bridges are allowed, but helper shape, cache knobs, or historical ergonomics must not override the native `Intl` owner model.
 8. **No import-cost shortcut beats the `Intl` namespace.** The root package represents ECMA-402 `Intl`; active constructor aliases are the current Go bridge for constructor properties such as `Intl.NumberFormat`. Measure and document aggregate facade cost separately instead of deleting constructor properties to make dependency reports smaller.
 
@@ -251,7 +251,7 @@ Decisions:
 
 `Intl.DateTimeFormat` requires IANA time-zone data and DST offset arithmetic:
 
-- `internal/tz/tzdata.go` blank-imports `time/tzdata` so `time.LoadLocation` has deterministic IANA data even on minimal deploy images.
+- `internal/tz/tzdata.go` blank-imports `time/tzdata` so `time.LoadLocation` has an IANA fallback on minimal deploy images; ZONEINFO, host and GOROOT data may take precedence.
 - The pinned tzdata version is recorded alongside CLDR / ICU in `internal/cldr/VERSION`.
 - Canonical-name resolution (`US/Eastern` → `America/New_York`) goes through generated CLDR canonical-link tables.
 

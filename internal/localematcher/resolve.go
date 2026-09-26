@@ -67,7 +67,7 @@ func ResolveLocale(opts ResolveOptions) ResolvedLocale {
 			if option.Key != key {
 				continue
 			}
-			if option.Value != "" && slices.Contains(keyLocaleData, option.Value) {
+			if option.Value != "" && option.Value != value && slices.Contains(keyLocaleData, option.Value) {
 				value = option.Value
 				supportedKeywordValue = ""
 			}

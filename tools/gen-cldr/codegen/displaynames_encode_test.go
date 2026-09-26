@@ -24,7 +24,8 @@ func TestEncodeLanguageDisplayNames(t *testing.T) {
 				Narrow: map[string]string{"ff": "F"},
 			},
 		},
-		LocalePattern: "{0} ({1})",
+		LocalePattern:   "{0} ({1})",
+		LocaleSeparator: "{0}, {1}",
 	}, table)
 
 	want := []byte{
@@ -34,7 +35,7 @@ func TestEncodeLanguageDisplayNames(t *testing.T) {
 		1, 9, 2, 11, 1,
 		1, 12, 2, 14, 1,
 		1, 15, 2, 17, 1,
-		18, 9,
+		18, 9, 27, 8,
 	}
 	assertBytesEqual(t, "encodeLanguageDisplayNames() bytes", e.bytes(), want)
 }

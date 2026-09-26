@@ -9,12 +9,14 @@ import (
 )
 
 type DisplayNames struct {
-	Languages      LanguageDisplay
-	Territories    StyledNames
-	Scripts        StyledNames
-	Calendars      StyledNames
-	DateTimeFields StyledNames
-	LocalePattern  string
+	Languages       LanguageDisplay
+	Territories     StyledNames
+	Scripts         StyledNames
+	Calendars       StyledNames
+	DateTimeFields  StyledNames
+	LocalePattern   string
+	LocaleSeparator string
+	Variants        StyledNames
 }
 
 type LanguageDisplay struct {
@@ -58,7 +60,11 @@ func readDisplayNamesLocale(root, locale string) (DisplayNames, bool, error) {
 	if err != nil {
 		return DisplayNames{}, false, err
 	}
-	calendars, pattern, err := readLocaleDisplayNamesFile(root, locale)
+	calendars, pattern, separator, err := readLocaleDisplayNamesFile(root, locale)
+	if err != nil {
+		return DisplayNames{}, false, err
+	}
+	variants, _, err := readLocaleNamesFile(root, locale, "variants.json", "variants")
 	if err != nil {
 		return DisplayNames{}, false, err
 	}
@@ -74,11 +80,13 @@ func readDisplayNamesLocale(root, locale string) (DisplayNames, bool, error) {
 			Dialect:  splitStyleData(languages),
 			Standard: buildStandardLanguageNames(languages, territories, pattern),
 		},
-		Territories:    splitStyleData(territories),
-		Scripts:        splitStyleData(scripts),
-		Calendars:      splitStyleData(calendars),
-		DateTimeFields: splitDateTimeFieldStyleData(dateTimeFields),
-		LocalePattern:  pattern,
+		Territories:     splitStyleData(territories),
+		Scripts:         splitStyleData(scripts),
+		Calendars:       splitStyleData(calendars),
+		DateTimeFields:  splitDateTimeFieldStyleData(dateTimeFields),
+		LocalePattern:   pattern,
+		LocaleSeparator: separator,
+		Variants:        splitStyleData(variants),
 	}
 	return data, true, nil
 }
@@ -117,20 +125,21 @@ func readLocaleNamesFile(root, locale, file, field string) (map[string]string, b
 	return values, true, nil
 }
 
-func readLocaleDisplayNamesFile(root, locale string) (calendars map[string]string, pattern string, err error) {
+func readLocaleDisplayNamesFile(root, locale string) (calendars map[string]string, pattern, separator string, err error) {
 	path := filepath.Join(root, "cldr-localenames-full", "main", locale, "localeDisplayNames.json")
 	raw, ok, err := readOptionalFile(path)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	if !ok {
-		return nil, "", nil
+		return nil, "", "", nil
 	}
 	var doc struct {
 		Main map[string]struct {
 			LocaleDisplayNames *struct {
 				LocaleDisplayPattern *struct {
-					LocalePattern string `json:"localePattern"`
+					LocalePattern   string `json:"localePattern"`
+					LocaleSeparator string `json:"localeSeparator"`
 				} `json:"localeDisplayPattern"`
 				Types *struct {
 					Calendar map[string]string `json:"calendar"`
@@ -139,26 +148,26 @@ func readLocaleDisplayNamesFile(root, locale string) (calendars map[string]strin
 		} `json:"main"`
 	}
 	if err := json.Unmarshal(raw, &doc); err != nil {
-		return nil, "", fmt.Errorf("parse %s: %w", path, err)
+		return nil, "", "", fmt.Errorf("parse %s: %w", path, err)
 	}
 	if doc.Main == nil {
-		return nil, "", fmt.Errorf("localeDisplayNames body missing for %s", locale)
+		return nil, "", "", fmt.Errorf("localeDisplayNames body missing for %s", locale)
 	}
 	body, ok := doc.Main[locale]
 	if !ok {
-		return nil, "", fmt.Errorf("localeDisplayNames body missing for %s", locale)
+		return nil, "", "", fmt.Errorf("localeDisplayNames body missing for %s", locale)
 	}
 	data := body.LocaleDisplayNames
 	if data == nil {
-		return nil, "", fmt.Errorf("localeDisplayNames data missing for %s", locale)
+		return nil, "", "", fmt.Errorf("localeDisplayNames data missing for %s", locale)
 	}
 	if data.LocaleDisplayPattern == nil || data.LocaleDisplayPattern.LocalePattern == "" {
-		return nil, "", fmt.Errorf("locale display pattern missing for %s", locale)
+		return nil, "", "", fmt.Errorf("locale display pattern missing for %s", locale)
 	}
 	if data.Types == nil || len(data.Types.Calendar) == 0 {
-		return nil, "", fmt.Errorf("calendar display-name data missing for %s", locale)
+		return nil, "", "", fmt.Errorf("calendar display-name data missing for %s", locale)
 	}
-	return data.Types.Calendar, data.LocaleDisplayPattern.LocalePattern, nil
+	return data.Types.Calendar, data.LocaleDisplayPattern.LocalePattern, data.LocaleDisplayPattern.LocaleSeparator, nil
 }
 
 func readDateTimeFieldNames(root, locale string) (map[string]string, error) {
@@ -258,11 +267,11 @@ func buildStandardLanguageNames(languages, territories map[string]string, patter
 		if value == "" {
 			continue
 		}
-		base, style, territorySuffix, ok := displayNameStyleKey(key)
+		base, style, suffix, ok := displayNameStyleKey(key)
 		if !ok {
 			continue
 		}
-		putStyledName(out, style, base, standardLanguageValue(base, value, languages, territories, territorySuffix, pattern))
+		putStyledName(out, style, base, standardLanguageValue(base, value, languages, territories, suffix, pattern))
 	}
 	return compactStyledNames(out)
 }
@@ -341,6 +350,5 @@ func standardLanguageValue(tag, dialectValue string, languages, territories map[
 		regionName = region
 	}
 	result := strings.Replace(pattern, "{0}", languageName, 1)
-	result = strings.Replace(result, "{1}", regionName, 1)
-	return result
+	return strings.Replace(result, "{1}", regionName, 1)
 }

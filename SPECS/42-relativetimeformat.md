@@ -141,7 +141,7 @@ MUST rules:
 2. `numberingSystem` option must override the `nu` locale extension during locale resolution, matching ECMA-402 `ResolveLocale`.
 3. The internal NumberFormat must format absolute numeric values.
 4. The internal PluralRules must select plural category from the original signed value as ECMA-402 `ResolvePlural` does.
-5. Constructor support for a locale requires relative time field data, number data, and plural rule data. Do not claim support if any of those payload families is missing.
+5. Constructor support for a locale requires relative time field data, number data, and plural rule data. For every legal unit, style falls back to long when needed, and both past/future must provide a nonempty `other` pattern. Incomplete data fails `New` with locale/unit/style/tense context; successful instances never report missing data as an invalid caller unit.
 
 ---
 

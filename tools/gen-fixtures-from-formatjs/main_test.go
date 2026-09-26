@@ -567,7 +567,9 @@ func TestImportFormatJSRequiresPackageTestRoots(t *testing.T) {
 	if !strings.Contains(err.Error(), formatJSNumberFormatTestSourcePrefix) {
 		t.Fatalf("importFormatJS() error = %v, want source prefix %q", err, formatJSNumberFormatTestSourcePrefix)
 	}
-	assertPathAbsent(t, "importFormatJS() stale file stat error", stalePath)
+	if got, err := os.ReadFile(stalePath); err != nil || string(got) != "[]\n" {
+		t.Fatalf("old fixture changed on missing source: %q, %v", got, err)
+	}
 }
 
 type formatJSImportCase struct {
@@ -2076,6 +2078,7 @@ func TestCommittedNodeFixturesAreGeneratedOrExplicitlyManual(t *testing.T) {
 		filepath.Join("datetimeformat", "testdata", "conformance", nodeDir, "deep-contract.json"): "deep DateTimeFormat range/parts contracts are still hand-curated",
 		filepath.Join("locale", "testdata", "conformance", nodeDir, "errors.json"):                "Locale constructor errors are still hand-curated",
 		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact.json"):          "compact PluralRules Node witness is hand-curated until node-witness owns compact groups",
+		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact-review.json"):   "Node 26.8.1 hand-curated compact divergence review in pluralrules/testdata/compact-review.md",
 	}
 
 	var unexpected []string
@@ -2410,6 +2413,177 @@ describe('duration mechanical cases', () => {
 	} {
 		if strings.Contains(string(skipData), retired) {
 			t.Fatalf("skip list = %s, want retired snapshot-only source %s absent", skipData, retired)
+		}
+	}
+}
+
+func TestNodeWitnessVersionMismatchLeavesOutputUntouched(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	node := filepath.Join(root, "node")
+	script := `#!/bin/sh
+cat <<'JSON'
+{"nodeVersion":"v26.8.1","versions":{"node":"26.8.1"},"localeSmoke":[{"id":"probe","source":"node:v26.8.1:locale","locale":"en","options":{},"input":"en","expected":"en"}]}
+JSON
+`
+	if err := os.WriteFile(node, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(root, "locale", "testdata", "conformance", "node-v26", "smoke.json")
+	if err := os.MkdirAll(filepath.Dir(output), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	original := []byte("existing witness")
+	if err := os.WriteFile(output, original, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	err := importNode(node, root)
+	if err == nil || !strings.Contains(err.Error(), "v26.0.0") || !strings.Contains(err.Error(), "v26.8.1") {
+		t.Fatalf("importNode mismatch error=%v", err)
+	}
+	got, readErr := os.ReadFile(output)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if string(got) != string(original) {
+		t.Fatalf("old output changed: %q", got)
+	}
+}
+
+func TestFormatJSSlugCollisionDoesNotOverwrite(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	fixtures := []fixture{
+		{ID: "one", Source: formatJSListFormatTestSourcePrefix + "a/b.test.ts"},
+		{ID: "two", Source: formatJSListFormatTestSourcePrefix + "a-b.test.ts"},
+	}
+	err := writeFixturesBySourceSlug(root, fixtures, formatJSListFormatTestSourcePrefix, fixtureSlug)
+	if err == nil || !strings.Contains(err.Error(), "collision") {
+		t.Fatalf("slug collision error=%v", err)
+	}
+	files, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 0 {
+		t.Fatalf("wrote files on collision: %v", files)
+	}
+}
+
+func TestFormatJSStopsBeforeReplacingOnLaterMissingRoute(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	source := filepath.Join(root, "formatjs")
+	out := filepath.Join(root, "out")
+	for _, route := range append(formatJSPreLocaleSurfaceRoutes(), formatJSPostLocaleSurfaceRoutes()...) {
+		tests := formatJSPackageTestsRoot(source, route.spec.packageDir)
+		if err := os.MkdirAll(tests, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, name := range []string{formatJSLocalePackageDir, formatJSCanonicalLocalesPackageDir} {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, name), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	old := filepath.Join(formatJSConformanceRoot(out, "numberformat"), "old.json")
+	mustWriteFile(t, old, "before")
+	missing := formatJSPackageTestsRoot(source, formatJSDurationFormatPackageDir)
+	if err := os.Remove(missing); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := importFormatJS(source, out); err == nil {
+		t.Fatal("later route should fail")
+	}
+	got, err := os.ReadFile(old)
+	if err != nil || string(got) != "before" {
+		t.Fatalf("early output changed: %q %v", got, err)
+	}
+}
+
+func TestFormatJSLocaleSecondSourceFailureKeepsOldOutput(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	source := filepath.Join(root, "formatjs")
+	out := filepath.Join(root, "out")
+	for _, route := range append(formatJSPreLocaleSurfaceRoutes(), formatJSPostLocaleSurfaceRoutes()...) {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, route.spec.packageDir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.MkdirAll(formatJSPackageTestsRoot(source, formatJSLocalePackageDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	old := filepath.Join(formatJSConformanceRoot(out, "locale"), "old.json")
+	mustWriteFile(t, old, "before")
+	if _, err := importFormatJS(source, out); err == nil || !strings.Contains(err.Error(), formatJSCanonicalLocalesPackageDir) {
+		t.Fatalf("second locale source error=%v", err)
+	}
+	got, err := os.ReadFile(old)
+	if err != nil || string(got) != "before" {
+		t.Fatalf("locale output changed: %q %v", got, err)
+	}
+}
+
+func TestFormatJSReadFailurePreservesOriginal(t *testing.T) {
+	t.Parallel()
+	source := t.TempDir()
+	out := t.TempDir()
+	for _, route := range append(formatJSPreLocaleSurfaceRoutes(), formatJSPostLocaleSurfaceRoutes()...) {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, route.spec.packageDir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, pkg := range []string{formatJSLocalePackageDir, formatJSCanonicalLocalesPackageDir} {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, pkg), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tests := formatJSPackageTestsRoot(source, formatJSDurationFormatPackageDir)
+	if err := os.Symlink(filepath.Join(source, "missing.ts"), filepath.Join(tests, "broken.ts")); err != nil {
+		t.Fatal(err)
+	}
+	old := filepath.Join(formatJSConformanceRoot(out, "numberformat"), "old.json")
+	mustWriteFile(t, old, "before")
+	if _, err := importFormatJS(source, out); err == nil {
+		t.Fatal("broken source should fail")
+	}
+	got, err := os.ReadFile(old)
+	if err != nil || string(got) != "before" {
+		t.Fatalf("output changed on read failure: %q %v", got, err)
+	}
+}
+
+func TestFormatJSSuccessRemovesStaleOwnedFileButKeepsOtherLane(t *testing.T) {
+	t.Parallel()
+	source := t.TempDir()
+	out := t.TempDir()
+	for _, route := range append(formatJSPreLocaleSurfaceRoutes(), formatJSPostLocaleSurfaceRoutes()...) {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, route.spec.packageDir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, pkg := range []string{formatJSLocalePackageDir, formatJSCanonicalLocalesPackageDir} {
+		if err := os.MkdirAll(formatJSPackageTestsRoot(source, pkg), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	stale := filepath.Join(formatJSConformanceRoot(out, "numberformat"), "stale.json")
+	mustWriteFile(t, stale, "before")
+	manual := filepath.Join(out, "numberformat", "testdata", "conformance", "manual", "manual.json")
+	mustWriteFile(t, manual, "manual")
+	other := filepath.Join(formatJSConformanceRoot(out, "displaynames"), "foreign.json")
+	mustWriteFile(t, other, "foreign")
+	if _, err := importFormatJS(source, out); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Fatalf("stale owned file remains: %v", err)
+	}
+	for path, want := range map[string]string{manual: "manual", other: "foreign"} {
+		got, err := os.ReadFile(path)
+		if err != nil || string(got) != want {
+			t.Fatalf("unowned %s changed: %q %v", path, got, err)
 		}
 	}
 }

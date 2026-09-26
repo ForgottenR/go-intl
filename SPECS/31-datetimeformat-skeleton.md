@@ -178,6 +178,7 @@ score -= delta == 2 ? longMore: shortMore // or longLess / shortLess
 3. Pattern scanning of `adjustFieldTypes` must maintain ASCII byte level: LDML pattern field characters are all ASCII, and field membership can use `strings.IndexByte` and other stdlib byte helpers; it is forbidden to change to rune/regex scanning.
 4. Pattern scanning loop **MUST** retain explicit index advancement, because quoted literal and repeated field width will skip multi-byte segments at one time; it is prohibited to hide index jumps in the loop body after mechanically changing to `for range len(pattern)`.
 5. After `adjustFieldTypes`, `format.Pattern` is the final pattern string and can be directly sent to `FormatDateTimePattern`.
+6. Month width adjustment preserves the selected LDML field family: `M` uses formatting names and `L` uses stand-alone names. The compiled endpoint and interval programs keep that field identity through `Format`, `FormatToParts`, `FormatRange`, and `FormatRangeToParts`; ru/pl month-only and month-with-day cases test the distinction.
 
 > **Why**: `adjustFieldTypes` is the equivalent of ICU `DateTimePatternGenerator::adjustFieldTypes`; without post-processing, the best-fit pattern cannot be adapted to the user's precise length requirements.
 > ASCII byte scanning keeps the algorithm aligned with LDML field grammar while avoiding a private one-off membership helper.

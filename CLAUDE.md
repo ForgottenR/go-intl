@@ -8,6 +8,7 @@ For human usage examples, read [`README.md`](README.md). This file is the develo
 
 ```bash
 task test                 # go test -race -p 1 ./...
+task modules:verify       # test + vet + tidy diff for root and three tools modules
 task lint                 # go mod tidy diff check + pinned golangci-lint v2
 task fmt                  # golangci-lint fmt ./...
 task vet                  # go vet ./...
@@ -230,9 +231,13 @@ Reference projects in [`.references/`](.references/) are read-only implementatio
 - Keep shared string and integer option validation in `internal/ecma402`. Formatter packages pass formatter-owned allowed values through helpers such as `RequiredStringOption`, `OptionalStringOption`, `InvalidStringOption`, and `InvalidIntegerOption`; do not hand-roll equivalent `switch` or `slices.Contains` loops.
 - Keep root supported-value accessors in the root package, conventionally in `supported.go`, backed by CLDR/tz data or ECMA-402 sanctioned constants. Do not create public `cldr`, `ecma402`, or `supported` packages for this data. Calendars must include `iso8601`; numbering systems must include the ECMA-402 simple digit table; do not add ad hoc runtime lists.
 - Keep `DateTimeFormat` calendar support tied to `internal/cldr/date.SupportedCalendars()` and generated date data; do not copy calendar allow-lists into constructors.
-- Keep time-zone facts separated by owner. The pinned official IANA archive owns the complete Zone/Link set and `zone.tab` region membership; pinned CLDR BCP47 timezone records own ECMA/ICU primary selection and rename state; `internal/tz` owns the generated immutable registry; Go `time/tzdata` owns transition bytes; `internal/cldr/timezone` owns localized display names only.
+- Keep time-zone facts separated by owner. The pinned official IANA archive owns the complete Zone/Link set and `zone.tab` region membership; pinned CLDR BCP47 timezone records own ECMA/ICU primary selection and rename state; `internal/tz` owns the generated immutable registry; Go `time.LoadLocation` owns transition lookup from `ZONEINFO`, host paths, GOROOT and the embedded `time/tzdata` fallback; `internal/cldr/timezone` owns localized display names only.
 - Keep the IANA identity source reproducible through `tools/gen-cldr/tzdata.json`, its SHA-256-verified cache, generated manifest hashes, and `task data:check`. The Go transition-data version must not be older than the identity pin; exact equality with CLDR display data is not required.
 - Keep generated-data verification structural and fail closed. `tools/data-preflight` validates pins before generation; `tools/check-generated-data` derives ownership from generated headers, compares the complete relative-path set in both directions, then compares bytes. Do not restore hand-maintained per-file diff lists.
+- Compose DisplayNames language names from the complete canonical language/script/region/variant identifier; dialect names consume only their matched components. Generated CLDR variant names and locale separator/pattern carry unresolved components, with the public fallback option controlling missing names.
+- Let `SupportedCurrencies()` enumerate the selected CLDR profile's name keys; precision exceptions do not define membership. Retain all selected currency name/symbol rows.
+- Validate DateTimeFormat `time.Time` instants against the ECMA TimeClip boundary before truncating toward zero to milliseconds. All four formatting methods return `(result, error)` and use `ErrInvalidValue` for out-of-domain instants.
+- Validate all required CLDR package names/versions before generation; plural cardinal/ordinal/ranges sources must report one cldr-core version. `task modules:verify` covers test/vet/tidy-diff in all four published modules.
 - Keep DisplayNames lookup inside the resolved data locale and its truncation parent chain. Missing data is resolved by the public `fallback` option; never borrow an English name from an unrelated locale.
 - Keep text direction generated from pinned CLDR `scriptMetadata.json`. `locale.TextInfo.Direction` is `*string`: known LTR/RTL is present, unknown direction is nil and omitted from JSON; do not restore a hand-written script list or guessed LTR default.
 - Keep Locale language-subtag transforms suffix-preserving: constructor language/script/region options and maximize/minimize may replace only those three subtags; variants, transformed extensions, Unicode extensions, and private use retain their canonical order. Numeric `firstDayOfWeek` aliases are constructor-option values, not valid `-u-fw-*` tag syntax.

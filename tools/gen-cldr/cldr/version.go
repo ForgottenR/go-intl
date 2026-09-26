@@ -47,25 +47,25 @@ func ReadVersionFile(path string) (Versions, error) {
 	return v, nil
 }
 
-// CrossCheck asserts the local cldr-json checkout matches the pinned CLDR
-// version. It reads cldr-core/package.json (always present in any cldr-json
-// distribution) and compares its `version` field.
+// CrossCheck verifies every CLDR package consumed by the generator against
+// the pinned package identity before any output is written.
 func CrossCheck(cldrJSONRoot string, want Versions) error {
-	pkgPath := filepath.Join(cldrJSONRoot, "cldr-core", "package.json")
-	raw, err := readRequiredFile(pkgPath)
-	if err != nil {
-		return err
-	}
-	var meta struct {
-		Name    string `json:"name"`
-		Version string `json:"version"`
-	}
-	if err := json.Unmarshal(raw, &meta); err != nil {
-		return fmt.Errorf("parse %s: %w", pkgPath, err)
-	}
-	if meta.Version != want.CLDR {
-		return fmt.Errorf("cldr-core version %q at %s does not match pin %q",
-			meta.Version, pkgPath, want.CLDR)
+	for _, name := range requiredPackages {
+		pkgPath := filepath.Join(cldrJSONRoot, name, "package.json")
+		raw, err := readRequiredFile(pkgPath)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", pkgPath, err)
+		}
+		var meta struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			return fmt.Errorf("parse %s: %w", pkgPath, err)
+		}
+		if meta.Name != name || meta.Version != want.CLDR {
+			return fmt.Errorf("CLDR package %s: expected name %q version %q, got name %q version %q", pkgPath, name, want.CLDR, meta.Name, meta.Version)
+		}
 	}
 	return nil
 }

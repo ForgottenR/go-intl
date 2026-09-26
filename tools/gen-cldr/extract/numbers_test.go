@@ -1,25 +1,10 @@
 package extract
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/agentable/go-intl/tools/gen-cldr/cldr"
 )
-
-func TestDisplayCurrencyAllowlistSortedUnique(t *testing.T) {
-	t.Parallel()
-
-	values := displayCurrencyAllowlist[:]
-	if !slices.IsSorted(values) {
-		t.Fatalf("displayCurrencyAllowlist = %v, want sorted for binary search", values)
-	}
-	for i := 1; i < len(values); i++ {
-		if values[i] == values[i-1] {
-			t.Fatalf("displayCurrencyAllowlist contains duplicate %q: %v", values[i], values)
-		}
-	}
-}
 
 func TestExtractCurrenciesProfilesLocaleNamesAndKeepsFractions(t *testing.T) {
 	t.Parallel()
@@ -62,7 +47,7 @@ func TestExtractCurrenciesProfilesLocaleNamesAndKeepsFractions(t *testing.T) {
 	if _, ok := filtered["USD"]; !ok {
 		t.Fatalf("ExtractCurrencies currencies dropped allowlisted USD")
 	}
-	if _, ok := filtered["XXX"]; ok {
-		t.Fatalf("ExtractCurrencies currencies kept non-allowlisted XXX")
+	if _, ok := filtered["XXX"]; !ok {
+		t.Fatal("ExtractCurrencies dropped pinned XXX name")
 	}
 }

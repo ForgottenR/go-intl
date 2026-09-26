@@ -171,8 +171,8 @@ func TestLocaleNewAppliesAndValidatesOptions(t *testing.T) {
 		Region:          stringPtr("ca"),
 		Calendar:        stringPtr("islamicc"),
 		Collation:       stringPtr("phonebk"),
-		HourCycle:       stringPtr("H23"),
-		CaseFirst:       stringPtr("UPPER"),
+		HourCycle:       stringPtr("h23"),
+		CaseFirst:       stringPtr("upper"),
 		Numeric:         boolPtr(false),
 		NumberingSystem: stringPtr("ARAB"),
 		FirstDayOfWeek:  stringPtr("0"),
@@ -245,7 +245,7 @@ func TestLocaleNewAppliesAndValidatesOptions(t *testing.T) {
 			opts:         Options{FirstDayOfWeek: stringPtr("8")},
 			wantName:     "firstDayOfWeek",
 			wantValue:    "8",
-			wantExpected: "a weekday name or number from 0 through 7",
+			wantExpected: "a Unicode locale type or weekday number from 0 through 7",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

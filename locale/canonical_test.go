@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	cldrlocale "github.com/agentable/go-intl/internal/cldr/locale"
 )
 
 func TestMustLanguageTagPanicsWithAttributedError(t *testing.T) {
@@ -57,7 +55,12 @@ func TestMinimize(t *testing.T) {
 	}{
 		{in: "en-Latn-US", want: "en"},
 		{in: "zh-Hans-CN", want: "zh"},
-		{in: "zh-Hant-TW", want: "zh-Hant"},
+		{in: "zh-Hant-TW", want: "zh-TW"},
+		{in: "zh-Hant", want: "zh-TW"},
+		{in: "und-Armn-SU", want: "hy"},
+		{in: "und", want: "en"},
+		{in: "en-Latn-ZZ", want: "en"},
+		{in: "en-Latn-XX", want: "en-XX"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.in, func(t *testing.T) {
@@ -110,12 +113,9 @@ func TestMinimizePreservesLanguageIdentifierSuffixes(t *testing.T) {
 	}
 }
 
-func TestMinimizeFallbackPreservesLanguageIdentifierSuffixes(t *testing.T) {
+func TestMinimizePreservesNondefaultRegionAndSuffixes(t *testing.T) {
 	t.Parallel()
 
-	if _, _, _, ok := cldrlocale.MinimizeSubtags("de", "Latn", "CA"); ok {
-		t.Fatal("de-Latn-CA unexpectedly uses the generated minimize table")
-	}
 	loc := parseLocaleForTest("de-Latn-CA-1901-t-en-u-ca-gregory-x-private")
 	got := loc.Minimize()
 	const want = "de-CA-1901-t-en-u-ca-gregory-x-private"

@@ -97,7 +97,7 @@ func run(args []string) error {
 	if *pluralsPath == "" || *rangesPath == "" || *outDir == "" || *profilePath == "" {
 		return fmt.Errorf("usage: gen-plural-rules -plurals <plurals.json> -ranges <pluralRanges.json> -out <internal/cldr/plural> -profile <tools/locale-profile.json>")
 	}
-	version, err := readCLDRVersion(*pluralsPath)
+	version, err := validatePluralInputVersions(*pluralsPath, *rangesPath)
 	if err != nil {
 		return err
 	}
@@ -718,32 +718,52 @@ func writeHeader(b *strings.Builder) {
 	fmt.Fprintf(b, "// CLDR version: %s\n\n", cldrVersion)
 }
 
-// readCLDRVersion reads the CLDR release from the package.json that ships with
-// the cldr-core data. In the real layout plurals.json lives at
-// <cldr-core>/supplemental/plurals.json and the version is in
-// <cldr-core>/package.json (one directory up); it also accepts a package.json
-// beside plurals.json for flat fixtures.
-func readCLDRVersion(pluralsPath string) (string, error) {
-	dir := filepath.Dir(pluralsPath)
-	for _, pkgPath := range []string{
-		filepath.Join(dir, "package.json"),
-		filepath.Join(dir, "..", "package.json"),
-	} {
+// validatePluralInputVersions keeps all three rule families on one CLDR
+// release even when range data comes from a separate installation.
+func validatePluralInputVersions(pluralsPath, rangesPath string) (string, error) {
+	cardinal, err := readCLDRVersion(pluralsPath)
+	if err != nil {
+		return "", err
+	}
+	ordinal, err := readCLDRVersion(filepath.Join(filepath.Dir(pluralsPath), ordinalRulesFilename))
+	if err != nil {
+		return "", err
+	}
+	ranges, err := readCLDRVersion(rangesPath)
+	if err != nil {
+		return "", err
+	}
+	if cardinal != ordinal || cardinal != ranges {
+		return "", fmt.Errorf("CLDR plural input versions differ: cardinal %q, ordinal %q, ranges %q", cardinal, ordinal, ranges)
+	}
+	return cardinal, nil
+}
+
+// readCLDRVersion reads the cldr-core package identity near a supplemental
+// input. Flat test fixtures may place package.json next to the JSON file.
+func readCLDRVersion(inputPath string) (string, error) {
+	dir := filepath.Dir(inputPath)
+	for _, pkgPath := range []string{filepath.Join(dir, "package.json"), filepath.Join(dir, "..", "package.json")} {
 		data, err := os.ReadFile(pkgPath)
-		if err != nil {
+		if os.IsNotExist(err) {
 			continue
 		}
+		if err != nil {
+			return "", fmt.Errorf("read %s: %w", pkgPath, err)
+		}
 		var pkg struct {
+			Name    string `json:"name"`
 			Version string `json:"version"`
 		}
 		if err := json.Unmarshal(data, &pkg); err != nil {
 			return "", fmt.Errorf("parse %s: %w", pkgPath, err)
 		}
-		if pkg.Version != "" {
-			return pkg.Version, nil
+		if pkg.Name != "cldr-core" || pkg.Version == "" {
+			return "", fmt.Errorf("CLDR package %s: expected name cldr-core and nonempty version, got %q %q", pkgPath, pkg.Name, pkg.Version)
 		}
+		return pkg.Version, nil
 	}
-	return "", fmt.Errorf("cldr version: no package.json with a version field near %s", pluralsPath)
+	return "", fmt.Errorf("cldr-core package.json missing near %s", inputPath)
 }
 
 func writeGoFile(path, source string) error {

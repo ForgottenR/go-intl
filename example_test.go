@@ -70,7 +70,11 @@ func Example_dateTimeFormat() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)))
+	out, err := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
 
 	// Output:
 	// May 8, 2026

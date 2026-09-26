@@ -14,7 +14,7 @@ var defaultProvider = struct {
 
 // Default returns the host default time zone snapshot used by DateTimeFormat
 // construction when no explicit timeZone option is provided.
-func Default() (string, *time.Location) {
+func Default() (string, *time.Location, error) {
 	defaultProvider.RLock()
 	location := defaultProvider.location
 	defaultProvider.RUnlock()
@@ -39,34 +39,26 @@ func OverrideDefaultForTest(name string) (func(), error) {
 	}, nil
 }
 
-func defaultLocation(local *time.Location) (string, *time.Location) {
+func defaultLocation(local *time.Location) (string, *time.Location, error) {
 	if local == nil {
-		return "UTC", time.UTC
+		return "UTC", time.UTC, nil
 	}
 	if name := local.String(); name != "" && name != "Local" {
-		return canonicalLocation(name, local)
+		return canonicalLocation(name)
 	}
 	if name := localtimeLinkName(); name != "" {
-		if loc, err := Resolve(name); err == nil {
-			return CanonicalLink(name), loc
-		}
+		return canonicalLocation(name)
 	}
-	return "UTC", time.UTC
+	return "UTC", time.UTC, nil
 }
 
-func canonicalLocation(name string, fallback *time.Location) (string, *time.Location) {
-	if isOffsetName(name) {
-		if loc, err := Resolve(name); err == nil {
-			canonical := loc.String()
-			return canonical, loc
-		}
-		return name, fallback
+func canonicalLocation(name string) (string, *time.Location, error) {
+	loc, err := Resolve(name)
+	if err != nil {
+		return name, nil, err
 	}
-	canonical := CanonicalLink(name)
-	if loc, err := Resolve(canonical); err == nil {
-		return canonical, loc
-	}
-	return name, fallback
+	canonical := loc.String()
+	return canonical, loc, nil
 }
 
 func localtimeLinkName() string {

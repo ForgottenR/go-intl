@@ -66,7 +66,7 @@ func ParseString(s string) (Decimal, error) {
 		return NegInfinity, nil
 	}
 	var inner apd.Decimal
-	if _, _, err := inner.SetString(s); err != nil {
+	if _, _, err := inner.SetString(s); err != nil || inner.Form != apd.Finite {
 		return Decimal{}, fmt.Errorf("decimal: parse %q: %w", s, ErrInvalidDecimal)
 	}
 	return Decimal{inner: inner, negative: inner.Negative}, nil

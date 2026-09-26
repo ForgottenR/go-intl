@@ -1,0 +1,53 @@
+[
+  {
+    "id": "locale-manual-options-region",
+    "source": "manual:sec-Intl.Locale",
+    "locale": "en-US",
+    "feature": "canonicalize",
+    "options": {
+      "region": "GB"
+    },
+    "input": "en-US",
+    "expected": "en-GB"
+  },
+  {
+    "id": "locale-manual-options-numeric-false",
+    "source": "manual:sec-Intl.Locale",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "numeric": false
+    },
+    "input": "en-u-kn",
+    "expected": "en-u-kn-false"
+  },
+  {
+    "id": "locale-manual-options-unknown-types",
+    "source": "manual:sec-Intl.Locale",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {},
+    "input": "en-u-hc-h25-kf-middle",
+    "expected": "en-u-hc-h25-kf-middle"
+  },
+  {
+    "id": "locale-manual-options-empty-key",
+    "source": "manual:sec-Intl.Locale",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {},
+    "input": "en-u-ca",
+    "expected": "en-u-ca"
+  },
+  {
+    "id": "locale-manual-options-unknown-weekday",
+    "source": "manual:sec-Intl.Locale",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "firstDayOfWeek": "funday"
+    },
+    "input": "en-US",
+    "expected": "en-US-u-fw-funday"
+  }
+]

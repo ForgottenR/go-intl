@@ -7,5 +7,49 @@
     "options": {},
     "input": "en-US-u-fw-0",
     "errorCode": "invalid_value"
+  },
+  {
+    "id": "locale-manual-options-empty-hour-cycle",
+    "source": "manual",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "hourCycle": ""
+    },
+    "input": "en",
+    "errorCode": "invalid_option"
+  },
+  {
+    "id": "locale-manual-options-invalid-hour-cycle",
+    "source": "manual",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "hourCycle": "h25"
+    },
+    "input": "en",
+    "errorCode": "invalid_option"
+  },
+  {
+    "id": "locale-manual-options-hour-cycle-casing",
+    "source": "manual",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "hourCycle": "H23"
+    },
+    "input": "en",
+    "errorCode": "invalid_option"
+  },
+  {
+    "id": "locale-manual-options-case-first-casing",
+    "source": "manual",
+    "locale": "en",
+    "feature": "canonicalize",
+    "options": {
+      "caseFirst": "UPPER"
+    },
+    "input": "en",
+    "errorCode": "invalid_option"
   }
 ]

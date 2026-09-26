@@ -8,20 +8,37 @@ import (
 	"github.com/agentable/go-intl/internal/ecma402"
 )
 
-func (f *DateTimeFormat) FormatRange(start, end time.Time) string {
+func (f *DateTimeFormat) FormatRange(start, end time.Time) (string, error) {
+	start, err := normalizeInstant(start, "start")
+	if err != nil {
+		return "", err
+	}
+	end, err = normalizeInstant(end, "end")
+	if err != nil {
+		return "", err
+	}
 	r := f.normalizeRange(start, end)
 	if r.relation.equal {
 		return f.Format(r.start)
 	}
-	return string(f.appendRange(nil, f.pattern, r))
+	return string(f.appendRange(nil, f.pattern, r)), nil
 }
 
-func (f *DateTimeFormat) FormatRangeToParts(start, end time.Time) []RangePart {
+func (f *DateTimeFormat) FormatRangeToParts(start, end time.Time) ([]RangePart, error) {
+	start, err := normalizeInstant(start, "start")
+	if err != nil {
+		return nil, err
+	}
+	end, err = normalizeInstant(end, "end")
+	if err != nil {
+		return nil, err
+	}
 	r := f.normalizeRange(start, end)
 	if r.relation.equal {
-		return rangeParts(f.FormatToParts(r.start), SourceShared)
+		parts, _ := f.FormatToParts(r.start)
+		return rangeParts(parts, SourceShared), nil
 	}
-	return f.formatRangeParts(f.pattern, r)
+	return f.formatRangeParts(f.pattern, r), nil
 }
 
 func (f *DateTimeFormat) formatRangeParts(pattern selectedPattern, r normalizedRange) []RangePart {

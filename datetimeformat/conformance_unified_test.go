@@ -30,21 +30,21 @@ func TestUnifiedConformanceFixtures(t *testing.T) {
 		}
 		if fixture.ExpectedRange != nil {
 			start, end := conformanceDateTimeRangeInput(t, fixture)
-			got := format.FormatRange(start, end)
+			got := mustDateFormatRange(t, format, start, end)
 			testcontract.AssertExpectedRange(t, "FormatRange", got, fixture.ExpectedRange)
 			if len(fixture.ExpectedRangeParts) > 0 {
-				parts := format.FormatRangeToParts(start, end)
+				parts := mustDateFormatRangeToParts(t, format, start, end)
 				testcontract.AssertRangeParts(t, "FormatRangeToParts", parts, fixture.ExpectedRangeParts, conformanceDateTimeRangePart)
 			}
 			return
 		}
 		input := conformanceDateTimeInput(t, fixture)
 		want := fixture.RequiredExpected(t)
-		if got := format.Format(input); got != want {
+		if got := mustDateFormat(t, format, input); got != want {
 			t.Fatalf("Format(%v) = %q, want %q", input, got, want)
 		}
 		if len(fixture.ExpectedParts) > 0 {
-			parts := format.FormatToParts(input)
+			parts := mustDateFormatToParts(t, format, input)
 			testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceDateTimePart)
 		}
 	})

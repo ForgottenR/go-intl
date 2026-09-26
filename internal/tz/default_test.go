@@ -13,7 +13,10 @@ func TestDefaultLocationUsesIANAName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	name, loc := defaultLocation(local)
+	name, loc, err := defaultLocation(local)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := name, "America/New_York"; got != want {
 		t.Fatalf("defaultLocation(US/Eastern) name = %q, want %q", got, want)
 	}
@@ -25,7 +28,10 @@ func TestDefaultLocationUsesIANAName(t *testing.T) {
 func TestDefaultLocationFallsBackToUTCForNilLocal(t *testing.T) {
 	t.Parallel()
 
-	name, loc := defaultLocation(nil)
+	name, loc, err := defaultLocation(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := name, "UTC"; got != want {
 		t.Fatalf("defaultLocation(nil) name = %q, want %q", got, want)
 	}
@@ -37,7 +43,10 @@ func TestDefaultLocationFallsBackToUTCForNilLocal(t *testing.T) {
 func TestDefaultLocationReturnsUsableLocationForLocal(t *testing.T) {
 	t.Parallel()
 
-	name, loc := defaultLocation(time.Local)
+	name, loc, err := defaultLocation(time.Local)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if name == "" {
 		t.Fatal("defaultLocation(Local) name is empty")
 	}
@@ -65,7 +74,10 @@ func TestDefaultLocationUsesFixedOffsetName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			name, loc := defaultLocation(time.FixedZone(tc.name, tc.seconds))
+			name, loc, err := defaultLocation(time.FixedZone(tc.name, tc.seconds))
+			if err != nil {
+				t.Fatal(err)
+			}
 			if name != tc.wantName {
 				t.Fatalf("defaultLocation(%s) name = %q, want %q", tc.name, name, tc.wantName)
 			}
@@ -76,29 +88,13 @@ func TestDefaultLocationUsesFixedOffsetName(t *testing.T) {
 	}
 }
 
-func TestDefaultLocationPreservesFallbackForUnknownNamedLocation(t *testing.T) {
+func TestDefaultLocationRejectsInvalidNamedLocation(t *testing.T) {
 	t.Parallel()
-
-	fallback := time.FixedZone("Mars/Phobos", 1234)
-	name, loc := defaultLocation(fallback)
-	if got, want := name, "Mars/Phobos"; got != want {
-		t.Fatalf("defaultLocation(Mars/Phobos) name = %q, want %q", got, want)
-	}
-	if loc != fallback {
-		t.Fatalf("defaultLocation(Mars/Phobos) location = %v, want original fallback", loc)
-	}
-}
-
-func TestDefaultLocationPreservesFallbackForInvalidOffsetName(t *testing.T) {
-	t.Parallel()
-
-	fallback := time.FixedZone("+24:00", 0)
-	name, loc := defaultLocation(fallback)
-	if got, want := name, "+24:00"; got != want {
-		t.Fatalf("defaultLocation(+24:00) name = %q, want %q", got, want)
-	}
-	if loc != fallback {
-		t.Fatalf("defaultLocation(+24:00) location = %v, want original fallback", loc)
+	for _, name := range []string{"Mars/Phobos", "+24:00"} {
+		got, loc, err := defaultLocation(time.FixedZone(name, 1234))
+		if got != name || loc != nil || !errors.Is(err, ErrUnsupportedTimeZone) {
+			t.Errorf("defaultLocation(%q) = %q, %v, %v", name, got, loc, err)
+		}
 	}
 }
 
@@ -109,7 +105,10 @@ func TestDefaultOverrideForTest(t *testing.T) {
 	}
 	t.Cleanup(restore)
 
-	name, loc := Default()
+	name, loc, err := Default()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := name, "Asia/Shanghai"; got != want {
 		t.Fatalf("Default() name = %q, want %q", got, want)
 	}
@@ -125,7 +124,10 @@ func TestDefaultOverrideCanonicalizesLink(t *testing.T) {
 	}
 	t.Cleanup(restore)
 
-	name, _ := Default()
+	name, _, err := Default()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := name, "America/New_York"; got != want {
 		t.Fatalf("Default() name = %q, want %q", got, want)
 	}

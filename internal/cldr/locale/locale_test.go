@@ -126,7 +126,7 @@ func firstTag(tags []string) string {
 }
 
 // TestSmokeSubtagsAndPreferences exercises the heavy blobs through known tuples
-// so an encoder/decoder regression in maximize/minimize, numbering, or
+// so an encoder/decoder regression in maximize, numbering, or
 // preference fails independently of the FormatJS fixtures.
 func TestSmokeSubtagsAndPreferences(t *testing.T) {
 	t.Parallel()
@@ -134,11 +134,6 @@ func TestSmokeSubtagsAndPreferences(t *testing.T) {
 	lang, script, region, ok := MaximizeSubtags("zh", "", "")
 	if !ok || lang != "zh" || script != "Hans" || region != "CN" {
 		t.Errorf("MaximizeSubtags(zh) = %q, %q, %q, %v; want zh, Hans, CN, true", lang, script, region, ok)
-	}
-
-	min, _, _, ok := MinimizeSubtags("zh", "Hans", "CN")
-	if !ok || min != "zh" {
-		t.Errorf("MinimizeSubtags(zh-Hans-CN) = %q, %v; want zh, true", min, ok)
 	}
 
 	enUS, ok := ResolveLocale("en")

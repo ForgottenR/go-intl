@@ -133,7 +133,7 @@
     "expected": "1.473μs"
   },
   {
-    "id": "durationformat-formatjs-index-test-ts-010",
+    "id": "durationformat-formatjs-index-test-ts-011",
     "source": "formatjs:packages/intl-durationformat/tests/index.test.ts",
     "locale": "en",
     "options": {

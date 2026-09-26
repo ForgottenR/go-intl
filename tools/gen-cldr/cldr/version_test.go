@@ -23,12 +23,14 @@ func TestReadVersionFileAndCrossCheck(t *testing.T) {
 		t.Fatalf("ReadVersionFile = %+v", got)
 	}
 
-	pkgDir := filepath.Join(dir, "cldr-core")
-	if err := os.MkdirAll(pkgDir, 0o777); err != nil {
-		t.Fatalf("mkdir cldr-core: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{"name":"cldr-core","version":"48.1.0"}`), 0o666); err != nil {
-		t.Fatalf("write package.json: %v", err)
+	for _, name := range RequiredPackages() {
+		pkgDir := filepath.Join(dir, name)
+		if err := os.MkdirAll(pkgDir, 0o777); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{"name":"`+name+`","version":"48.1.0"}`), 0o666); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if err := CrossCheck(dir, got); err != nil {
 		t.Fatalf("CrossCheck: %v", err)
@@ -48,5 +50,40 @@ func TestCrossCheckRejectsVersionMismatch(t *testing.T) {
 	}
 	if err := CrossCheck(dir, Versions{CLDR: "48.1.0"}); err == nil {
 		t.Fatal("CrossCheck succeeded for mismatched version")
+	}
+}
+
+func TestCrossCheckRequiresEveryPackageIdentity(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ name, pkg, body string }{
+		{"non-core mismatch", "cldr-numbers-full", `{"name":"cldr-numbers-full","version":"47.0.0"}`},
+		{"wrong name", "cldr-units-full", `{"name":"unrelated","version":"48.1.0"}`},
+		{"missing metadata", "cldr-misc-full", ""},
+		{"malformed metadata", "cldr-dates-full", "{"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			for _, name := range RequiredPackages() {
+				dir := filepath.Join(root, name)
+				if err := os.MkdirAll(dir, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"`+name+`","version":"48.1.0"}`), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			path := filepath.Join(root, tc.pkg, "package.json")
+			if tc.body == "" {
+				if err := os.Remove(path); err != nil {
+					t.Fatal(err)
+				}
+			} else if err := os.WriteFile(path, []byte(tc.body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if err := CrossCheck(root, Versions{CLDR: "48.1.0"}); err == nil {
+				t.Fatal("CrossCheck accepted invalid package identity")
+			}
+		})
 	}
 }

@@ -84,13 +84,13 @@ func BenchmarkCompileLanguageMatchingProfile(b *testing.B) {
 	}
 }
 
-func BenchmarkLanguageMatchingCachedDistance(b *testing.B) {
+func BenchmarkLanguageMatchingDistance(b *testing.B) {
 	matcher := NewMatcher([]string{"en", "nb", "de", "zh", "es"}, cldrlocale.Maximize)
 	maxDesired := matcher.maximize("gsw")
 	maxSupported := matcher.maximize("de")
-	_ = matcher.cachedMatchingDistance("gsw", "de", maxDesired, maxSupported)
+	_ = matcher.distanceProfile.distance(maxDesired, maxSupported)
 	b.ResetTimer()
 	for b.Loop() {
-		_ = matcher.cachedMatchingDistance("gsw", "de", maxDesired, maxSupported)
+		_ = matcher.distanceProfile.distance(maxDesired, maxSupported)
 	}
 }

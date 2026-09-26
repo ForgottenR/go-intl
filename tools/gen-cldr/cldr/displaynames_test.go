@@ -109,7 +109,8 @@ func TestLoadDisplayNamesMapsAndInherits(t *testing.T) {
 				"timeZoneName": "tz",
 			},
 		},
-		LocalePattern: "{0} ({1})",
+		LocalePattern:   "{0} ({1})",
+		LocaleSeparator: "{0}, {1}",
 	}
 	want := map[string]DisplayNames{
 		"en":    en,
@@ -266,7 +267,7 @@ func TestLoadDisplayNamesRejectsInvalidLocaleDisplayNamesShape(t *testing.T) {
 					"fr": {
 						"localeDisplayNames": {
 							"localeDisplayPattern": {
-								"localePattern": "{0} ({1})"
+								"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 							},
 							"types": {
 								"calendar": {
@@ -345,7 +346,7 @@ func TestLoadDisplayNamesRejectsInvalidLocaleDisplayNamesShape(t *testing.T) {
 					"en": {
 						"localeDisplayNames": {
 							"localeDisplayPattern": {
-								"localePattern": "{0} ({1})"
+								"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 							}
 						}
 					}
@@ -359,7 +360,7 @@ func TestLoadDisplayNamesRejectsInvalidLocaleDisplayNamesShape(t *testing.T) {
 					"en": {
 						"localeDisplayNames": {
 							"localeDisplayPattern": {
-								"localePattern": "{0} ({1})"
+								"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 							},
 							"types": {}
 						}
@@ -374,7 +375,7 @@ func TestLoadDisplayNamesRejectsInvalidLocaleDisplayNamesShape(t *testing.T) {
 					"en": {
 						"localeDisplayNames": {
 							"localeDisplayPattern": {
-								"localePattern": "{0} ({1})"
+								"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 							},
 							"types": {
 								"calendar": null
@@ -391,7 +392,7 @@ func TestLoadDisplayNamesRejectsInvalidLocaleDisplayNamesShape(t *testing.T) {
 					"en": {
 						"localeDisplayNames": {
 							"localeDisplayPattern": {
-								"localePattern": "{0} ({1})"
+								"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 							},
 							"types": {
 								"calendar": {}
@@ -623,7 +624,7 @@ func mustWriteDisplayNamesFixture(t *testing.T, root, locale string) {
 			"`+locale+`": {
 				"localeDisplayNames": {
 					"localeDisplayPattern": {
-						"localePattern": "{0} ({1})"
+						"localePattern": "{0} ({1})", "localeSeparator": "{0}, {1}"
 					},
 					"types": {
 						"calendar": {
@@ -671,7 +672,7 @@ func displayNamesEqual(got, want DisplayNames) bool {
 		styledNamesEqual(got.Scripts, want.Scripts) &&
 		styledNamesEqual(got.Calendars, want.Calendars) &&
 		styledNamesEqual(got.DateTimeFields, want.DateTimeFields) &&
-		got.LocalePattern == want.LocalePattern
+		got.LocalePattern == want.LocalePattern && got.LocaleSeparator == want.LocaleSeparator && styledNamesEqual(got.Variants, want.Variants)
 }
 
 func languageDisplayEqual(got, want LanguageDisplay) bool {

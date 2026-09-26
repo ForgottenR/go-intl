@@ -142,3 +142,11 @@ MUST rules:
 | `new Intl.DisplayNames(locales, options)` with optional second arg | `New(locales locale.List, opts Options)`; use `Options{}` for the omitted or empty object case | Typed bridge |
 
 Accepted divergences live in `displaynames/testdata/divergences.md` when added.
+
+Language display-name composition retains script, region, and variants. Dialect
+rows consume only components that the matched row actually names; unresolved
+components use pinned CLDR script/territory/variant names and
+`localeDisplayPattern.localePattern` / `localeSeparator` in the resolved data
+locale. `fallback=code` inserts a missing component code, while `none` yields no
+name. Lookups never borrow a name from unrelated English data. Currency names
+are no longer restricted to an arbitrary common-currency allowlist.

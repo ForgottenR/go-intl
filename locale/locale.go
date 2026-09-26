@@ -16,17 +16,8 @@ type Locale struct {
 }
 
 type extensions struct {
-	calendar        string
-	collation       string
-	hourCycle       string
-	caseFirst       string
-	numeric         bool
-	hasNumeric      bool
-	numericValue    string
-	numberingSystem string
-	firstDayOfWeek  string
-	attributes      []string
-	keywords        map[string]string
+	attributes []string
+	keywords   map[string]string
 }
 
 func Parse(s string) (Locale, error) {
@@ -44,9 +35,7 @@ func Parse(s string) (Locale, error) {
 		return Locale{}, invalidLocaleValue("languageTag", s, err)
 	}
 	loc := Locale{tag: tag}
-	if err := loc.readExtensions(unicodeExtension); err != nil {
-		return Locale{}, err
-	}
+	loc.readExtensions(unicodeExtension)
 	loc.freeze()
 	return loc, nil
 }
@@ -60,9 +49,6 @@ func New(tag string, opts Options) (Locale, error) {
 		return Locale{}, err
 	}
 	if err := applyOptions(&loc, opts); err != nil {
-		return Locale{}, err
-	}
-	if err := loc.validate(); err != nil {
 		return Locale{}, err
 	}
 	loc.freeze()
@@ -105,31 +91,32 @@ func (l Locale) Tag() language.Tag {
 }
 
 func (l Locale) Calendar() string {
-	return l.ext.calendar
+	return l.ext.keywords["ca"]
 }
 
 func (l Locale) Collation() string {
-	return l.ext.collation
+	return l.ext.keywords["co"]
 }
 
 func (l Locale) HourCycle() string {
-	return l.ext.hourCycle
+	return l.ext.keywords["hc"]
 }
 
 func (l Locale) CaseFirst() string {
-	return l.ext.caseFirst
+	return l.ext.keywords["kf"]
 }
 
 func (l Locale) Numeric() bool {
-	return l.ext.numeric
+	value, present := l.ext.keywords["kn"]
+	return present && value == ""
 }
 
 func (l Locale) NumberingSystem() string {
-	return l.ext.numberingSystem
+	return l.ext.keywords["nu"]
 }
 
 func (l Locale) FirstDayOfWeek() string {
-	return l.ext.firstDayOfWeek
+	return l.ext.keywords["fw"]
 }
 
 func (l Locale) Language() string {

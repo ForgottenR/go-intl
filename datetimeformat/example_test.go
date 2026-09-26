@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	_ func(*datetimeformat.DateTimeFormat, time.Time, time.Time) string                     = (*datetimeformat.DateTimeFormat).FormatRange
-	_ func(*datetimeformat.DateTimeFormat, time.Time, time.Time) []datetimeformat.RangePart = (*datetimeformat.DateTimeFormat).FormatRangeToParts
-	_ func(*gointl.DateTimeFormat, time.Time, time.Time) string                             = (*gointl.DateTimeFormat).FormatRange
-	_ func(*gointl.DateTimeFormat, time.Time, time.Time) []datetimeformat.RangePart         = (*gointl.DateTimeFormat).FormatRangeToParts
+	_ func(*datetimeformat.DateTimeFormat, time.Time, time.Time) (string, error)                     = (*datetimeformat.DateTimeFormat).FormatRange
+	_ func(*datetimeformat.DateTimeFormat, time.Time, time.Time) ([]datetimeformat.RangePart, error) = (*datetimeformat.DateTimeFormat).FormatRangeToParts
+	_ func(*gointl.DateTimeFormat, time.Time, time.Time) (string, error)                             = (*gointl.DateTimeFormat).FormatRange
+	_ func(*gointl.DateTimeFormat, time.Time, time.Time) ([]datetimeformat.RangePart, error)         = (*gointl.DateTimeFormat).FormatRangeToParts
 )
 
 // Example demonstrates Intl.DateTimeFormat.prototype.format from ECMA-402.
@@ -26,7 +26,11 @@ func Example() {
 	}
 
 	t := time.Date(2020, time.May, 14, 15, 4, 0, 0, time.UTC)
-	fmt.Println(format.Format(t))
+	out, err := format.Format(t)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
 
 	// Output:
 	// 5/14/2020
@@ -43,7 +47,11 @@ func Example_options() {
 	}
 
 	t := time.Date(2020, time.May, 14, 15, 4, 0, 0, time.UTC)
-	fmt.Println(format.Format(t))
+	out, err := format.Format(t)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
 
 	// Output:
 	// May 14, 2020
@@ -62,7 +70,11 @@ func ExampleDateTimeFormat_FormatToParts() {
 	}
 
 	t := time.Date(2020, time.May, 14, 15, 4, 0, 0, time.UTC)
-	for _, part := range format.FormatToParts(t) {
+	parts, err := format.FormatToParts(t)
+	if err != nil {
+		panic(err)
+	}
+	for _, part := range parts {
 		fmt.Printf("%s=%q\n", part.Type, part.Value)
 	}
 
@@ -87,8 +99,16 @@ func ExampleDateTimeFormat_FormatRange() {
 	}
 
 	date := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
-	fmt.Println(format.FormatRange(date, date))
-	for _, part := range format.FormatRangeToParts(date, date) {
+	out, err := format.FormatRange(date, date)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
+	parts, err := format.FormatRangeToParts(date, date)
+	if err != nil {
+		panic(err)
+	}
+	for _, part := range parts {
 		fmt.Print(part.Value)
 	}
 	fmt.Println()

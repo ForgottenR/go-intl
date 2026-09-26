@@ -90,7 +90,7 @@ func lookupInLocale(tag, kind, style, languageDisplay, code string, fallbackCode
 		if value, ok := resolveStyled(display, style, code); ok {
 			return value, true
 		}
-		return resolveLanguage(tag, rec.localePattern, display, style, code, fallbackCode)
+		return resolveLanguage(tag, rec.localePattern, rec.localeSeparator, display, style, code, fallbackCode)
 	case "region":
 		return resolveStyledForTag(territoryData(), tag, style, code)
 	case "script":
@@ -113,51 +113,87 @@ func resolveStyledForTag(byLocale map[string]styledNames, tag, style, code strin
 	return resolveStyled(s, style, code)
 }
 
-func resolveLanguage(tag, localePattern string, display styledNames, style, code string, fallbackCode bool) (string, bool) {
+func resolveLanguage(tag, localePattern, localeSeparator string, display styledNames, style, code string, fallbackCode bool) (string, bool) {
 	parts := strings.Split(code, "-")
 	if len(parts) == 1 {
 		return "", false
 	}
-
-	base, region, ok := languageBaseAndRegion(display, style, parts)
+	base, ok := resolveStyled(display, style, parts[0])
 	if !ok {
 		return "", false
 	}
-	if region == "" {
-		return base, true
-	}
-
-	regionName, ok := resolveStyledForTag(territoryData(), tag, style, region)
-	if !ok {
-		if !fallbackCode {
-			return "", false
-		}
-		regionName = region
-	}
-	return applyLocalePattern(localePattern, base, regionName), true
-}
-
-func languageBaseAndRegion(display styledNames, style string, parts []string) (base, region string, ok bool) {
-	language := parts[0]
 	index := 1
-	var script string
-	if index < len(parts) && len(parts[index]) == 4 {
+	script := ""
+	if index < len(parts) && localeid.IsUnicodeScriptSubtag(parts[index]) {
 		script = parts[index]
 		index++
 	}
+	region := ""
 	if index < len(parts) && localeid.IsUnicodeRegionSubtag(parts[index]) {
 		region = parts[index]
+		index++
 	}
-
-	if script != "" {
-		if value, ok := resolveStyled(display, style, language+"-"+script); ok {
-			return value, region, true
+	// A dialect row may consume the script and/or region. A standard name
+	// deliberately starts from the bare language and composes every component.
+	if script != "" && region != "" {
+		if value, found := resolveStyled(display, style, parts[0]+"-"+script+"-"+region); found {
+			base = value
+			script = ""
+			region = ""
 		}
 	}
-	if value, ok := resolveStyled(display, style, language); ok {
-		return value, region, true
+	if script != "" {
+		if value, found := resolveStyled(display, style, parts[0]+"-"+script); found {
+			base = value
+			script = ""
+		}
 	}
-	return "", "", false
+	if region != "" {
+		if value, found := resolveStyled(display, style, parts[0]+"-"+region); found {
+			base = value
+			region = ""
+		}
+	}
+	components := make([]string, 0, 2+len(parts)-index)
+	appendName := func(value string, found bool, code string) bool {
+		if !found {
+			if !fallbackCode {
+				return false
+			}
+			value = code
+		}
+		components = append(components, value)
+		return true
+	}
+	if script != "" {
+		value, found := resolveStyledForTag(scriptData(), tag, style, script)
+		if !appendName(value, found, script) {
+			return "", false
+		}
+	}
+	if region != "" {
+		value, found := resolveStyledForTag(territoryData(), tag, style, region)
+		if !appendName(value, found, region) {
+			return "", false
+		}
+	}
+	for _, variant := range parts[index:] {
+		value, found := resolveStyledForTag(variantData(), tag, style, strings.ToUpper(variant))
+		if !appendName(value, found, variant) {
+			return "", false
+		}
+	}
+	if len(components) == 0 {
+		return base, true
+	}
+	joined := components[0]
+	if localeSeparator == "" {
+		localeSeparator = "{0}, {1}"
+	}
+	for _, part := range components[1:] {
+		joined = pattern.FormatIndexed(localeSeparator, joined, part)
+	}
+	return applyLocalePattern(localePattern, base, joined), true
 }
 
 func applyLocalePattern(text, language, region string) string {

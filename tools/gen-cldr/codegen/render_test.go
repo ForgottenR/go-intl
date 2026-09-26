@@ -128,9 +128,6 @@ func minimalRuntimeInput() RuntimeInput {
 			Maximize: map[string]extract.SubtagTriple{
 				"en": {Lang: "en", Script: "Latn", Region: "US"},
 			},
-			Minimize: map[extract.SubtagTriple]string{
-				{Lang: "en", Script: "Latn", Region: "US"}: "en",
-			},
 		},
 		Numbers: extract.Numbers{
 			"en": {DefaultNumberingSystem: "latn"},

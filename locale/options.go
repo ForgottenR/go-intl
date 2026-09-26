@@ -38,35 +38,37 @@ func applyLanguageOptions(loc *Locale, opts Options) error {
 }
 
 func applyOptions(loc *Locale, opts Options) error {
-	if err := applyStringOption(&loc.ext.calendar, opts.Calendar, "calendar", localeUnicodeTypeExpected); err != nil {
-		return err
-	}
-	if err := applyStringOption(&loc.ext.collation, opts.Collation, "collation", localeUnicodeTypeExpected); err != nil {
-		return err
-	}
-	if err := applyStringOption(&loc.ext.hourCycle, opts.HourCycle, "hourCycle", localeHourCycleExpected); err != nil {
-		return err
-	}
-	if err := applyStringOption(&loc.ext.caseFirst, opts.CaseFirst, "caseFirst", localeCaseFirstExpected); err != nil {
-		return err
+	for _, opt := range []struct {
+		key, name, expected string
+		value               *string
+		normalize           func(string) (string, error)
+	}{
+		{"ca", "calendar", localeUnicodeTypeExpected, opts.Calendar, normalizeUnicodeTypeForKey("ca")},
+		{"co", "collation", localeUnicodeTypeExpected, opts.Collation, normalizeUnicodeTypeForKey("co")},
+		{"fw", "firstDayOfWeek", localeFirstDayExpected, opts.FirstDayOfWeek, normalizeFirstDayOfWeek},
+		{"hc", "hourCycle", localeHourCycleExpected, opts.HourCycle, normalizeHourCycle},
+		{"kf", "caseFirst", localeCaseFirstExpected, opts.CaseFirst, normalizeCaseFirst},
+		{"nu", "numberingSystem", localeUnicodeTypeExpected, opts.NumberingSystem, normalizeUnicodeTypeForKey("nu")},
+	} {
+		if opt.value == nil {
+			continue
+		}
+		if *opt.value == "" {
+			return invalidLocaleOptionExpected(opt.name, *opt.value, opt.expected, nil)
+		}
+		value, err := opt.normalize(*opt.value)
+		if err != nil {
+			return invalidLocaleOptionExpected(opt.name, *opt.value, opt.expected, err)
+		}
+		loc.ext.setKeyword(opt.key, value)
 	}
 	if opts.Numeric != nil {
-		loc.ext.setNumericOption(*opts.Numeric)
+		value := "false"
+		if *opts.Numeric {
+			value = "true"
+		}
+		loc.ext.setKeyword("kn", value)
 	}
-	if err := applyStringOption(&loc.ext.numberingSystem, opts.NumberingSystem, "numberingSystem", localeUnicodeTypeExpected); err != nil {
-		return err
-	}
-	return applyStringOption(&loc.ext.firstDayOfWeek, opts.FirstDayOfWeek, "firstDayOfWeek", localeFirstDayExpected)
-}
-
-func applyStringOption(dst *string, value *string, name, expected string) error {
-	if value == nil {
-		return nil
-	}
-	if *value == "" {
-		return invalidLocaleOptionExpected(name, *value, expected, nil)
-	}
-	*dst = *value
 	return nil
 }
 

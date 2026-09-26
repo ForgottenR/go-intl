@@ -109,9 +109,6 @@ func TestParseInvalidUnicodeExtensions(t *testing.T) {
 		value    string
 		expected string
 	}{
-		{in: "en-US-u-hc-h25", name: "hourCycle", value: "h25", expected: localeHourCycleExpected},
-		{in: "en-US-u-kf-middle", name: "caseFirst", value: "middle", expected: localeCaseFirstExpected},
-		{in: "en-US-u-fw-funday", name: "firstDayOfWeek", value: "funday", expected: localeFirstDayExpected},
 		{in: "en-US-u-ca-a", name: "languageTag", value: "en-US-u-ca-a", expected: localeLanguageTagExpected},
 		{in: "en-US-u-nu-ab_cd", name: "languageTag", value: "en-US-u-nu-ab_cd", expected: localeLanguageTagExpected},
 	} {
@@ -126,5 +123,59 @@ func TestParseInvalidUnicodeExtensions(t *testing.T) {
 				t.Fatalf("Parse(%q) error detail = %+v, want name=%q value=%q expected=%q", tc.in, detail, tc.name, tc.value, tc.expected)
 			}
 		})
+	}
+}
+
+func TestParsePreservesUnicodeTypePresence(t *testing.T) {
+	t.Parallel()
+	for _, tag := range []string{"en-u-hc-h25", "en-u-kf-middle", "en-US-u-fw-funday", "en-u-ca", "en-u-co", "en-u-hc", "en-u-kf", "en-u-fw", "en-u-nu", "en-u-ca-hc-kf-nu", "en-t-fr-u-ca-x-private"} {
+		t.Run(tag, func(t *testing.T) {
+			t.Parallel()
+			loc, err := Parse(tag)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := loc.String(); got != tag {
+				t.Fatalf("String() = %q, want %q", got, tag)
+			}
+			again, err := Parse(loc.String())
+			if err != nil || !again.Equal(loc) {
+				t.Fatalf("round trip = %v, %v", again, err)
+			}
+		})
+	}
+	for _, tag := range []string{"en-u-ca-true", "en-u-ca-ca-gregory"} {
+		loc, err := Parse(tag)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := loc.String(); got != "en-u-ca" {
+			t.Errorf("Parse(%q) = %q, want en-u-ca", tag, got)
+		}
+	}
+}
+
+func TestUnknownWeekdayUsesRegionPreference(t *testing.T) {
+	t.Parallel()
+	loc, err := Parse("en-US-u-fw-funday")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := parseLocaleForTest("en-US")
+	if got, want := loc.GetWeekInfo().FirstDay, base.GetWeekInfo().FirstDay; got != want {
+		t.Fatalf("firstDay = %v, want %v", got, want)
+	}
+}
+
+func TestEmptyUnicodeTypesHavePresentCandidateLists(t *testing.T) {
+	t.Parallel()
+	loc, err := Parse("en-u-ca-co-hc-nu")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, got := range map[string][]string{"calendars": loc.GetCalendars(), "collations": loc.GetCollations(), "hourCycles": loc.GetHourCycles(), "numberingSystems": loc.GetNumberingSystems()} {
+		if len(got) != 1 || got[0] != "" {
+			t.Errorf("%s = %q, want one empty type", name, got)
+		}
 	}
 }

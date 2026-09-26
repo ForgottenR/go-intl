@@ -10,7 +10,7 @@
 Defines the `numberformat.NumberFormat` public API, construction-time validation, typed format / parts / range behavior, and the internal contract of NumberFormat ↔ PluralRules on compact notation. The active scope must support all style/notation combinations of ECMA-402 §15 (ES 2025): `decimal | percent | currency | unit` × `standard | scientific | engineering | compact`.
 
 This SPEC does not redefine:
-- `Decimal` type and seven rounding modes → see [SPEC 21 §Decimal API](./21-number-math.md#decimal-api)
+- `Decimal` type and nine rounding modes → see [SPEC 21 §Decimal API](./21-number-math.md#decimal-api)
 - `Locale` and `Locale.NumberingSystem()` → see [SPEC 10 §Locale structure](./10-locale.md)
 - `OperandsRecord` → see [SPEC 40 §OperandsRecord](./40-pluralrules.md#operandsrecord)
 - CLDR data schema(`numbers.json` / `currencies.json` / `units.json`)→ see [SPEC 50 §Schema](./50-cldr-data.md#schema)
@@ -25,7 +25,7 @@ This SPEC does not redefine:
 ```go
 package numberformat
 
-type NumberFormat struct{ /* Immutable; contains resolved + apd.Context copy + plural handle */ }
+type NumberFormat struct{ /* Immutable; contains resolved options, compiled patterns and generated plural rule */ }
 
 type Style string
 type Notation string
@@ -409,8 +409,8 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 
 1. NumberFormat internal state **MUST** all be calculated and frozen at the time of `New`; the `*NumberFormat` returned by `New` is an immutable snapshot.
 2. The CLDR number-domain data (`numberSymbols / patterns / compactDecimalFormats`) **MUST** be pulled once through the resolved `internal/cldr/number.Locale` accessors in `New` and saved to the `NumberFormat` internal slot; the `Format` path **is prohibited** from calling CLDR accessors again.
-3. The PluralRules handle **MUST** be lazy constructed in `New` (only constructed in `notation = compact | scientific | engineering`); the `Format` path **forbids** to reconstruct PluralRules.
-4. `apd.Context` **MUST** be held as an immutable baseline; the `Rounding` field is modified after copying when `Format` is called (to avoid races).
+3. `New` resolves the generated cardinal rule once; formatting never constructs a public PluralRules instance.
+4. Exact rounding consumes constructor-resolved digit options; there is no per-formatter apd context or mutable rounding policy.
 
 > **Why**: The `internalSlot` mode of `generated-reference` (checking slot every time `format()`) corresponds to "materialization during construction and read-only during runtime" on Go. This is consistent with the CLAUDE.md "constructor-eager / Format-no-error" rule.
 
@@ -423,7 +423,7 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 1. Construction-time errors **MUST** be the wrapped form of `gointl.ErrInvalidOption`, and expose field names, user-input values, locale and expected-value guidance through `*gointl.Error`.
 2. Sentinel **MUST** match root `gointl.ErrInvalidOption`(SPEC 12); this package does not establish a separate independent error category.
 3. **BANNED** `panic` any user path; `MustNew` does not exist (user can wrap it in the caller).
-4. Runtime fallback (NaN / Infinity / string parsing failure) **must not** return an error, but directly output the fallback string.
+4. Typed NaN and Infinity format normally. Malformed numeric strings return a structured error from `Decimal`; range methods reject NaN endpoints.
 
 ```go
 // Error form example (signature)
@@ -516,8 +516,26 @@ second implementation or a weaker runtime contract.
 
 - [SPEC 12 §Abstract Ops](./12-abstract-operations.md) — shared validators / digit pipeline / `ErrInvalidOption`
 - [SPEC 10 §Locale structure](./10-locale.md) — `Locale.NumberingSystem()`
-- [SPEC 21 §Decimal API](./21-number-math.md#decimal-api) — `Decimal` / `apd/v3` backend / seven rounding modes / RoundingPriority / RoundingIncrement / TrailingZeroDisplay algorithm
+- [SPEC 21 §Decimal API](./21-number-math.md#decimal-api) — `Decimal` / `apd/v3` backend / nine rounding modes / RoundingPriority / RoundingIncrement / TrailingZeroDisplay algorithm
 - [SPEC 40 §Compact Operand Contract](./40-pluralrules.md#compact-operand-contract) — compact plural operand contract
 - [SPEC 50 §Schema](./50-cldr-data.md#schema) — `numbers.json` / `currencies.json` / `units.json` data shape
 - [SPEC 60](./60-facade.md) — root namespace ownership; root `intl.FormatNumber*` one-shot helpers are outside the long-term public surface.
 - [SPEC 71](./71-benchmark.md) — non-blocking performance telemetry
+
+### Percent pattern ownership
+
+`numberformat/percent.go` compiles the resolved CLDR percent pattern into
+unsigned, negative and positive affixes at construction, preserving explicit
+negative sub-patterns. The numeric partition owns scaling, rounding, notation
+and sign selection. The percent program places the selected sign and localized
+percent symbol around that partition, including literals from both the pattern
+and bidi marks around symbols. Both range endpoints use the same program;
+a remaining percent prefix gets the spaced range separator.
+
+Evidence: `numberformat/percent_test.go`, CLDR numbers.json percentFormats,
+`.references/formatjs/packages/ecma402-abstract/NumberFormat/format_to_parts.ts`,
+and `.references/node/deps/icu-small/source/i18n/number_patternmodifier.cpp`.
+Pinned CLDR 48.1 percent spacing remains the source of truth, including NBSP
+in French compact-percent output; a newer/different ICU witness may use ASCII
+space there. The test uses ar-EG for generated arab symbols and ar for latn;
+this does not widen the existing default-plus-latn generated symbol profile.

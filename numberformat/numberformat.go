@@ -94,6 +94,7 @@ func New(locales locale.List, opts Options) (*NumberFormat, error) {
 			currency:     currencyPatternsForNumberFormat(cldrLoc, unitLoc, resolved),
 			unit:         unitPatterns,
 			compact:      compactPatternsForNumberFormat(cldrLoc, resolved),
+			percent:      percentPatternsForNumberFormat(cldrLoc, resolved, symbols),
 		},
 	}, nil
 }

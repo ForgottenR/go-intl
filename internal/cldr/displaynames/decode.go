@@ -28,8 +28,9 @@ type languageDisplay struct{ dialect, standard styledNames }
 // languageRecord couples one locale's language display names with its locale
 // pattern, the two pieces the language accessor needs together.
 type languageRecord struct {
-	display       languageDisplay
-	localePattern string
+	display         languageDisplay
+	localePattern   string
+	localeSeparator string
 }
 
 var (
@@ -37,6 +38,8 @@ var (
 	languageByLocale  map[string]languageRecord
 	territoryOnce     sync.Once
 	territoryByLocale map[string]styledNames
+	variantOnce       sync.Once
+	variantByLocale   map[string]styledNames
 	scriptOnce        sync.Once
 	scriptByLocale    map[string]styledNames
 	calendarOnce      sync.Once
@@ -54,6 +57,8 @@ func territoryData() map[string]styledNames {
 	territoryOnce.Do(loadTerritory)
 	return territoryByLocale
 }
+
+func variantData() map[string]styledNames { variantOnce.Do(loadVariant); return variantByLocale }
 
 func scriptData() map[string]styledNames {
 	scriptOnce.Do(loadScript)
@@ -79,13 +84,16 @@ func decodeLanguageRecord(r *codec.Reader) languageRecord {
 	dialect := decodeStyledNames(r)
 	standard := decodeStyledNames(r)
 	pattern := r.StringRef(_data)
+	separator := r.StringRef(_data)
 	return languageRecord{
-		display:       languageDisplay{dialect: dialect, standard: standard},
-		localePattern: pattern,
+		display:         languageDisplay{dialect: dialect, standard: standard},
+		localePattern:   pattern,
+		localeSeparator: separator,
 	}
 }
 
 func loadTerritory() { territoryByLocale = decodeStyledBlob(_dnTerritoryBlob) }
+func loadVariant()   { variantByLocale = decodeStyledBlob(_dnVariantBlob) }
 func loadScript()    { scriptByLocale = decodeStyledBlob(_dnScriptBlob) }
 func loadCalendar()  { calendarByLocale = decodeStyledBlob(_dnCalendarBlob) }
 func loadField()     { fieldByLocale = decodeStyledBlob(_dnDateTimeFieldBlob) }

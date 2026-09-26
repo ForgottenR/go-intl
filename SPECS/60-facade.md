@@ -251,7 +251,10 @@ Mapping:
 
 The root package must not duplicate these methods. This preserves package ownership and avoids root-level formatter option re-exports.
 
-`SupportedLocalesOf` accepts at most one options object. The only option it reads is `localeMatcher`; invalid values and multiple option objects return errors matching root `ErrInvalidOption`.
+`SupportedLocalesOf` accepts exactly one typed `Options` value; use `Options{}`
+for omitted or empty JavaScript options. The only option it reads is
+`localeMatcher`; invalid values return errors matching root `ErrInvalidOption`.
+Passing multiple options objects is a Go compile error.
 
 ---
 
@@ -304,3 +307,23 @@ Rules:
 - SPEC 43 — DurationFormat
 - SPEC 44 — DisplayNames
 - SPEC 50 — CLDR Data
+
+### Currency supported-values membership (D2a)
+
+`SupportedCurrencies()` lists every canonical three-letter currency code with a
+name record in at least one locale of the pinned CLDR profile. It is sorted,
+unique and defensively copied. Fraction overrides affect digits, not membership;
+`NumberFormat` may accept any well-formed code with fallback digits and a code
+label. This is a local implementation-defined support policy, not Node's list.
+
+| Codes | Constructor | Pinned source name | Member | Reason |
+|---|---|---|---|---|
+| USD, JPY | yes | `cldr-numbers-full/main/en/currencies.json` | yes | names in profile |
+| AED, SAR, BDT | yes | same | yes | names currently trimmed by extraction |
+| AFN, SLL | yes | same | yes | names even when no precision exception |
+| DEM, XXX | yes | same | yes | historic/no-currency names are still display data |
+| ZZZ | yes | absent | no | syntactically valid but no pinned name |
+
+The source is `tools/gen-cldr/.cldr-json/node_modules/cldr-numbers-full/main/en/currencies.json`
+and other selected locales, consumed by `tools/gen-cldr/extract/numbers.go`;
+`cldr-core/supplemental/currencyData.json` supplies fractions only.

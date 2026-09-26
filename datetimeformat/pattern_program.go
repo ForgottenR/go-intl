@@ -145,7 +145,7 @@ func datePatternPart(field rune, width int, t localTime, gregorian *cldrdate.Gre
 	case 'E', 'e', 'c':
 		return Part{Type: PartWeekday, Value: weekdayName(gregorian, t.Weekday, width)}
 	case 'M', 'L':
-		return Part{Type: PartMonth, Value: monthName(gregorian, t.Month, width, numberingSystem)}
+		return Part{Type: PartMonth, Value: monthName(gregorian, t.Month, width, numberingSystem, field == 'L')}
 	case 'd':
 		return Part{Type: PartDay, Value: localizedNumericField(t.Day, width, numberingSystem)}
 	case 'y':

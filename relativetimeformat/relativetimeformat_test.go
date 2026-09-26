@@ -204,14 +204,13 @@ func TestRelativeTimeFormatNumberingSystemOptionLocalizesDigits(t *testing.T) {
 func TestCompileRelativeTimeFieldsFallsBackToLongStyleData(t *testing.T) {
 	t.Parallel()
 
-	fields, err := compileRelativeTimeFields(cldrrelativetime.RelativeTimeFields{
-		string(Day): {
-			string(LongStyle): {
-				Future: map[string]string{"one": "in {0} day", "other": "in {0} days"},
-				Past:   map[string]string{"one": "{0} day ago", "other": "{0} days ago"},
-			},
-		},
-	}, ShortStyle)
+	raw := cldrrelativetime.RelativeTimeFields{}
+	for _, unit := range relativeTimeUnits {
+		raw[string(unit)] = map[string]cldrrelativetime.RelativeTimeField{
+			string(LongStyle): {Future: map[string]string{"one": "in {0} day", "other": "in {0} days"}, Past: map[string]string{"one": "{0} day ago", "other": "{0} days ago"}},
+		}
+	}
+	fields, err := compileRelativeTimeFields(raw, ShortStyle)
 	if err != nil {
 		t.Fatalf("compile relative time fields: %v", err)
 	}

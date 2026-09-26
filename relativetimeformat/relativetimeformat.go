@@ -1,6 +1,8 @@
 package relativetimeformat
 
 import (
+	"fmt"
+
 	cldrrelativetime "github.com/agentable/go-intl/internal/cldr/relativetime"
 	"github.com/agentable/go-intl/internal/ecma402"
 	"github.com/agentable/go-intl/locale"
@@ -48,7 +50,7 @@ func New(locales locale.List, opts Options) (*RelativeTimeFormat, error) {
 	}
 	fields, err := compileRelativeTimeFields(cldrrelativetime.FieldsFor(cldrLoc), Style(cfg.style))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("relative-time data locale %s: %w", resolvedLocale.String(), err)
 	}
 	numberOptions := number.ResolvedOptions()
 	resolved := ResolvedOptions{

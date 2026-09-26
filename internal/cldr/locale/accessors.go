@@ -111,19 +111,6 @@ func exactLikelySubtags(key string) (lang, scr, reg string, ok bool) {
 	return "", "", "", false
 }
 
-// MinimizeSubtags returns the minimized tag for the input subtags, or ok=false
-// when the (language, script, region) triple is absent from the minimize table.
-func MinimizeSubtags(language, script, region string) (lang, scr, reg string, ok bool) {
-	likelySubtagsOnce.Do(loadLikelySubtags)
-
-	key := minimizeSubtagKey{language: language, script: script, region: region}
-	i, ok := slices.BinarySearchFunc(minimizeSubtags, key, compareMinimizeSubtag)
-	if ok {
-		return minimizeSubtags[i].minimized, "", "", true
-	}
-	return "", "", "", false
-}
-
 // TextDirection returns the CLDR direction for script. Unknown or missing
 // script metadata returns ok=false.
 func TextDirection(script string) (direction string, ok bool) {
@@ -224,20 +211,4 @@ func supportedByAll(loc string, sets []map[string]bool) bool {
 		}
 	}
 	return true
-}
-
-type minimizeSubtagKey struct {
-	language string
-	script   string
-	region   string
-}
-
-func compareMinimizeSubtag(row minimizeSubtagRecord, key minimizeSubtagKey) int {
-	if diff := cmp.Compare(row.lang, key.language); diff != 0 {
-		return diff
-	}
-	if diff := cmp.Compare(row.script, key.script); diff != 0 {
-		return diff
-	}
-	return cmp.Compare(row.region, key.region)
 }

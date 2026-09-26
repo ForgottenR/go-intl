@@ -188,19 +188,17 @@ func splitBidiSignPart(parts []Part) []Part {
 	if len(parts) == 0 || (parts[0].Type != PartMinusSign && parts[0].Type != PartPlusSign) {
 		return parts
 	}
-	value := parts[0].Value
+	out := appendBidiSymbol(nil, parts[0])
+	return append(out, parts[1:]...)
+}
+
+func appendBidiSymbol(parts []Part, part Part) []Part {
+	value := part.Value
 	coreWithSuffix := strings.TrimLeftFunc(value, isBidiSignMark)
 	core := strings.TrimRightFunc(coreWithSuffix, isBidiSignMark)
-	prefix := value[:len(value)-len(coreWithSuffix)]
-	suffix := coreWithSuffix[len(core):]
-	if prefix == "" && suffix == "" {
-		return parts
-	}
-	out := make([]Part, 0, len(parts)+2)
-	out = appendLiteral(out, prefix)
-	out = append(out, Part{Type: parts[0].Type, Value: core})
-	out = appendLiteral(out, suffix)
-	return append(out, parts[1:]...)
+	parts = appendLiteral(parts, value[:len(value)-len(coreWithSuffix)])
+	parts = append(parts, Part{Type: part.Type, Value: core})
+	return appendLiteral(parts, coreWithSuffix[len(core):])
 }
 
 func isBidiSignMark(r rune) bool {

@@ -90,7 +90,7 @@ func numberRangeSeparator(startParts []Part, sign string) string {
 	if sign == "" {
 		sign = "–"
 	}
-	if len(startParts) > 0 && isSignPart(startParts[0].Type) {
+	if len(startParts) > 0 && (isSignPart(startParts[0].Type) || startParts[0].Type == PartPercentSign) {
 		return " " + sign + " "
 	}
 	return sign

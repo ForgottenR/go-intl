@@ -2,8 +2,12 @@ package datetimeformat
 
 import "time"
 
-func (f *DateTimeFormat) FormatToParts(t time.Time) []Part {
+func (f *DateTimeFormat) FormatToParts(t time.Time) ([]Part, error) {
+	t, err := normalizeInstant(t, "value")
+	if err != nil {
+		return nil, err
+	}
 	pattern := f.pattern
-	_, local := gregoryTimeInLocation(t.Round(0), f.location)
-	return pattern.parts(f, local)
+	_, local := gregoryTimeInLocation(t, f.location)
+	return pattern.parts(f, local), nil
 }

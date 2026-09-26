@@ -139,7 +139,10 @@ func resolveLocale(locales locale.List, fallback locale.Locale, cfg config) loca
 
 func resolveTimeZone(locName string, cfg config) (string, *time.Location, error) {
 	if !cfg.hasTimeZone {
-		timeZone, location := tz.Default()
+		timeZone, location, err := tz.Default()
+		if err != nil {
+			return "", nil, unsupportedTimeZone(timeZone, locName, err)
+		}
 		return timeZone, location, nil
 	}
 	if cfg.timeZone == "" {
@@ -188,9 +191,13 @@ func resolveDateData(cldrLoc cldrdate.Locale, cfg config) (cldrdate.Locale, cldr
 	return cldrLoc, gregorianDataFor(cldrLoc)
 }
 
-func (f *DateTimeFormat) Format(t time.Time) string {
-	_, local := gregoryTimeInLocation(t.Round(0), f.location)
-	return string(f.pattern.appendTo(f, nil, local))
+func (f *DateTimeFormat) Format(t time.Time) (string, error) {
+	t, err := normalizeInstant(t, "value")
+	if err != nil {
+		return "", err
+	}
+	_, local := gregoryTimeInLocation(t, f.location)
+	return string(f.pattern.appendTo(f, nil, local)), nil
 }
 
 func withDefaultDateFields(c config) config {

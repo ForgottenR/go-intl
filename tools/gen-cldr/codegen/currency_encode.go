@@ -62,16 +62,10 @@ func appendCurrencyFraction(e *blobEncoder, f cldr.CurrencyFraction) {
 	e.appendUvarint(uint64(f.Rounding))
 }
 
-// supportedCurrencyValues returns the supported ISO 4217 currency codes in
-// sorted order: every fraction-table code (excluding the DEFAULT sentinel) plus
-// every code that carries locale names.
+// supportedCurrencyValues lists codes with a name in the selected CLDR profile.
+// Fraction exceptions affect precision, not supported-values membership.
 func supportedCurrencyValues(data extract.CurrencyData) []string {
 	seen := map[string]bool{}
-	for code := range data.Fractions {
-		if code != "DEFAULT" {
-			seen[code] = true
-		}
-	}
 	for _, currencies := range data.Currencies {
 		for code := range currencies {
 			seen[code] = true

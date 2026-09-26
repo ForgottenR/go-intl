@@ -157,8 +157,8 @@ func TestNewNormalizesRawOptionValuesDuringValidation(t *testing.T) {
 
 	loc, err := New("en", Options{
 		Calendar:        stringPtr("GREGORY"),
-		HourCycle:       stringPtr("H23"),
-		CaseFirst:       stringPtr("UPPER"),
+		HourCycle:       stringPtr("h23"),
+		CaseFirst:       stringPtr("upper"),
 		NumberingSystem: stringPtr("ARAB"),
 		FirstDayOfWeek:  stringPtr("MON"),
 	})
@@ -412,5 +412,45 @@ func TestUnmarshalTextRejectsInvalidLocale(t *testing.T) {
 	var loc Locale
 	if err := loc.UnmarshalText([]byte("")); !errors.Is(err, intlerr.ErrInvalidValue) {
 		t.Fatalf("UnmarshalText(empty) error = %v, want intlerr.ErrInvalidValue", err)
+	}
+}
+
+func TestNewValidatesOnlyExplicitUnicodeOptions(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, tag string
+		opts      Options
+		want      string
+		bad       bool
+	}{
+		{name: "unknown tag", tag: "en-u-hc-h25-kf-middle", want: "en-u-hc-h25-kf-middle"},
+		{name: "override unknown", tag: "en-u-hc-h25", opts: Options{HourCycle: stringPtr("h23")}, want: "en-u-hc-h23"},
+		{name: "hour casing", tag: "en", opts: Options{HourCycle: stringPtr("H23")}, bad: true},
+		{name: "case first casing", tag: "en", opts: Options{CaseFirst: stringPtr("UPPER")}, bad: true},
+		{name: "unknown weekday", tag: "en-US", opts: Options{FirstDayOfWeek: stringPtr("funday")}, want: "en-US-u-fw-funday"},
+		{name: "weekday compound type", tag: "en", opts: Options{FirstDayOfWeek: stringPtr("foo-bar")}, want: "en-u-fw-foo-bar"},
+		{name: "weekday malformed", tag: "en", opts: Options{FirstDayOfWeek: stringPtr("foo_b ar")}, bad: true},
+		{name: "empty presence", tag: "en-u-ca", want: "en-u-ca"},
+		{name: "true option", tag: "en", opts: Options{Calendar: stringPtr("true")}, want: "en-u-ca"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			loc, err := New(tc.tag, tc.opts)
+			if tc.bad {
+				if !errors.Is(err, intlerr.ErrInvalidOption) {
+					t.Fatalf("error = %v, want invalid option", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := loc.String(); got != tc.want {
+				t.Fatalf("String() = %q, want %q", got, tc.want)
+			}
+			if tc.name == "true option" && loc.Calendar() != "" {
+				t.Fatalf("Calendar() = %q, want empty type", loc.Calendar())
+			}
+		})
 	}
 }

@@ -66,6 +66,11 @@ Each fixture **MUST** conform to the following schema (JSON object):
 5. `errors.json` **can only** contain error fixtures with `errorCode`; forward fixtures **are prohibited** from being put into `errors.json`.
 6. The source directory where the fixture is located **MUST** be consistent with the `source` field prefix: `manual/` for `manual` or `manual:*`, `formatjs/` for `formatjs:*`, `node-*` for `node:*`.
 7. The `options` field **MUST** maintain the original ECMA-402 spec naming (`maximumFractionDigits` instead of `MaximumFractionDigits`); the Go-side harness is mapped to a typed `Options` value when loading.
+   Locale fixtures pass their input tag and typed options to `locale.New`
+   before observing canonicalization, maximize/minimize, or locale info.
+   Omitted pointer fields remain absent; explicit false and empty strings are
+   preserved. Constructor option failures use `invalid_option`, while invalid
+   input tags use `invalid_value`.
 8. **It is prohibited** to embed JS functions, callbacks, and Date literals in fixtures; parts that cannot be mechanically extracted are classified according to the SPEC §2.4 process.
 
 > **Why**: The unified schema is universal across formatters and lets the shared harness validate every active surface without formatter-specific fixture loaders.
@@ -386,3 +391,12 @@ review policy.
 - `.references/formatjs/packages/intl-listformat/tests/` (main extraction source)
 - `.references/formatjs/packages/intl-relativetimeformat/tests/` (main extraction source)
 - `.references/formatjs/packages/intl-durationformat/tests/` (main extraction source)
+
+The active Node witness refresh validates its exact `nodeVersion` against the
+version consumed by the conformance checker before writing fixtures; a different
+Node release requires an explicit checker/provenance upgrade. The FormatJS
+extractor stages all owned routes and collision checks before replacing its
+owned output directories, preserving prior fixtures and skip-list on extraction
+failure. It does not own DisplayNames' older FormatJS lane, manual fixtures,
+Node witnesses, or divergence/XFAIL ledgers. Source-deleted/zero-assertion
+lanes are removed on successful extraction.

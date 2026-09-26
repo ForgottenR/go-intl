@@ -385,7 +385,12 @@ func CardinalRule(loc string) (func(pluralop.OperandsRecord) pluralop.Category, 
    3. ops            := GetOperands(formatted, exponent)
    4. category       := PluralRuleSelect(localeTag, type, ops)
    ```
-2. Public PluralRules compact selection **MUST** follow native Node/V8 behavior when FormatJS diverges. Node v26 compact fixtures are the product witness for this boundary.
+2. Public PluralRules compact selection **MUST** use constructor-owned compact
+   data and the pinned CLDR rule, without an optional-data fallback to exponent
+   zero. Native Node/V8 fixtures independently verify this behavior. The
+   FormatJS test environment can omit NumberFormat data; that reference setup
+   is not a product requirement. The exact three French cases and their source
+   evidence are recorded in `pluralrules/testdata/compact-review.md`.
 3. NumberFormat compact suffix selection **required**:
    ```text
    1. value, exponent := ComputeExponent(...)
@@ -535,7 +540,7 @@ semantics, and conformance fixtures agree with the ECMA-402/CLDR boundary.
 | Codegen does not depend on `dave/jennifer`; runtime and codegen do not depend on `golang.org/x/text/feature/plural`. | `rg "dave/jennifer" tools/gen-plural-rules`; `rg "x/text/feature/plural" internal/plural tools/gen-plural-rules pluralrules/*.go` | Satisfied |
 | The `pluralrules/benchmark_baseline_test.go` `x/text/feature/plural` import is retained only as benchmark comparison evidence and is outside runtime/codegen acceptance. | `pluralrules/benchmark_baseline_test.go` | Accepted exception |
 | Cardinal, ordinal, range, non-finite select/range behavior, NaN range errors, reversed range, rounded equality, and resolved category behavior are covered by package tests and generated fixtures. | `pluralrules/pluralrules_test.go`; `pluralrules/range_test.go`; `pluralrules/options_test.go`; `pluralrules/conformance_unified_test.go`; `pluralrules/testdata/conformance/formatjs/index-test-ts.json` | Satisfied |
-| Public PluralRules compact notation follows Node v26 source-decimal-plus-exponent behavior, including million-scale `many` fixtures. | `pluralrules/testdata/conformance/node-v26/compact.json`; `pluralrules/testdata/xfail.json`; `compact_contract_test.go` | Satisfied |
+| Public PluralRules compact notation uses source-decimal-plus-exponent behavior, including million-scale `many` fixtures; FormatJS's missing compact-data environment is recorded separately. | `pluralrules/testdata/conformance/node-v26/compact.json`; `pluralrules/testdata/conformance/node-v26/compact-review.json`; `pluralrules/testdata/compact-review.md`; `pluralrules/testdata/divergences.md`; `compact_contract_test.go` | Satisfied |
 | NumberFormat compact suffix selection remains internal and generated-rule based; no public `SelectFormatted` or internal `ResolvePlural` helper exists. | `numberformat/notation.go`; `internal/plural/plural.go`; absence of `SelectFormatted` / `ResolvePlural` in Go source | Satisfied |
 | `OperandsRecord` remains the single internal operand record bridge. | `internal/plural/plural.go`; `pluralrules/pluralrules_test.go` | Satisfied |
 | Race, vet, and generated-data byte stability gates pass for the package and generated CLDR output. | `go test -race ./pluralrules/...`; `go vet ./pluralrules/...`; `task data:check` | Required verification |

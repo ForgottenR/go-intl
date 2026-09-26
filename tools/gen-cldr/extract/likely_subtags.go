@@ -17,12 +17,10 @@ type SubtagTriple struct {
 
 type LikelySubtags struct {
 	Maximize map[string]SubtagTriple
-	Minimize map[SubtagTriple]string
 }
 
 func ExtractLikelySubtags(raw map[string]string) (LikelySubtags, error) {
 	max := make(map[string]SubtagTriple, len(raw))
-	min := make(map[SubtagTriple]string, len(raw))
 	sourceByNormalizedKey := make(map[string]string, len(raw))
 	for _, key := range slices.Sorted(maps.Keys(raw)) {
 		value := raw[key]
@@ -39,14 +37,8 @@ func ExtractLikelySubtags(raw map[string]string) (LikelySubtags, error) {
 			return LikelySubtags{}, fmt.Errorf("likely subtag %q -> %q: %w", key, value, err)
 		}
 		max[normalized] = triple
-		if strings.HasPrefix(normalized, "und") {
-			continue
-		}
-		if _, ok := min[triple]; !ok {
-			min[triple] = normalized
-		}
 	}
-	return LikelySubtags{Maximize: max, Minimize: min}, nil
+	return LikelySubtags{Maximize: max}, nil
 }
 
 func normalizeLikelySubtagKey(key string) (string, error) {

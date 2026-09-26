@@ -65,7 +65,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	date := dateFormat.Format(time.Date(2026, time.May, 8, 14, 30, 0, 0, time.UTC))
+	date, err := dateFormat.Format(time.Date(2026, time.May, 8, 14, 30, 0, 0, time.UTC))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println(price)
 	fmt.Println(date)
@@ -293,7 +296,12 @@ root-namespace examples above stay the primary documented style.
 
 ### Format Exact Decimals
 
-Use decimal-string methods when binary `float64` cannot represent the value you need to format:
+Use `Decimal` when binary `float64` cannot represent the value you need to
+format. It accepts Intl numeric strings, including surrounding ECMAScript
+whitespace, empty strings (zero), and unsigned `0b`/`0o`/`0x` integers.
+Malformed strings return an error. Finite nonzero values retain their exact
+precision; strings beyond the Number rounding range become signed infinity or
+signed zero. Use `BigInt` for integers without that range normalization:
 
 ```go
 format, err := numberformat.New(mustLocaleList("en-US"), numberformat.Options{
@@ -405,8 +413,15 @@ if err != nil {
 start := time.Date(2026, time.May, 8, 14, 30, 0, 0, time.UTC)
 end := start.Add(2 * time.Hour)
 
-fmt.Println(format.Format(start))
-rangeText := format.FormatRange(start, end)
+text, err := format.Format(start)
+if err != nil {
+    return err
+}
+fmt.Println(text)
+rangeText, err := format.FormatRange(start, end)
+if err != nil {
+    return err
+}
 fmt.Println(rangeText)
 ```
 
@@ -461,15 +476,15 @@ Use `listformat` and `relativetimeformat` for native list and relative-time phra
 locales := mustLocaleList("en")
 
 list, err := listformat.New(locales, listformat.Options{
-	Type:  listformat.Conjunction,
-	Style: listformat.ShortStyle,
+	Type:  gointl.String(listformat.Conjunction),
+	Style: gointl.String(listformat.ShortStyle),
 })
 if err != nil {
 	return err
 }
 
 relative, err := relativetimeformat.New(locales, relativetimeformat.Options{
-	Numeric: relativetimeformat.NumericAuto,
+	Numeric: gointl.String(relativetimeformat.NumericAuto),
 })
 if err != nil {
 	return err
@@ -525,6 +540,12 @@ nanoseconds are not narrowed to `int64`; fractions, NaN, and infinities return
 `gointl.ErrInvalidValue`.
 
 ### Name Codes
+
+`SupportedCurrencies()` enumerates canonical codes with a name in at least one
+selected CLDR locale; numeric precision exceptions do not define membership.
+DisplayNames and currency-name formatting retain all names in the selected
+profile, including AED, SAR, BDT, historic DEM and XXX. An unknown well-formed
+code remains constructible and falls back according to the formatter option.
 
 Use `displaynames` for localized names of language, region, script, currency,
 calendar, and date-time field codes:
@@ -586,16 +607,19 @@ matches identifiers using ECMA-402 ASCII-case-insensitive rules. Links such as
 identifiers. `SupportedTimeZones` returns the complete primary projection, and
 `Locale.GetTimeZones` returns the `zone.tab` primary identifiers for the
 locale's explicit region. Localized time-zone names remain CLDR display data;
-Go's embedded `time/tzdata` supplies transition bytes.
+Go's `time.LoadLocation` supplies transitions from `ZONEINFO`, host paths,
+GOROOT, then embedded `time/tzdata` as fallback. IANA identity, CLDR display
+names, and the transition source have separate owners.
 
 `DateTimeFormat.FormatRange` and `FormatRangeToParts` preserve caller-provided
 endpoint order. A later first argument is valid and remains `startRange`; the
 methods do not silently sort the range.
 
 After `datetimeformat.New` succeeds, `Format`, `FormatToParts`, `FormatRange`,
-and `FormatRangeToParts` accept typed `time.Time` values and return their
-results directly. Locale, option, and time-zone failures remain construction
-errors.
+and `FormatRangeToParts` accept typed `time.Time` values and return `(result, error)`.
+An instant outside ±8,640,000,000,000,000 epoch milliseconds returns
+`ErrInvalidValue` before millisecond truncation. Locale, option, and time-zone
+failures remain construction errors.
 
 ## Known Divergences
 

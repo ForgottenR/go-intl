@@ -34,6 +34,7 @@ type decimalFormatState struct {
 	currency     currencyPatternSet
 	unit         unitPatternSet
 	compact      compactPatternSet
+	percent      percentPatternSet
 }
 
 func formatDecimalToPartsAppend(parts []Part, d decimal.Decimal, state *decimalFormatState) []Part {
@@ -101,7 +102,7 @@ func applyStylePatternForPlural(parts []Part, plural pluralop.Category, state *d
 	style := resolved.Style
 	numberingSystem := resolved.NumberingSystem
 	if style == PercentStyle {
-		parts = append(parts, Part{Type: PartPercentSign, Value: state.symbols.Percent})
+		parts = state.percent.append(parts)
 	}
 	if style == CurrencyStyle {
 		return localizeParts(applyCurrencyPatternForPlural(parts, plural, resolved, state.currencyLoc, state.currency), numberingSystem)

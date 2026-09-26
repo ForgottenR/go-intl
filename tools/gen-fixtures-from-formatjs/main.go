@@ -208,6 +208,9 @@ func importNode(path, outDir string) error {
 	if err != nil {
 		return err
 	}
+	if witness.NodeVersion != conformance.ActiveNodeWitnessVersion {
+		return fmt.Errorf("Node witness version: expected %s, got %s", conformance.ActiveNodeWitnessVersion, witness.NodeVersion)
+	}
 	nodeDir, err := nodeFixtureDir(witness.NodeVersion)
 	if err != nil {
 		return err
@@ -334,6 +337,40 @@ func nodeFixtureDir(version string) (string, error) {
 }
 
 func importFormatJS(path, outDir string) ([]skipEntry, error) {
+	stage, err := os.MkdirTemp("", "go-intl-formatjs-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(stage)
+	skips, err := extractFormatJS(path, stage)
+	if err != nil {
+		return nil, err
+	}
+	for _, packageName := range []string{"numberformat", "pluralrules", "datetimeformat", "locale", "listformat", "relativetimeformat", "durationformat"} {
+		target := formatJSConformanceRoot(outDir, packageName)
+		source := formatJSConformanceRoot(stage, packageName)
+		if err := os.RemoveAll(target); err != nil {
+			return nil, fmt.Errorf("replace %s: %w", target, err)
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o777); err != nil {
+			return nil, err
+		}
+		if _, err := os.Stat(source); os.IsNotExist(err) {
+			if err := os.MkdirAll(target, 0o777); err != nil {
+				return nil, err
+			}
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+		if err := os.Rename(source, target); err != nil {
+			return nil, fmt.Errorf("replace %s: %w", target, err)
+		}
+	}
+	return skips, nil
+}
+
+func extractFormatJS(path, outDir string) ([]skipEntry, error) {
 	skips := []skipEntry{}
 	if err := appendFormatJSSurfaceSkips(&skips, path, outDir, formatJSPreLocaleSurfaceRoutes()); err != nil {
 		return nil, err
@@ -620,9 +657,17 @@ func writeFixturesBySourceSlug(targetRoot string, fixtures []fixture, sourcePref
 		fixturesBySource[fixture.Source] = append(fixturesBySource[fixture.Source], fixture)
 	}
 	sources := slices.Sorted(maps.Keys(fixturesBySource))
+	paths := map[string]string{}
 	for _, source := range sources {
 		rel := strings.TrimPrefix(source, sourcePrefix)
-		if err := writeJSON(formatJSFixtureFile(targetRoot, rel, slug), fixturesBySource[source]); err != nil {
+		output := formatJSFixtureFile(targetRoot, rel, slug)
+		if previous, exists := paths[output]; exists {
+			return fmt.Errorf("FormatJS fixture slug collision at %s: %s and %s", output, previous, source)
+		}
+		paths[output] = source
+	}
+	for _, source := range sources {
+		if err := writeJSON(formatJSFixtureFile(targetRoot, strings.TrimPrefix(source, sourcePrefix), slug), fixturesBySource[source]); err != nil {
 			return err
 		}
 	}

@@ -10,7 +10,8 @@ import (
 var errMissingNodeWitnessCoverage = errors.New("missing node witness coverage")
 
 const (
-	activeNodeWitnessVersion = "v26.0.0"
+	ActiveNodeWitnessVersion = "v26.0.0"
+	activeNodeWitnessVersion = ActiveNodeWitnessVersion
 	nodeWitnessSourcePrefix  = "node:" + activeNodeWitnessVersion
 )
 

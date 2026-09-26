@@ -17,6 +17,33 @@ This SPEC does not redefine:
 
 ---
 
+## time.Time input contract
+
+The four public methods take `time.Time` and return `(result, error)`:
+`Format(time.Time) (string, error)`, `FormatToParts(time.Time) ([]Part, error)`,
+`FormatRange(time.Time, time.Time) (string, error)`, and
+`FormatRangeToParts(time.Time, time.Time) ([]RangePart, error)`.
+Invalid instants return the existing `ErrInvalidValue` / `*gointl.Error` category;
+range errors name the offending `start` or `end` input. Constructor validation
+remains in `New`. This intentionally breaks the old direct-result Go API.
+
+| Input instant (epoch milliseconds as a mathematical value) | Result |
+|---|---|
+| exactly ±8,640,000,000,000,000 | accepted |
+| outside either bound by less than one millisecond | error before truncation |
+| negative epoch within one millisecond of zero | truncate toward zero to epoch |
+| BCE date and `time.Time{}` | accepted when within bounds |
+| equal absolute instants with different Location/monotonic state | same result |
+| range with one invalid endpoint | `start` or `end` error respectively |
+| reversed valid range | accepted in caller order |
+
+Normalize once before timezone projection. Comparing `UnixMilli` after its floor
+conversion would admit some just-outside negative/positive inputs; `UnixNano`
+can overflow on otherwise valid centuries. The changed call sites are root
+`example_test.go`, `intl_test.go`, `README.md`, datetimeformat tests,
+`datetimeformat/conformance_unified_test.go`, `datetimeformat/benchmark_test.go`,
+and the package examples. No parallel Checked/v2 method is retained.
+
 ## 1. Public API
 
 ### 1.1 Construction and Option
@@ -51,10 +78,10 @@ type Options struct {
 
 func New(locales locale.List, opts Options) (*DateTimeFormat, error)
 
-func (f *DateTimeFormat) Format(t time.Time) string
-func (f *DateTimeFormat) FormatToParts(t time.Time) []Part
-func (f *DateTimeFormat) FormatRange(start, end time.Time) string
-func (f *DateTimeFormat) FormatRangeToParts(start, end time.Time) []RangePart
+func (f *DateTimeFormat) Format(t time.Time) (string, error)
+func (f *DateTimeFormat) FormatToParts(t time.Time) ([]Part, error)
+func (f *DateTimeFormat) FormatRange(start, end time.Time) (string, error)
+func (f *DateTimeFormat) FormatRangeToParts(start, end time.Time) ([]RangePart, error)
 func (f *DateTimeFormat) ResolvedOptions() ResolvedOptions
 ```
 
@@ -62,12 +89,12 @@ func (f *DateTimeFormat) ResolvedOptions() ResolvedOptions
 
 1. `New` **MUST** complete all option syntax verification, locale/options negotiation, and `*time.Location` parsing during the construction period, and `error` will be returned on failure.
 2. `New` accepts a `Options` value. `New(locales, Options{})` is equivalent to JS passing an empty options object or omitting options; multiple options objects are not Go API shapes and are rejected by the compiler.
-3. After successful construction, `Format` / `FormatToParts` / `FormatRange` / `FormatRangeToParts` **MUST** return direct results for the accepted `time.Time` domain. Locale, option, and time-zone failures belong to `New`; the range methods do not add a method-level error or reject endpoint order.
+3. After successful construction, formatting methods return `(result, error)`: out-of-TimeClip-domain instants return `ErrInvalidValue`. Locale, option, and time-zone failures belong to `New`; reversed valid ranges remain accepted.
 4. `DateTimeFormat` is an immutable value; all methods on `*DateTimeFormat` must be concurrency safe.
 5. Formatter options **MUST** adopt the typed `Options` value (same as SPEC 20), and functional options are prohibited from being used as a common main path.
 6. `ResolvedOptions` **MUST** return an immutable snapshot (value type); the results of multiple calls are equal.
 
-> **Why**: Error handling is centralized during construction; all four typed formatting methods return direct results and are byte-checked by conformance fixtures. The parsing of `*time.Location` (`time.LoadLocation`) cannot be redone in the `Format` phase (violating the hot path zero allocation rule).
+> **Why**: Constructor errors and runtime instant errors have distinct owners. All four typed formatting methods are byte-checked by conformance fixtures on accepted instants. The parsing of `*time.Location` (`time.LoadLocation`) cannot be redone in the `Format` phase (violating the hot path zero allocation rule).
 
 ### 1.2 Input type
 
@@ -79,15 +106,8 @@ func (f *DateTimeFormat) ResolvedOptions() ResolvedOptions
 4. The zero value of `time.Time{}` is instant that can be represented by Go, not JavaScript invalid Date. It must be formatted as normal `time.Time` via formatter `[[TimeZone]]`; rewriting it as Unix epoch or error is prohibited.
 5. `FormatRange` / `FormatRangeToParts` normalize each instant independently before display-time-zone conversion. They do not compare or reorder endpoints: a later first argument is valid and remains the `startRange` source.
 
-```go
-// Entry normalization (signature, no implementation)
-func (f *DateTimeFormat) Format(t time.Time) string {
-t = t.Round(0) // Strip monotonic
-loc := f.timeZone // Already cached on New; never from a single input Location()
-    instant := t.UTC().UnixMilli()
-// Use (instant, loc) to use PartitionDateTimePattern
-}
-```
+`normalizeInstant` checks the mathematical instant before truncating to milliseconds;
+formatting uses the constructor-resolved display zone after validation.
 
 > **Why**:
 > 1. `time.Time` is Go idiom, interoperable with `time.Now()` / `time.Date()` / time package.
@@ -108,7 +128,7 @@ df, err := datetimeformat.New(locale.List{mustLocale("zh-CN")},
         DateStyle: gointl.String(string(datetimeformat.FullDateTimeStyle)),
         TimeZone:  gointl.String("Asia/Shanghai"),
     })
-out := df.Format(time.Now())
+out, err := df.Format(time.Now())
 // out == "Friday, May 8, 2026"
 ```
 
@@ -119,7 +139,7 @@ df, _ := datetimeformat.New(locale.List{mustLocale("en-US")},
         Day:   gointl.String(string(datetimeformat.NumericFieldStyle)),
         Year:  gointl.String(string(datetimeformat.NumericFieldStyle)),
     })
-// df.Format(t) == "May 8, 2026"
+// out, err := df.Format(t); out == "May 8, 2026" when err == nil
 ```
 
 ### 1.4 Option parameter type — typed ECMA-402 values
@@ -444,7 +464,7 @@ Benchmark numbers guide profiling and prioritization; they do not override ECMA-
 
 ## 9. Forbidden
 
-- **BANNED** Do not add method-level errors to `Format` / `FormatToParts` / `FormatRange` / `FormatRangeToParts`; the accepted Go `time.Time` domain has no JavaScript invalid Date state.
+- **BANNED** Silently format a `time.Time` outside the ECMA TimeClip domain; the four methods return `ErrInvalidValue` for such instants.
 - **DOWN** Calling `time.LoadLocation` on the `Format` path - `*time.Location` must be cached when `New` is used.
 - **BANNED** Check CLDR time zone display name in `Format` path - `metaZones` data must be materialized at `New` time.
 - **NO** Generating calendar pattern data (including Buddhist year offsets) outside of the Gregorian pattern payload before the §3.1 removal path is complete; this is a current implementation boundary, not a permanent range shrinkage.
@@ -464,7 +484,7 @@ Benchmark numbers guide profiling and prioritization; they do not override ECMA-
 - [ ] `formatjs/packages/intl-datetimeformat/tests/format-range.test.ts` All fixtures passed.
 - [ ] `formatjs/packages/intl-datetimeformat/tests/offset-timezone.test.ts` All fixtures pass (`+05:30` / `-08:00` and other inputs).
 - [ ] `go test -race ./datetimeformat/...` passed (including `TestDateTimeFormat_TimezoneContextPreservation`: the same `time.Time` has different output under different options `TimeZone`).
-- [ ] `go test -race ./datetimeformat/...` passes (including `TestDateTimeFormat_MonotonicClockStripping`:`t.Round(0)` followed by multiple `Format(t)` bytes that are equal).
+- [ ] `go test -race ./datetimeformat/...` passes (including `TestDateTimeFormat_MonotonicClockStripping`:`t.Round(0)` followed by equal successful `Format(t)` bytes).
 - [ ] `go test -race ./datetimeformat/...` passed (including `TestDateTimeFormat_ConcurrentFormat` 100 goroutine × 1000 calls).
 - [ ] `datetimeformat/range_relation_test.go` proves selected-record semantic equality, flexible and standard day periods, resolved fractional precision, DST-fold local equality, and distinguishing cross-date fallbacks; joined range parts equal `FormatRange` bytes.
 - [ ] `go vet ./datetimeformat/...` clean.

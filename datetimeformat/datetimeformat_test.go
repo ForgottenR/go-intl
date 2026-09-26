@@ -30,12 +30,20 @@ func TestMain(m *testing.M) {
 
 func mustFormatRange(t *testing.T, f *DateTimeFormat, start, end time.Time) string {
 	t.Helper()
-	return f.FormatRange(start, end)
+	got, err := f.FormatRange(start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return got
 }
 
 func mustFormatRangeToParts(t *testing.T, f *DateTimeFormat, start, end time.Time) []RangePart {
 	t.Helper()
-	return f.FormatRangeToParts(start, end)
+	got, err := f.FormatRangeToParts(start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return got
 }
 
 func joinPartValues(parts []Part) string {
@@ -100,7 +108,7 @@ func TestDateTimeFormatDefaultFormatUsesDateFields(t *testing.T) {
 		t.Fatalf("New(en-US) error = %v", err)
 	}
 	date := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
-	if got, want := format.Format(date), "5/8/2026"; got != want {
+	if got, want := mustDateFormat(t, format, date), "5/8/2026"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -110,7 +118,7 @@ func TestDateTimeFormatDefaultFormatUsesDateFields(t *testing.T) {
 		{Type: PartLiteral, Value: "/"},
 		{Type: PartYear, Value: "2026"},
 	}
-	if got := format.FormatToParts(date); !reflect.DeepEqual(got, wantParts) {
+	if got := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(got, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", got, wantParts)
 	}
 }
@@ -127,7 +135,7 @@ func TestDateTimeFormatDefaultFormatUsesCLDRDateOrder(t *testing.T) {
 	if got, want := gregorian.AvailableFormats["yMd"], "y/M/d"; got != want {
 		t.Fatalf("CLDR yMd pattern = %q, want %q", got, want)
 	}
-	if got, want := format.Format(date), "2026/5/8"; got != want {
+	if got, want := mustDateFormat(t, format, date), "2026/5/8"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -137,7 +145,7 @@ func TestDateTimeFormatDefaultFormatUsesCLDRDateOrder(t *testing.T) {
 		{Type: PartLiteral, Value: "/"},
 		{Type: PartDay, Value: "8"},
 	}
-	if got := format.FormatToParts(date); !reflect.DeepEqual(got, wantParts) {
+	if got := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(got, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", got, wantParts)
 	}
 }
@@ -161,7 +169,7 @@ func TestDateTimeFormatFallsBackToDateDataLocale(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(zh-Hans-CN) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(2026, 5, 10, 8, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, 5, 10, 8, 0, 0, 0, time.UTC))
 	if len(parts) == 0 || parts[0].Value == "" || parts[0].Value == "in the morning" {
 		t.Fatalf("FormatToParts() = %#v, want zh-Hans day-period data", parts)
 	}
@@ -242,7 +250,7 @@ func TestDateTimeFormatNumberingSystemOptionLocalizesDigits(t *testing.T) {
 	if got := format.ResolvedOptions().NumberingSystem; got != "arab" {
 		t.Fatalf("ResolvedOptions().NumberingSystem = %q, want arab", got)
 	}
-	if got := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)); got != "٥/٨/٢٠٢٦" {
+	if got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)); got != "٥/٨/٢٠٢٦" {
 		t.Fatalf("Format() = %q, want Arabic-Indic digits", got)
 	}
 }
@@ -497,7 +505,7 @@ func TestDateTimeFormatUsesDefaultTimeZoneWhenOmitted(t *testing.T) {
 			if got := format.ResolvedOptions().TimeZone; got != tc.wantTimeZone {
 				t.Fatalf("ResolvedOptions().TimeZone = %q, want %q", got, tc.wantTimeZone)
 			}
-			if got := format.Format(tc.instant); got != tc.wantFormat {
+			if got := mustDateFormat(t, format, tc.instant); got != tc.wantFormat {
 				t.Fatalf("Format() = %q, want %q", got, tc.wantFormat)
 			}
 		})
@@ -595,7 +603,7 @@ func TestDateTimeFormatFormatDateOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(date fields) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
 	if want := "May 8, 2026"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -613,7 +621,7 @@ func TestDateTimeFormatShortMonthDateUsesCLDRPattern(t *testing.T) {
 	if got, want := gregorian.AvailableFormats["yMMMd"], "y年M月d日"; got != want {
 		t.Fatalf("CLDR yMMMd pattern = %q, want %q", got, want)
 	}
-	if got, want := format.Format(date), "2026年5月8日"; got != want {
+	if got, want := mustDateFormat(t, format, date), "2026年5月8日"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -624,7 +632,7 @@ func TestDateTimeFormatShortMonthDateUsesCLDRPattern(t *testing.T) {
 		{Type: PartDay, Value: "8"},
 		{Type: PartLiteral, Value: "日"},
 	}
-	if parts := format.FormatToParts(date); !reflect.DeepEqual(parts, wantParts) {
+	if parts := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(parts, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", parts, wantParts)
 	}
 }
@@ -696,10 +704,10 @@ func TestDateTimeFormatFormatEqualsFormatToPartsJoin(t *testing.T) {
 				t.Fatalf("New(%s) error = %v", tc.name, err)
 			}
 			var joined strings.Builder
-			for _, part := range format.FormatToParts(tc.date) {
+			for _, part := range mustDateFormatToParts(t, format, tc.date) {
 				joined.WriteString(part.Value)
 			}
-			if got, want := format.Format(tc.date), joined.String(); got != want {
+			if got, want := mustDateFormat(t, format, tc.date), joined.String(); got != want {
 				t.Fatalf("Format() = %q, want joined FormatToParts %q", got, want)
 			}
 		})
@@ -713,7 +721,7 @@ func TestDateTimeFormatFormatToPartsDateFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(long date fields) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
 	want := []Part{
 		{Type: PartWeekday, Value: "Friday"},
 		{Type: PartLiteral, Value: ", "},
@@ -739,7 +747,7 @@ func TestDateTimeFormatFormatToPartsEra(t *testing.T) {
 	if got, want := ecma402.ResolvedScalarValue(resolved.Era), ShortFieldStyle; got != want {
 		t.Fatalf("ResolvedOptions().Era = %q, want %q", got, want)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
 	want := []Part{
 		{Type: PartYear, Value: "2026"},
 		{Type: PartLiteral, Value: " "},
@@ -757,7 +765,7 @@ func TestDateTimeFormatFormatToPartsBCEWideEra(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(wide era+year) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(0, time.January, 1, 0, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(0, time.January, 1, 0, 0, 0, 0, time.UTC))
 	var era, year string
 	for _, part := range parts {
 		switch part.Type {
@@ -783,7 +791,7 @@ func TestDateTimeFormatFormatsNarrowDateFieldNames(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(narrow date fields) error = %v", err)
 	}
-	if got, want := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)), "F, M 8, 2026 A"; got != want {
+	if got, want := mustDateFormat(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)), "F, M 8, 2026 A"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 }
@@ -802,7 +810,7 @@ func TestDateTimeFormatUsesCLDRDateFieldNames(t *testing.T) {
 		t.Fatalf("generated CLDR weekday=%q, want non-English value", wantWeekday)
 	}
 
-	parts := format.FormatToParts(date)
+	parts := mustDateFormatToParts(t, format, date)
 	var gotWeekday, gotMonth string
 	for _, part := range parts {
 		switch part.Type {
@@ -864,10 +872,10 @@ func TestDateTimeFormatExplicitTimeComponentsUseCLDRPattern(t *testing.T) {
 				t.Fatalf("New(%s) error = %v", tt.locale, err)
 			}
 			date := time.Date(2026, time.May, 8, 9, 7, 6, 0, time.UTC)
-			if got := format.Format(date); got != tt.want {
+			if got := mustDateFormat(t, format, date); got != tt.want {
 				t.Fatalf("Format() = %q, want %q", got, tt.want)
 			}
-			if parts := format.FormatToParts(date); !reflect.DeepEqual(parts, tt.parts) {
+			if parts := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(parts, tt.parts) {
 				t.Fatalf("FormatToParts() = %#v, want %#v", parts, tt.parts)
 			}
 		})
@@ -884,7 +892,7 @@ func TestDateTimeFormatFormatToPartsTimeFieldsWithFractionalSeconds(t *testing.T
 	if got := format.ResolvedOptions().FractionalSecondDigits; got == nil || *got != 3 {
 		t.Fatalf("ResolvedOptions().FractionalSecondDigits = %v, want 3", got)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC))
 	want := []Part{
 		{Type: PartHour, Value: "09"},
 		{Type: PartLiteral, Value: ":"},
@@ -909,7 +917,7 @@ func TestDateTimeFormatFractionalSecondPartUsesECMA402Type(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC))
 	for _, part := range parts {
 		if part.Value == "1" {
 			if got, want := part.Type, PartType("fractionalSecond"); got != want {
@@ -954,7 +962,7 @@ func TestDateTimeFormatFractionalSecondPartWidthsAndNumberingSystem(t *testing.T
 				t.Fatal(err)
 			}
 			input := time.Date(2026, time.May, 8, 9, 7, 6, 123_000_000, time.UTC)
-			parts := format.FormatToParts(input)
+			parts := mustDateFormatToParts(t, format, input)
 			var fractional Part
 			for _, part := range parts {
 				if part.Type == PartFractionalSecond {
@@ -967,7 +975,7 @@ func TestDateTimeFormatFractionalSecondPartWidthsAndNumberingSystem(t *testing.T
 			if fractional.Value != tc.want {
 				t.Fatalf("fractional-second part = %#v, want value %q", fractional, tc.want)
 			}
-			if got, want := format.Format(input), joinPartValues(parts); got != want {
+			if got, want := mustDateFormat(t, format, input), joinPartValues(parts); got != want {
 				t.Fatalf("Format() = %q, want joined parts %q", got, want)
 			}
 			record, err := json.Marshal(fractional)
@@ -1026,7 +1034,7 @@ func TestDateTimeFormatFormatFlexibleDayPeriod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(day period fields) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.May, 8, 15, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.May, 8, 15, 0, 0, 0, time.UTC))
 	want := []Part{
 		{Type: PartDayPeriod, Value: "下午"},
 		{Type: PartHour, Value: "3"},
@@ -1044,7 +1052,7 @@ func TestDateTimeFormatFormatsTimeZoneName(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(timezone name fields) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(2026, time.January, 8, 12, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(2026, time.January, 8, 12, 0, 0, 0, time.UTC))
 	want := []Part{
 		{Type: PartHour, Value: "7"},
 		{Type: PartLiteral, Value: " "},
@@ -1080,7 +1088,7 @@ func TestDateTimeFormatUsesLocalizedRegionFormatForLocationTimeZoneName(t *testi
 			if err != nil {
 				t.Fatalf("New(location timezone name) error = %v", err)
 			}
-			parts := format.FormatToParts(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC))
+			parts := mustDateFormatToParts(t, format, time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC))
 			for _, part := range parts {
 				if part.Type == PartTimeZoneName {
 					if part.Value != tc.want {
@@ -1119,7 +1127,7 @@ func TestDateTimeFormatFormatsLocalizedTimeZoneNameForms(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New(timezone name fields) error = %v", err)
 			}
-			if got := format.Format(date); got != tc.want {
+			if got := mustDateFormat(t, format, date); got != tc.want {
 				t.Fatalf("Format() = %q, want %q", got, tc.want)
 			}
 		})
@@ -1137,7 +1145,7 @@ func TestDateTimeFormatUsesHistoricalTransitionDSTFlagForSpecificName(t *testing
 	if err != nil {
 		t.Fatalf("New(historical timezone name) error = %v", err)
 	}
-	parts := format.FormatToParts(time.Date(1941, time.January, 15, 12, 0, 0, 0, time.UTC))
+	parts := mustDateFormatToParts(t, format, time.Date(1941, time.January, 15, 12, 0, 0, 0, time.UTC))
 	for _, part := range parts {
 		if part.Type == PartTimeZoneName {
 			if got, want := part.Value, "British Summer Time"; got != want {
@@ -1174,7 +1182,7 @@ func TestDateTimeFormatFormatsOffsetTimeZoneName(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New(offset timezone name) error = %v", err)
 			}
-			if got := format.Format(time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)); got != tc.want {
+			if got := mustDateFormat(t, format, time.Date(1970, time.January, 1, 0, 0, 0, 0, time.UTC)); got != tc.want {
 				t.Fatalf("Format() = %q, want %q", got, tc.want)
 			}
 		})
@@ -1193,10 +1201,10 @@ func TestDateTimeFormatFormatsDifferentTimeZones(t *testing.T) {
 		t.Fatalf("New(Shanghai) error = %v", err)
 	}
 	instant := time.Date(2026, time.May, 8, 2, 0, 0, 0, time.UTC)
-	if got, want := newYork.Format(instant), "May 7, 2026, 22"; got != want {
+	if got, want := mustDateFormat(t, newYork, instant), "May 7, 2026, 22"; got != want {
 		t.Fatalf("New_York Format() = %q, want %q", got, want)
 	}
-	if got, want := shanghai.Format(instant), "May 8, 2026, 10"; got != want {
+	if got, want := mustDateFormat(t, shanghai, instant), "May 8, 2026, 10"; got != want {
 		t.Fatalf("Shanghai Format() = %q, want %q", got, want)
 	}
 }
@@ -1210,7 +1218,7 @@ func TestDateTimeFormatIgnoresMonotonicClock(t *testing.T) {
 	}
 	withMonotonic := time.Now()
 	withoutMonotonic := withMonotonic.Round(0)
-	if got, want := format.Format(withMonotonic), format.Format(withoutMonotonic); got != want {
+	if got, want := mustDateFormat(t, format, withMonotonic), mustDateFormat(t, format, withoutMonotonic); got != want {
 		t.Fatalf("Format(monotonic) = %q, want Format(Round(0)) %q", got, want)
 	}
 }
@@ -1227,11 +1235,11 @@ func TestDateTimeFormatConcurrentFormatCalls(t *testing.T) {
 	errCh := make(chan string, 16)
 	for range 16 {
 		go func() {
-			if got := format.Format(date); got != want {
+			if got := mustDateFormat(t, format, date); got != want {
 				errCh <- got
 				return
 			}
-			parts := format.FormatToParts(date)
+			parts := mustDateFormatToParts(t, format, date)
 			if len(parts) == 0 {
 				errCh <- "empty parts"
 				return
@@ -1253,7 +1261,7 @@ func TestDateTimeFormatDateStyleFull(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(DateStyle=full) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
 	if want := "Friday, May 8, 2026"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -1268,10 +1276,10 @@ func TestDateTimeFormatDateStyleUsesCLDRPattern(t *testing.T) {
 	}
 	date := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
 	gregorian := mustGregorianForDateLocale(t, "zh-Hans-CN")
-	if got, want := format.Format(date), "2026年5月8日星期五"; got != want {
+	if got, want := mustDateFormat(t, format, date), "2026年5月8日星期五"; got != want {
 		t.Fatalf("Format() = %q, want %q from CLDR pattern %q", got, want, gregorian.DateFormats[0])
 	}
-	parts := format.FormatToParts(date)
+	parts := mustDateFormatToParts(t, format, date)
 	wantParts := []Part{
 		{Type: PartYear, Value: "2026"},
 		{Type: PartLiteral, Value: "年"},
@@ -1294,7 +1302,7 @@ func TestDateTimeFormatDateStyleShortUsesCLDRPattern(t *testing.T) {
 		t.Fatalf("New(en-US dateStyle short) error = %v", err)
 	}
 	date := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
-	if got, want := format.Format(date), "5/8/26"; got != want {
+	if got, want := mustDateFormat(t, format, date), "5/8/26"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -1304,7 +1312,7 @@ func TestDateTimeFormatDateStyleShortUsesCLDRPattern(t *testing.T) {
 		{Type: PartLiteral, Value: "/"},
 		{Type: PartYear, Value: "26"},
 	}
-	if got := format.FormatToParts(date); !reflect.DeepEqual(got, wantParts) {
+	if got := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(got, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", got, wantParts)
 	}
 }
@@ -1316,7 +1324,7 @@ func TestDateTimeFormatTimeStyleShort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(TimeStyle=short) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
 	if want := "09:07"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -1334,7 +1342,7 @@ func TestDateTimeFormatTimeStyleMediumUsesCLDRPattern(t *testing.T) {
 	if got, want := gregorian.TimeFormats[2], "HH:mm:ss"; got != want {
 		t.Fatalf("CLDR medium time pattern = %q, want %q", got, want)
 	}
-	if got, want := format.Format(date), "09:07:06"; got != want {
+	if got, want := mustDateFormat(t, format, date), "09:07:06"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -1344,7 +1352,7 @@ func TestDateTimeFormatTimeStyleMediumUsesCLDRPattern(t *testing.T) {
 		{Type: PartLiteral, Value: ":"},
 		{Type: PartSecond, Value: "06"},
 	}
-	if parts := format.FormatToParts(date); !reflect.DeepEqual(parts, wantParts) {
+	if parts := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(parts, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", parts, wantParts)
 	}
 }
@@ -1357,7 +1365,7 @@ func TestDateTimeFormatTimeStyleLongUsesCLDRTimeZonePattern(t *testing.T) {
 		t.Fatalf("New(en-US timeStyle long) error = %v", err)
 	}
 	date := time.Date(2026, time.January, 8, 12, 7, 6, 0, time.UTC)
-	if got, want := format.Format(date), "07:07:06 EST"; got != want {
+	if got, want := mustDateFormat(t, format, date), "07:07:06 EST"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 	wantParts := []Part{
@@ -1369,7 +1377,7 @@ func TestDateTimeFormatTimeStyleLongUsesCLDRTimeZonePattern(t *testing.T) {
 		{Type: PartLiteral, Value: " "},
 		{Type: PartTimeZoneName, Value: "EST"},
 	}
-	if parts := format.FormatToParts(date); !reflect.DeepEqual(parts, wantParts) {
+	if parts := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(parts, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", parts, wantParts)
 	}
 }
@@ -1382,7 +1390,7 @@ func TestDateTimeFormatLongDateAndFullTimeStyles(t *testing.T) {
 		t.Fatalf("New(long dateStyle+full timeStyle) error = %v", err)
 	}
 	date := time.Date(2026, time.January, 8, 12, 7, 6, 0, time.UTC)
-	if got, want := format.Format(date), "January 8, 2026 at 07:07:06 Eastern Standard Time"; got != want {
+	if got, want := mustDateFormat(t, format, date), "January 8, 2026 at 07:07:06 Eastern Standard Time"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 }
@@ -1394,7 +1402,7 @@ func TestDateTimeFormatCombinesDateAndTimeStyles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(dateStyle+timeStyle) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
 	if want := "May 8, 2026, 09:07"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -1407,7 +1415,7 @@ func TestDateTimeFormatCombinesFullDateAndTimeStylesWithAtConnector(t *testing.T
 	if err != nil {
 		t.Fatalf("New(full dateStyle+short timeStyle) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
 	if want := "Friday, May 8, 2026 at 9:07 AM"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -1420,7 +1428,7 @@ func TestDateTimeFormatCombinesLongMonthDateAndTimeWithAtConnector(t *testing.T)
 	if err != nil {
 		t.Fatalf("New(long month date+time fields) error = %v", err)
 	}
-	got := format.Format(time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
+	got := mustDateFormat(t, format, time.Date(2026, time.May, 8, 9, 7, 0, 0, time.UTC))
 	if want := "May 8, 2026 at 9:07 AM"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
@@ -1440,7 +1448,7 @@ func TestDateTimeFormatCombinesDateAndTimeStylesWithCLDRConnector(t *testing.T) 
 		t.Fatalf("CLDR medium dateTime at pattern = %q, want date/time connector", pattern)
 	}
 
-	got := format.Format(date)
+	got := mustDateFormat(t, format, date)
 	if strings.Contains(got, ",") {
 		t.Fatalf("Format() = %q, want CLDR connector %q without hard-coded comma", got, pattern)
 	}
@@ -1458,7 +1466,7 @@ func TestDateTimeFormatCombinesDateAndTimeStylesWithCLDRConnector(t *testing.T) 
 		{Type: PartLiteral, Value: ":"},
 		{Type: PartMinute, Value: "07"},
 	}
-	if parts := format.FormatToParts(date); !reflect.DeepEqual(parts, wantParts) {
+	if parts := mustDateFormatToParts(t, format, date); !reflect.DeepEqual(parts, wantParts) {
 		t.Fatalf("FormatToParts() = %#v, want %#v", parts, wantParts)
 	}
 }
@@ -1470,7 +1478,7 @@ func TestDateTimeFormatBasicMatcherWithComponents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New(FormatMatcher=basic) error = %v", err)
 	}
-	if got, want := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)), "May 8, 2026"; got != want {
+	if got, want := mustDateFormat(t, format, time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)), "May 8, 2026"; got != want {
 		t.Fatalf("Format() = %q, want %q", got, want)
 	}
 }
@@ -1498,7 +1506,7 @@ func TestDateTimeFormatResolvedComponentsFollowSelectedPattern(t *testing.T) {
 			if got, want := ecma402.ResolvedScalarValue(resolved.Minute), TwoDigitFieldStyle; got != want {
 				t.Fatalf("ResolvedOptions().Minute = %q, want selected pattern width %q", got, want)
 			}
-			if got, want := format.Format(time.Date(2026, time.January, 1, 9, 5, 0, 0, time.UTC)), "9:05 AM"; got != want {
+			if got, want := mustDateFormat(t, format, time.Date(2026, time.January, 1, 9, 5, 0, 0, time.UTC)), "9:05 AM"; got != want {
 				t.Fatalf("Format() = %q, want %q", got, want)
 			}
 		})
@@ -1532,7 +1540,7 @@ func TestDateTimeFormatRangeEqualInstantsUsesSingleFormat(t *testing.T) {
 		t.Fatalf("New(date fields) error = %v", err)
 	}
 	date := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
-	if got, want := mustFormatRange(t, format, date, date), format.Format(date); got != want {
+	if got, want := mustFormatRange(t, format, date, date), mustDateFormat(t, format, date); got != want {
 		t.Fatalf("FormatRange(equal) = %q, want %q", got, want)
 	}
 }
@@ -1818,11 +1826,11 @@ func TestDateTimeFormatRangePreservesReversedInputOrder(t *testing.T) {
 	}
 	start := time.Date(2027, time.June, 10, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)
-	got := format.FormatRange(start, end)
+	got := mustDateFormatRange(t, format, start, end)
 	if want := "Jun 10, 2027\u2009–\u2009May 8, 2026"; got != want {
 		t.Fatalf("FormatRange(reversed) = %q, want %q", got, want)
 	}
-	parts := format.FormatRangeToParts(start, end)
+	parts := mustDateFormatRangeToParts(t, format, start, end)
 	if joined := joinRangePartValues(parts); joined != got {
 		t.Fatalf("joined FormatRangeToParts(reversed) = %q, want %q", joined, got)
 	}
@@ -1882,11 +1890,11 @@ func TestDateTimeFormatRangePreservesReversedTimeAndFallbackOrder(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			got := format.FormatRange(tc.start, tc.end)
+			got := mustDateFormatRange(t, format, tc.start, tc.end)
 			if got != tc.want {
 				t.Fatalf("FormatRange(reversed) = %q, want %q", got, tc.want)
 			}
-			parts := format.FormatRangeToParts(tc.start, tc.end)
+			parts := mustDateFormatRangeToParts(t, format, tc.start, tc.end)
 			if joined := joinRangePartValues(parts); joined != got {
 				t.Fatalf("joined FormatRangeToParts(reversed) = %q, want %q", joined, got)
 			}
@@ -1942,7 +1950,11 @@ func ExampleDateTimeFormat_Format() {
 		panic(err)
 	}
 
-	fmt.Println(format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)))
+	out, err := format.Format(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
 
 	// Output:
 	// May 8, 2026
@@ -1954,7 +1966,11 @@ func ExampleDateTimeFormat_Format_timezone() {
 		panic(err)
 	}
 
-	fmt.Println(format.Format(time.Date(2026, time.January, 8, 12, 0, 0, 0, time.UTC)))
+	out, err := format.Format(time.Date(2026, time.January, 8, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out)
 
 	// Output:
 	// 7 AM Eastern Time
@@ -1966,7 +1982,11 @@ func ExampleDateTimeFormat_FormatToParts() {
 		panic(err)
 	}
 
-	for _, part := range format.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC)) {
+	parts, err := format.FormatToParts(time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		panic(err)
+	}
+	for _, part := range parts {
 		fmt.Printf("%s=%q\n", part.Type, part.Value)
 	}
 

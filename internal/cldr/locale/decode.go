@@ -24,8 +24,6 @@ const Undefined Locale = 0
 
 type maximizeSubtagRecord struct{ key, lang, script, region string }
 
-type minimizeSubtagRecord struct{ lang, script, region, minimized string }
-
 type scriptDirectionRecord struct {
 	script string
 	rtl    bool
@@ -43,7 +41,6 @@ var (
 
 	likelySubtagsOnce sync.Once
 	likelySubtags     []maximizeSubtagRecord
-	minimizeSubtags   []minimizeSubtagRecord
 
 	scriptDirectionOnce sync.Once
 	scriptDirections    []scriptDirectionRecord
@@ -68,9 +65,6 @@ func loadLocaleRegistry() {
 func loadLikelySubtags() {
 	max := codec.NewReader(_maximizeBlob)
 	likelySubtags = codec.CountedSlice[maximizeSubtagRecord](&max, decodeMaximizeSubtagRecord)
-
-	min := codec.NewReader(_minimizeBlob)
-	minimizeSubtags = codec.CountedSlice[minimizeSubtagRecord](&min, decodeMinimizeSubtagRecord)
 }
 
 func decodeMaximizeSubtagRecord(r *codec.Reader) maximizeSubtagRecord {
@@ -79,15 +73,6 @@ func decodeMaximizeSubtagRecord(r *codec.Reader) maximizeSubtagRecord {
 		lang:   r.StringRef(_data),
 		script: r.StringRef(_data),
 		region: r.StringRef(_data),
-	}
-}
-
-func decodeMinimizeSubtagRecord(r *codec.Reader) minimizeSubtagRecord {
-	return minimizeSubtagRecord{
-		lang:      r.StringRef(_data),
-		script:    r.StringRef(_data),
-		region:    r.StringRef(_data),
-		minimized: r.StringRef(_data),
 	}
 }
 

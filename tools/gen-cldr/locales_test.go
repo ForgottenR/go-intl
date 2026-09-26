@@ -59,7 +59,7 @@ func TestRunGeneratesLocalesAndLikelySubtags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read locale/data.go: %v", err)
 	}
-	if !containsAll(string(payload), "package cldrlocale", "const _data", "_localeBlob", "_maximizeBlob", "_minimizeBlob", "_directionBlob", "_numberingBlob") {
+	if !containsAll(string(payload), "package cldrlocale", "const _data", "_localeBlob", "_maximizeBlob", "_directionBlob", "_numberingBlob") {
 		t.Fatalf("locale/data.go missing expected const payload:\n%s", payload)
 	}
 	// The _data const is emitted in 64-byte chunks, so locale tags can straddle a
@@ -77,46 +77,6 @@ func TestRunGeneratesLocalesAndLikelySubtags(t *testing.T) {
 	}
 	if !containsAll(string(manifest), "package cldrlocale", "type DataManifest struct", "func Manifest() DataManifest") {
 		t.Fatalf("locale/manifest.go missing expected content:\n%s", manifest)
-	}
-}
-
-func TestRunPrefersLanguageMinimizeAlias(t *testing.T) {
-	t.Parallel()
-
-	dir := t.TempDir()
-	root := filepath.Join(dir, "node_modules")
-	writeRuntimeCLDRFixtures(t, root)
-	likely := `{"supplemental":{"likelySubtags":{"und_CN":"zh_Hans_CN","zh":"zh_Hans_CN","zh_Hant":"zh_Hant_TW","und_Hant":"zh_Hant_TW"}}}`
-	if err := os.WriteFile(filepath.Join(root, "cldr-core", "supplemental", "likelySubtags.json"), []byte(likely), 0o666); err != nil {
-		t.Fatalf("write likelySubtags: %v", err)
-	}
-	out := filepath.Join(dir, "out")
-	if err := os.MkdirAll(out, 0o777); err != nil {
-		t.Fatalf("mkdir out: %v", err)
-	}
-	versionPath := filepath.Join(out, "VERSION")
-	if err := os.WriteFile(versionPath, []byte("cldr=48.1.0\nicu=78\ntzdata=2025b\n"), 0o666); err != nil {
-		t.Fatalf("write VERSION: %v", err)
-	}
-
-	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
-		t.Fatalf("Run: %v", err)
-	}
-	// The minimize-alias preference is an extract-layer decision verified
-	// byte-for-byte through the production accessors in the locale kernel
-	// round-trip gate. Here we assert the kernel payload is emitted and carries
-	// the minimized zh alias rather than the und-CN key in its _data table.
-	payload, err := os.ReadFile(filepath.Join(out, "locale", "data.go"))
-	if err != nil {
-		t.Fatalf("read locale/data.go: %v", err)
-	}
-	if !containsAll(string(payload), "package cldrlocale", "_minimizeBlob") {
-		t.Fatalf("locale/data.go missing minimize blob:\n%s", payload)
-	}
-	reconstructed := readGeneratedStringTable(t, filepath.Join(out, "locale", "data.go"))
-	if !strings.Contains(reconstructed, "zh") {
-		t.Fatalf("locale/data.go _data missing minimized zh alias:\n%s", payload)
 	}
 }
 

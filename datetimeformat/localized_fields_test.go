@@ -74,10 +74,10 @@ func TestDateTimeFormatLocalizedFieldWidths(t *testing.T) {
 			if err != nil {
 				t.Fatalf("New() error = %v", err)
 			}
-			if got := format.Format(tc.date); got != tc.want {
+			if got := mustDateFormat(t, format, tc.date); got != tc.want {
 				t.Fatalf("Format() = %q, want %q", got, tc.want)
 			}
-			parts := format.FormatToParts(tc.date)
+			parts := mustDateFormatToParts(t, format, tc.date)
 			var joined string
 			for _, part := range parts {
 				joined += part.Value
@@ -106,8 +106,8 @@ func TestDateTimeFormatLocalizedRangeNamesKeepSources(t *testing.T) {
 	}
 	start := time.Date(2026, time.March, 28, 22, 30, 0, 0, time.UTC)
 	end := time.Date(2026, time.March, 29, 1, 30, 0, 0, time.UTC)
-	text := format.FormatRange(start, end)
-	parts := format.FormatRangeToParts(start, end)
+	text := mustDateFormatRange(t, format, start, end)
+	parts := mustDateFormatRangeToParts(t, format, start, end)
 	var joined string
 	seen := map[RangeSource]bool{}
 	for _, part := range parts {

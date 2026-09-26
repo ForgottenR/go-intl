@@ -27,19 +27,19 @@ This SPEC does not redefine:
 
 1. The SHA-256-pinned official IANA release archive **MUST** own the complete legal Zone/Link identifier set and `zone.tab` region assignments used by ECMA-402 identifier records.
 2. CLDR BCP47 `timezone.json` **MUST** refine stable primary-identifier selection and rename state for IANA identifiers. It does not define the complete legal identifier set.
-3. IANA transition bytes **MUST** be injected via the Go official `_ "time/tzdata"` blank import. The Go transition-data version must be at least the pinned IANA identity version.
+3. Go `time.LoadLocation` owns transition lookup; `_ "time/tzdata"` supplies a fallback when no external zoneinfo is found. The bundled transition-data version must not predate the pinned IANA identity version.
 4. **It is forbidden** to copy tzif files or transition tables into generated project data.
-5. **FORBIDDEN** host-only `/usr/share/zoneinfo`: deployment to Alpine/scratch containers must retain named-zone behavior through the embedded Go data.
+5. Minimal deployment images retain named-zone behavior through the embedded fallback. Host zoneinfo may take precedence.
 6. **FORBIDDEN** from transplanting Generated reference's `tz_data.tar.gz` pipeline (zdump + Docker + base36 encoding) - Go already owns transition decoding.
 
 > **Why**:
 > 1. The official IANA archive is the only complete identity source; CLDR carries the primary-name policy that ECMA-402/ICU observes, while Go carries executable transitions. Treating any one of the three as all-purpose data loses either identifiers, canonicalization, or transitions.
 > 2. `time/tzdata` is maintained by the Go team and has the same origin as IANA tzdata. ~450 KB increments added to the binary are acceptable (Go binary is usually 10–50 MB).
 > 3. ECMA-402 requires three types of input to coexist: `"Etc/UTC"` / `"America/New_York"` / `"+05:30"`; the first two types use registered identifiers and Go transitions, and the third type parses directly.
-> 4. SPEC 00 §5.4 has stated that "we want deterministic output" - the system zoneinfo is not deterministic in different deployment environments.
+> 4. Deployment must account for the actual transition source: `ZONEINFO`, system paths, `GOROOT/lib/time/zoneinfo.zip`, then embedded fallback. The identity and CLDR display pins alone do not freeze host transitions.
 >
 > **Rejected**:
-> - **Dependent system zoneinfo**: Alpine/scratch container has no files, prod/dev failure mode is inconsistent.
+> - **Host-only zoneinfo**: minimal images may have no zone files; retain the embedded fallback.
 > - **Transplanting Generated reference tz_data**: CI is highly complex (Docker is required to run zic), and the packed binary format is difficult to mechanically translate on the Go side.
 > - **Automatic zone-transition table codegen**:`time/tzdata` is already the minimum trusted source and has no profit.
 
@@ -72,7 +72,7 @@ This SPEC does not redefine:
 package tz
 
 func Resolve(name string) (*time.Location, error)
-func Default() (string, *time.Location)
+func Default() (string, *time.Location, error)
 func ParseOffsetString(s string) (int64, error)        // ms east of UTC
 func CanonicalLink(name string) string                 // "US/Eastern" → "America/New_York"
 func LookupIdentifier(name string) (IdentifierRecord, bool)
@@ -187,12 +187,12 @@ End int64 //, MaxInt64 means +∞
 
 1. The tzdata version number **MUST** be written into the `internal/cldr/VERSION` single file, as a `tzdata=2025b` line (the same file as `cldr=` / `icu=`).
 2. CI **MUST** verify that the embedded IANA version of `time/tzdata` is consistent with the `VERSION` file; inconsistency is a block.
-3. The tzdata version and the CLDR/ICU version **MUST** be bumped at the same time; bumping either one independently is a PR block.
+3. IANA identity, CLDR display, and Go transition data have separate owners and release cycles; bump each when its data changes.
 4. Inconsistencies between tzdata and metaZones **MUST** be authoritative (behavioral correctness > display name consistency); disagreements are logged to `divergences.md`.
 
-> **Why**: tzdata and CLDR are released independently (IANA multiple times a year, CLDR twice a year); version inconsistency will cause `LookupAt(loc, t)` and metaZones data to have a corner case of "the moment should be in metazone X, but tzdata has changed". Pin the same file + CI check to avoid drift.
+> **Why**: tzdata and CLDR are released independently (IANA multiple times a year, CLDR twice a year); version inconsistency will cause `LookupAt(loc, t)` and metaZones data to have a corner case of "the moment should be in metazone X, but tzdata has changed". Record the versions and verify the bundled fallback floor; preflight cannot verify the actual host transition version.
 >
-> **Rejected**: Let tzdata and CLDR bump independently - the cost of time zone data drift is much higher than the cost of "unified bump once".
+> **Rejected**: Require simultaneous tzdata and CLDR upgrades despite their independent release cycles.
 
 ---
 
@@ -351,7 +351,7 @@ From, To time.Duration // Time offset from 00:00 on the current day
 - **Disabled** Runtime JSON parsing `metaZones.json` - Must codegen output Go literal.
 - **BANNED** `//go:embed metaZones.json` + `encoding/json/v2` paths - Conflicts with SPEC 50 "no runtime file I/O".
 - **FORBIDDEN** advertising or generating active non-Gregorian calendar data, including Buddhist placeholders, without formatter local-time projection, pattern / part behavior, and conformance fixtures in the same change.
-- **Disabled** The tzdata version is bumped independently from the CLDR / ICU version - must be the same as the `internal/cldr/VERSION` file, CI verification.
+- **Allowed** IANA identity, CLDR display, and Go transition data may advance independently; verify each owner and the bundled fallback floor.
 - **BANNED** `dayPeriodRules` only generates `en` - must fully codegen all active scope locales.
 - **BANNED** `dayPeriodRules` only covers `noon` / `midnight` - must be full flex(morning1/afternoon1/evening1/night1).
 - **BANNED** `Format` paths calling `internal/tz.Resolve` or `time.LoadLocation` -- must cache `*time.Location` when `New` does (SPEC 30 §4.2).

@@ -42,7 +42,8 @@ func AdjustFieldTypes(format Formats, opts Options) Formats {
 	adjustNumericField(&format, &format.Year, opts.Year, 'y')
 	if opts.Month != "" && format.Month != opts.Month {
 		if canAdjustFieldStyle(format.Pattern, monthPatternFields, opts.Month) {
-			format.Pattern = adjustPatternFields(format.Pattern, monthPatternFields, fieldPatternWidth('M', opts.Month))
+			format.Pattern = adjustPatternFields(format.Pattern, "M", fieldPatternWidth('M', opts.Month))
+			format.Pattern = adjustPatternFields(format.Pattern, "L", fieldPatternWidth('L', opts.Month))
 			format.Month = opts.Month
 		}
 	}

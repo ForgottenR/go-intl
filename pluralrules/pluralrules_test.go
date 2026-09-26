@@ -348,7 +348,7 @@ func TestPluralRulesDecimalRejectsMalformed(t *testing.T) {
 		t.Fatalf("Decimal(invalid) error = %v, want intlerr.ErrInvalidValue and ErrInvalidDecimal", err)
 	} else {
 		testcontract.AssertIntlError(t, err, intlerr.InvalidValue, "pluralrules", "decimal", "not-a-number", "")
-		testcontract.AssertErrorExpected(t, err, "a well-formed decimal string, NaN, Infinity, or -Infinity")
+		testcontract.AssertErrorExpected(t, err, "an Intl numeric string (decimal, binary, octal, hexadecimal, or Infinity), or NaN")
 	}
 }
 

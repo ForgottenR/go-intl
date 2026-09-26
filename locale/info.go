@@ -43,11 +43,11 @@ func (w WeekInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (l Locale) GetCalendars() []string {
-	if l.ext.calendar != "" {
-		return []string{l.ext.calendar}
+	if value, present := l.ext.keywords["ca"]; present {
+		return []string{value}
 	}
 	preference := l.regionPreference()
-	calendars := normalizeCalendarList(cldrlocale.CalendarPreference(preference.lookupRegion(cldrlocale.HasCalendarPreference)))
+	calendars := cldrlocale.CalendarPreference(preference.lookupRegion(cldrlocale.HasCalendarPreference))
 	supported := cldrdate.SupportedCalendars()
 	out := make([]string, 0, len(calendars))
 	for _, calendar := range calendars {
@@ -62,23 +62,23 @@ func (l Locale) GetCalendars() []string {
 }
 
 func (l Locale) GetCollations() []string {
-	if l.ext.collation != "" {
-		return []string{l.ext.collation}
+	if value, present := l.ext.keywords["co"]; present {
+		return []string{value}
 	}
 	return nil
 }
 
 func (l Locale) GetHourCycles() []string {
-	if l.ext.hourCycle != "" {
-		return []string{l.ext.hourCycle}
+	if value, present := l.ext.keywords["hc"]; present {
+		return []string{value}
 	}
 	preference := l.regionPreference()
 	return slices.Clone(cldrlocale.HourCyclePreference(preference.lookupRegion(cldrlocale.HasHourCyclePreference)))
 }
 
 func (l Locale) GetNumberingSystems() []string {
-	if l.ext.numberingSystem != "" {
-		return []string{l.ext.numberingSystem}
+	if value, present := l.ext.keywords["nu"]; present {
+		return []string{value}
 	}
 	if resolved, ok := cldrlocale.ResolveLocale(l.tag.String()); ok {
 		if numberingSystem := resolved.DefaultNumberingSystem(); numberingSystem != "" {
@@ -103,8 +103,8 @@ func (l Locale) GetWeekInfo() WeekInfo {
 	start, end := cldrlocale.Weekend(region)
 	weekend := weekdaysBetween(start, end)
 	first := cldrlocale.FirstDayOfWeek(region)
-	if l.ext.firstDayOfWeek != "" {
-		first = weekdayFromString(l.ext.firstDayOfWeek)
+	if day, ok := weekdayFromString(l.ext.keywords["fw"]); ok {
+		first = day
 	}
 	return WeekInfo{FirstDay: first, Weekend: weekend}
 }
@@ -194,14 +194,6 @@ func validSubdivisionSuffix(s string) bool {
 	return true
 }
 
-func normalizeCalendarList(in []string) []string {
-	out := make([]string, len(in))
-	for i, cal := range in {
-		out[i], _ = normalizeUnicodeType("ca", cal)
-	}
-	return out
-}
-
 func weekdaysBetween(start, end time.Weekday) []time.Weekday {
 	weekend := []time.Weekday{start}
 	for day := start; day != end; {
@@ -211,24 +203,24 @@ func weekdaysBetween(start, end time.Weekday) []time.Weekday {
 	return weekend
 }
 
-func weekdayFromString(s string) time.Weekday {
+func weekdayFromString(s string) (time.Weekday, bool) {
 	switch s {
 	case "sun", "7":
-		return time.Sunday
+		return time.Sunday, true
 	case "mon", "1":
-		return time.Monday
+		return time.Monday, true
 	case "tue", "2":
-		return time.Tuesday
+		return time.Tuesday, true
 	case "wed", "3":
-		return time.Wednesday
+		return time.Wednesday, true
 	case "thu", "4":
-		return time.Thursday
+		return time.Thursday, true
 	case "fri", "5":
-		return time.Friday
+		return time.Friday, true
 	case "sat", "6":
-		return time.Saturday
+		return time.Saturday, true
 	}
-	return time.Monday
+	return 0, false
 }
 
 func weekdayNumber(day time.Weekday) int {

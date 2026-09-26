@@ -18,7 +18,7 @@ func BenchmarkDateTimeFormat_DateStyleShort_PerCall(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		_ = format.Format(date)
+		_, _ = format.Format(date)
 	}
 }
 
@@ -28,7 +28,7 @@ func BenchmarkDateTimeFormat_DateStyleShort_Cached(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = format.Format(date)
+		_, _ = format.Format(date)
 	}
 }
 
@@ -39,7 +39,7 @@ func BenchmarkDateTimeFormat_DateTimeRange_Cached(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = format.FormatRange(start, end)
+		_, _ = format.FormatRange(start, end)
 	}
 }
 
@@ -49,7 +49,7 @@ func BenchmarkDateTimeFormat_FormatToParts_Cached(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
-		_ = format.FormatToParts(date)
+		_, _ = format.FormatToParts(date)
 	}
 }
 

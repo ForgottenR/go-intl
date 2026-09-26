@@ -9,7 +9,7 @@
       "timeZone": "Europe/Amsterdam",
       "timeZoneName": "short"
     },
-    "input": "2020-09-16T09:55:32Z",
+    "input": "2020-09-16T09:55:32.491Z",
     "expected": "11:55 AM GMT+2"
   },
   {

@@ -18,19 +18,23 @@ func weekdayName(gregorian *cldrdate.Gregorian, weekday time.Weekday, width int)
 	return gregorian.Weekdays.Abbr[int(weekday)]
 }
 
-func monthName(gregorian *cldrdate.Gregorian, month time.Month, width int, numberingSystem string) string {
+func monthName(gregorian *cldrdate.Gregorian, month time.Month, width int, numberingSystem string, standalone bool) string {
 	idx := int(month) - 1
+	names := gregorian.Months
+	if standalone {
+		names.Wide, names.Abbr, names.Narrow = names.StandWide, names.StandAbbr, names.StandNarrow
+	}
 	switch width {
 	case 1:
 		return localizedNumericField(int(month), width, numberingSystem)
 	case 2:
 		return localizedNumericField(int(month), width, numberingSystem)
 	case 3:
-		return gregorian.Months.Abbr[idx]
+		return names.Abbr[idx]
 	case 4:
-		return gregorian.Months.Wide[idx]
+		return names.Wide[idx]
 	default:
-		return gregorian.Months.Narrow[idx]
+		return names.Narrow[idx]
 	}
 }
 
