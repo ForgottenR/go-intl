@@ -70,9 +70,7 @@ func formatDecimalOperandToPartsAppend(parts []Part, d decimal.Decimal, state *d
 	case StandardNotation:
 		result := ecma402nf.FormatNumericToString(d, digitOptions)
 		formatted := result.Formatted
-		if shouldUseGrouping(resolved.UseGrouping, formatted) {
-			formatted = groupDecimal(formatted, grouping)
-		}
+		formatted = groupDecimal(formatted, grouping)
 		parts = appendDecimalParts(parts, formatted, symbols)
 		parts = applySignDisplay(parts, d.Negative(), signDisplay, symbols)
 		operand = stylePluralOperand{formatted: result.Formatted, finite: true}
@@ -118,7 +116,7 @@ func applySpecialSignDisplay(parts []Part, negative bool, nan bool, signDisplay 
 	if !ok {
 		return parts
 	}
-	return prependPart(Part{Type: sign, Value: signValue(sign, symbols)}, parts)
+	return prependBidiSymbol(Part{Type: sign, Value: signValue(sign, symbols)}, parts)
 }
 
 func applySignDisplay(parts []Part, negative bool, signDisplay SignDisplay, symbols cldrnumber.NumberSymbols) []Part {
@@ -128,14 +126,7 @@ func applySignDisplay(parts []Part, negative bool, signDisplay SignDisplay, symb
 	if !ok {
 		return parts
 	}
-	return prependPart(Part{Type: sign, Value: signValue(sign, symbols)}, parts)
-}
-
-func prependPart(part Part, parts []Part) []Part {
-	out := make([]Part, len(parts)+1)
-	out[0] = part
-	copy(out[1:], parts)
-	return out
+	return prependBidiSymbol(Part{Type: sign, Value: signValue(sign, symbols)}, parts)
 }
 
 func displaySign(signDisplay SignDisplay, negative, zero, nan bool) (PartType, bool) {

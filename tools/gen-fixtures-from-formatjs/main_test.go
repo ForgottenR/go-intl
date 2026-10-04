@@ -1368,7 +1368,7 @@ func TestParseRangePartArrayMapsFormatJSRangePartRecords(t *testing.T) {
 func TestParseOptionsObjectMapsFormatJSOptionBag(t *testing.T) {
 	t.Parallel()
 
-	got := parseOptionsObject(`{
+	got, ok := parseOptionsObject(`{
   style: 'digital',
   fractionalDigits: 3,
   useGrouping: false,
@@ -1376,7 +1376,10 @@ func TestParseOptionsObjectMapsFormatJSOptionBag(t *testing.T) {
   numeric: 'auto',
 	numeric: false,
 }`)
-	want := `{"fractionalDigits":3,"minimumIntegerDigits":1000,"numeric":"auto","style":"digital","useGrouping":false}`
+	if !ok {
+		t.Fatal("literal options were not understood")
+	}
+	want := `{"fractionalDigits":3,"minimumIntegerDigits":1000,"numeric":false,"style":"digital","useGrouping":false}`
 	assertJSONEqual(t, "parseOptionsObject()", got, want)
 }
 
@@ -2075,10 +2078,13 @@ func TestCommittedNodeFixturesAreGeneratedOrExplicitlyManual(t *testing.T) {
 	}
 	generated[filepath.Join(nodeSupportedValuesPath(nodeDir)...)] = true
 	manual := map[string]string{
-		filepath.Join("datetimeformat", "testdata", "conformance", nodeDir, "deep-contract.json"): "deep DateTimeFormat range/parts contracts are still hand-curated",
-		filepath.Join("locale", "testdata", "conformance", nodeDir, "errors.json"):                "Locale constructor errors are still hand-curated",
-		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact.json"):          "compact PluralRules Node witness is hand-curated until node-witness owns compact groups",
-		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact-review.json"):   "Node 26.8.1 hand-curated compact divergence review in pluralrules/testdata/compact-review.md",
+		filepath.Join("datetimeformat", "testdata", "conformance", nodeDir, "deep-contract.json"):        "deep DateTimeFormat range/parts contracts are still hand-curated",
+		filepath.Join("datetimeformat", "testdata", "conformance", nodeDir, "range-spacing-review.json"): "Node 26.10.0 hand-curated text/parts witnesses for datetimeformat/testdata/divergences.md",
+		filepath.Join("listformat", "testdata", "conformance", nodeDir, "contextual-spanish.json"):       "Node 26.10.0 hand-curated Spanish contextual conjunction/disjunction witnesses",
+		filepath.Join("listformat", "testdata", "conformance", nodeDir, "contextual-hebrew.json"):        "Node 26.10.0 hand-curated Hebrew contextual vav witnesses",
+		filepath.Join("locale", "testdata", "conformance", nodeDir, "errors.json"):                       "Locale constructor errors are still hand-curated",
+		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact.json"):                 "compact PluralRules Node witness is hand-curated until node-witness owns compact groups",
+		filepath.Join("pluralrules", "testdata", "conformance", nodeDir, "compact-review.json"):          "Node 26.8.1 hand-curated compact divergence review in pluralrules/testdata/compact-review.md",
 	}
 
 	var unexpected []string

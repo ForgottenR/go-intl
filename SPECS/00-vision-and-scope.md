@@ -83,12 +83,13 @@ Only reference trees with compatible root licensing and direct project value bel
 
 ### 2.3 Test fixture policy
 
-We pull **language-agnostic input/output pairs** from three sources and run them through one Go harness per package that asserts byte-equality:
+We pull **language-agnostic input/output pairs** from three sources and run them through one Go harness per package that asserts declared observations:
 
 | Source | Path | Format | Used for |
 |--------|------|--------|----------|
 | generated-reference tests | checked-in reference tests + locale-data JSON | Static assertions with inline expectations | Primary conformance — every public formatter must pass extracted cases or record explicit debt |
 | native-engine snapshots | generated JSON witness files | Runtime snapshots extracted from native Intl behavior | Cross-validation for implementation-defined output and backend-capability boundaries |
+| manual cases | source-owned JSON cases and package tests | Focused counterexamples with reference provenance | Behavior boundaries not reducible by the generated extractor |
 
 **Porting flow:**
 
@@ -243,7 +244,7 @@ CLDR data is **compiled into Go source** via a generator under `tools/gen-cldr/`
 
 Decisions:
 
-- **No runtime JSON parsing.** All decoding happens at generation time.
+- **No runtime JSON parsing.** Source JSON is decoded at generation time; generated packed Go payloads are decoded lazily by their domain accessors.
 - **Single CLDR profile, honest supported sets.** `tools/locale-profile.json` lists the generated CLDR payload target for number, date, plural, list, relative time, duration, display names, units, currency, and time-zone display. Constructors derive `SupportedLocalesOf` from the generated payloads they consume. No constructor may advertise a locale before its backing data can support it. See SPEC 50 §1.3.
 - **CLDR version is pinned.** The pinned version lives in `internal/cldr/VERSION` and is referenced by the generator. Changing it is a SPEC-affecting decision.
 
@@ -252,8 +253,8 @@ Decisions:
 `Intl.DateTimeFormat` requires IANA time-zone data and DST offset arithmetic:
 
 - `internal/tz/tzdata.go` blank-imports `time/tzdata` so `time.LoadLocation` has an IANA fallback on minimal deploy images; ZONEINFO, host and GOROOT data may take precedence.
-- The pinned tzdata version is recorded alongside CLDR / ICU in `internal/cldr/VERSION`.
-- Canonical-name resolution (`US/Eastern` → `America/New_York`) goes through generated CLDR canonical-link tables.
+- The identity pin and archive hash live in `tools/gen-cldr/tzdata.json`; generated manifest metadata records the inputs. Go transition data must be no older than that pin and may come from a newer host or toolchain.
+- Canonical-name resolution (`US/Eastern` → `America/New_York`) uses `internal/tz`'s generated IANA/CLDR registry. Localized names use a separate CLDR display join; display coverage does not define identifier legality.
 
 ---
 
@@ -291,6 +292,15 @@ Until a new ECMA-402 edition expands the surface:
 - new Intl families enter only with an owning SPEC and complete implementation;
 - optimization work must preserve the public API and byte-equal output;
 - data-size work must keep runtime CLDR data embedded in generated Go source.
+
+Improvement work starts from a reproducible behavior defect or a demonstrated
+maintenance cost, with current source and direct reference paths plus a bounded
+acceptance check. A completed behavior is removed from the work list. A
+speculative engine rewrite, public registry/configuration layer, extra cache
+platform, or unmeasured data preload has no task until evidence identifies the
+specific failure it would resolve. Existing constructor programs, per-domain
+accessors, and source-owned fixtures already provide those boundaries; adding
+parallel owners would make their facts harder to keep consistent.
 
 ---
 

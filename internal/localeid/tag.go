@@ -6,6 +6,16 @@ import (
 	"golang.org/x/text/language"
 )
 
+// ParseTag uses x/text's Unicode aliases while retaining explicit scripts.
+func ParseTag(s string) (language.Tag, error) {
+	tag, err := language.Parse(s)
+	if err != nil {
+		return tag, err
+	}
+	// Apply macro aliases separately: Legacy|CLDR would conflate no and nb.
+	return (language.Macro | language.CLDR).Canonicalize(tag)
+}
+
 func Parts(tag language.Tag) (lang, script, region string) {
 	base, scr, reg := tag.Raw()
 	lang = base.String()
@@ -60,5 +70,5 @@ func ReplaceLanguageSubtags(tag language.Tag, lang, script, region string) (lang
 	for _, extension := range tag.Extensions() {
 		parts = append(parts, extension.String())
 	}
-	return language.Parse(strings.Join(parts, "-"))
+	return ParseTag(strings.Join(parts, "-"))
 }

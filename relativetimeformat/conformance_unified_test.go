@@ -16,41 +16,44 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		if fixture.IsSupportedLocalesOf() {
-			runSupportedLocalesFixture(t, fixture)
-			return
-		}
+	conformance.RunFixtures(t, ".", runRelativeConformanceFixture)
+}
 
-		format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceRelativeOptions(t, fixture))
-		if fixture.ErrorCode == "invalid_option" {
-			testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
-				return conformanceRelativeOptionError(t, code)
-			})
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
+func runRelativeConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
 
-		input := conformanceRelativeInput(t, fixture)
-		got, parts, err := conformanceRelativeOutput(t, format, input)
-		if testcontract.AssertErrorCode(t, "Format()", err, fixture.ErrorCode, func(code string) error {
-			return conformanceRelativeFormatError(t, code)
-		}) {
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		want := fixture.RequiredExpected(t)
-		if got != want {
-			t.Fatalf("Format(%v, %q) = %q, want %q", input.Value, input.Unit, got, want)
-		}
-		if len(fixture.ExpectedParts) > 0 {
-			testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceRelativePart)
-		}
-	})
+	if fixture.IsSupportedLocalesOf() {
+		runSupportedLocalesFixture(t, fixture)
+		return
+	}
+
+	format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceRelativeOptions(t, fixture))
+	if fixture.ErrorCode == "invalid_option" {
+		testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+			return conformanceRelativeOptionError(t, code)
+		})
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	input := conformanceRelativeInput(t, fixture)
+	got, parts, err := conformanceRelativeOutput(t, format, input)
+	if testcontract.AssertErrorCode(t, "Format()", err, fixture.ErrorCode, func(code string) error {
+		return conformanceRelativeFormatError(t, code)
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.Expected != nil && got != *fixture.Expected {
+		t.Fatalf("Format(%v, %q) = %q, want %q", input.Value, input.Unit, got, *fixture.Expected)
+	}
+	if fixture.ExpectedParts != nil {
+		testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceRelativePart)
+	}
 }
 
 func TestConformanceRelativeOptionsPreserveExplicitEmptyString(t *testing.T) {

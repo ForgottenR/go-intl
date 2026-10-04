@@ -10,8 +10,8 @@ Reviewed 2026-09-25 against FormatJS revision
 | `index-test-ts-044` | 1200000 | `other`, `index.test.ts:252` | `many` | Same difference, second source assertion |
 
 All three use locale `fr` and `{notation: "compact"}` without other options.
-The original generated assertions remain in
-`pluralrules/testdata/conformance/formatjs/index-test-ts.json`.
+These were the original generated assertions at the reviewed revision.
+They are no longer present after the 2026-10-03 source refresh.
 
 ## Why the assertions differ
 
@@ -77,3 +77,11 @@ reference update or by 2026-12-31. Resolve each record if its assertion/setup
 aligns with complete compact data; reconsider the product behavior if the
 ECMA-402 operation or pinned CLDR rule changes. Never change the extracted
 `other` assertions or suppress the native `many` witnesses to make a gate pass.
+
+## Source refresh on 2026-10-03
+
+The current `.references/formatjs/packages/intl-pluralrules/tests/index.test.ts`
+now expects `many` for compact selection without ambient NumberFormat data and
+adds rounded-magnitude cases. The three original assertions no longer exist;
+their ledger records are resolved history, not exemptions for newly numbered
+fixtures. Native compact witnesses retain their original version and values.

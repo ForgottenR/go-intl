@@ -12,7 +12,7 @@ task modules:verify       # test + vet + tidy diff for root and three tools modu
 task lint                 # go mod tidy diff check + pinned golangci-lint v2
 task fmt                  # golangci-lint fmt ./...
 task vet                  # go vet ./...
-task verify               # deps + fmt + vet + lint + test + conformance + data contract + vuln
+task verify               # deps + fmt + vet + lint + test + modules + conformance + data contract + vuln
 task vuln                 # govulncheck ./...
 task deps                 # go mod download && go mod tidy
 task deps:update          # update root and nested module dependencies
@@ -21,6 +21,7 @@ task codegraph:source:status # verify mirror/worktree sync, then show CodeGraph 
 task codegraph:source:sync-check # verify source-only mirror matches the current worktree
 task codegraph:source:clean  # remove the source-only CodeGraph mirror
 task conformance:verify   # fixture schema + XFAIL + skip-list + divergence audit + coverage + Node witness matrix
+task conformance:witness  # refresh generated Node witnesses with the active pinned Node version
 task data                 # regenerate CLDR data from local npm CLDR checkout
 task data:check           # verify generated data plus gen-cldr test/vet
 task data:contract        # generated CLDR data contract tests
@@ -88,7 +89,7 @@ go-intl/
 │   ├── gen-cldr/          # CLDR JSON -> generated Go data
 │   ├── gen-plural-rules/  # CLDR plural JSON -> generated Go rules
 │   └── gen-fixtures-from-formatjs/ # FormatJS/Node references -> conformance fixtures
-├── SPECS/                 # Contract layer; read before design changes
+├── SPECS/                 # Maintained behavior/data decisions; read and correct with implementation evidence
 ├── .references/           # Reference implementations; study before coding
 └── reports/               # Dependency issue reports
 ```
@@ -101,7 +102,7 @@ The root package mirrors the JavaScript `Intl` namespace shape as closely as Go 
 - Use CodeGraph for source orientation when the source graph matters.
 - Apply KISS, DRY, and YAGNI as product judgment, not minimalism theater.
 - Prefer standard library, native Intl behavior, generated accessors, and existing helpers before custom code.
-- Keep edits surgical and behavior-preserving unless the SPEC calls for a break.
+- Keep edits focused; correct observable defects from normative/native evidence and synchronize affected tests and docs.
 - Verify the changed contract with the narrowest meaningful command, then widen when shared behavior moves.
 - Treat tests as behavior evidence, not mirrors for prose.
 - Do not add policy-only gates that restate README, SPECS, or AGENTS/CLAUDE rules.
@@ -131,7 +132,7 @@ task needs FormatJS, Node, or Go `intl` implementation evidence. Never commit
 
 Before designing or modifying code, read the relevant ECMA-402 source files in `.references/ecma402/spec/` and then the relevant `SPECS/` documents end to end. ECMA-402 is the normative source for constructor shape, locale/options negotiation, option names and values, resolved options, parts, range sources, and error conditions.
 
-If a SPEC contradicts ECMA-402, update the SPEC first. Do not preserve local API convenience, FormatJS helper shape, or historical tests over the specification.
+SPECS are correctable records of behavior and design decisions. When ECMA-402 or verified implementation evidence disproves a local record, correct it with the implementation and its acceptance evidence. A stale SPEC does not justify preserving an incorrect API, data path, or test.
 
 ### Implementation Workflow - Find 2 References First
 
@@ -147,7 +148,7 @@ Before writing implementation code, find at least two relevant implementation re
 
 - README is the usage guide: installation, examples, API overview.
 - CLAUDE.md / AGENTS.md is the development guide: workflow, commands, rules, indexes.
-- SPECS are the contract layer: behavior, data layout, and acceptance criteria.
+- SPECS record current behavior, data layout, design decisions, and acceptance evidence; correct them when stronger evidence changes the contract.
 - Source comments explain non-obvious implementation decisions only.
 
 ## SPECS Index
@@ -233,16 +234,19 @@ Reference projects in [`.references/`](.references/) are read-only implementatio
 - Keep `DateTimeFormat` calendar support tied to `internal/cldr/date.SupportedCalendars()` and generated date data; do not copy calendar allow-lists into constructors.
 - Keep time-zone facts separated by owner. The pinned official IANA archive owns the complete Zone/Link set and `zone.tab` region membership; pinned CLDR BCP47 timezone records own ECMA/ICU primary selection and rename state; `internal/tz` owns the generated immutable registry; Go `time.LoadLocation` owns transition lookup from `ZONEINFO`, host paths, GOROOT and the embedded `time/tzdata` fallback; `internal/cldr/timezone` owns localized display names only.
 - Keep the IANA identity source reproducible through `tools/gen-cldr/tzdata.json`, its SHA-256-verified cache, generated manifest hashes, and `task data:check`. The Go transition-data version must not be older than the identity pin; exact equality with CLDR display data is not required.
+- Require the pinned IANA archive and CLDR BCP47 time-zone joins whenever generating localized time-zone data; `-timezone-out` controls registry output only. See [SPEC 50](SPECS/50-cldr-data.md).
 - Keep generated-data verification structural and fail closed. `tools/data-preflight` validates pins before generation; `tools/check-generated-data` derives ownership from generated headers, compares the complete relative-path set in both directions, then compares bytes. Do not restore hand-maintained per-file diff lists.
-- Compose DisplayNames language names from the complete canonical language/script/region/variant identifier; dialect names consume only their matched components. Generated CLDR variant names and locale separator/pattern carry unresolved components, with the public fallback option controlling missing names.
+- Compose DisplayNames standard language names from separate language/script/region/variant components; only dialect mode may consume a matched composite name. Keep locale patterns and fallback semantics in [SPEC 44](SPECS/44-displaynames.md); validate source patterns during generation as specified in [SPEC 50](SPECS/50-cldr-data.md).
 - Let `SupportedCurrencies()` enumerate the selected CLDR profile's name keys; precision exceptions do not define membership. Retain all selected currency name/symbol rows.
 - Validate DateTimeFormat `time.Time` instants against the ECMA TimeClip boundary before truncating toward zero to milliseconds. All four formatting methods return `(result, error)` and use `ErrInvalidValue` for out-of-domain instants.
 - Validate all required CLDR package names/versions before generation; plural cardinal/ordinal/ranges sources must report one cldr-core version. `task modules:verify` covers test/vet/tidy-diff in all four published modules.
 - Keep DisplayNames lookup inside the resolved data locale and its truncation parent chain. Missing data is resolved by the public `fallback` option; never borrow an English name from an unrelated locale.
 - Keep text direction generated from pinned CLDR `scriptMetadata.json`. `locale.TextInfo.Direction` is `*string`: known LTR/RTL is present, unknown direction is nil and omitted from JSON; do not restore a hand-written script list or guessed LTR default.
 - Keep Locale language-subtag transforms suffix-preserving: constructor language/script/region options and maximize/minimize may replace only those three subtags; variants, transformed extensions, Unicode extensions, and private use retain their canonical order. Numeric `firstDayOfWeek` aliases are constructor-option values, not valid `-u-fw-*` tag syntax.
+- Keep language alias canonicalization on the shared two-stage x/text path: `language.Parse`, then `(language.Macro | language.CLDR).Canonicalize`. Preserve distinct `no`/`nb` identities and explicit scripts across Locale and DisplayNames; see [SPEC 10](SPECS/10-locale.md).
 - Keep ECMA-402 digit rounding centralized in `internal/ecma402/numberformat.FormatNumericToString`; `numberformat` and `pluralrules` both feed it one constructor-resolved `ResolvedDigitOptions` record, including typed rounding mode and branch. Runtime formatting must not reparse options, infer a second rounding branch, or erase negative zero from the rounded result.
 - Keep NumberFormat string output as a projection of its canonical private parts partition. Do not restore parallel text renderers or integer-only fast paths that duplicate sign, grouping, notation, localization, currency, or unit semantics.
+- Emit CLDR bidi controls around signs and symbols as adjacent NumberFormat `literal` parts, and preserve their association when collapsing shared range affixes. See [SPEC 20](SPECS/20-numberformat.md).
 - Keep compound-unit resolution constructor-owned and CLDR-driven: prefer a generated direct pattern for the complete identifier, then a denominator `perUnitPattern`, then the validated generic compound pattern. Preserve legal patterns that omit `{0}` and never synthesize display text from a raw `-per-` identifier.
 - Keep NumberFormat style plural selection on one unlocalized formatted operand: preserve digit-option zeros, restore a scientific, engineering, or compact mantissa to its full magnitude with the selected exponent, and retain that exponent as `c/e`. Currency name, currency-name placement, and unit pattern must consume that same category; do not rebuild it from `Rounded.String()` or erase visible zeros.
 - Keep `currencyDisplay="name"` placement on the generated plural-sensitive `unitPattern-count-*` rows for the resolved numbering system. Fall back to `other` within the same locale and insert the complete numeric parts partition into the constructor-compiled pattern; do not hard-code name order, ASCII spacing, or a separate accounting wrapper.
@@ -251,6 +255,8 @@ Reference projects in [`.references/`](.references/) are read-only implementatio
 - Keep RelativeTimeFormat on one ECMAScript Number boundary. `Int` and `Uint` convert through `float64`, `Float` preserves signed zero, and literal lookup, tense, NumberFormat, and PluralRules all project that same normalized value; do not add an exact-decimal bridge or mode.
 - Keep DurationFormat on one ECMAScript Number boundary. Validate each public `float64` field as finite and integral, project it once to the exact represented integer, and perform sign, limit, rollup, and NumberFormat work without `int64` narrowing or later `float64` arithmetic.
 - Freeze constructor-derived hot-path state on formatter instances. Cached method calls must not redo locale negotiation, option validation, digit-option resolution, plural-rule lookup, interval-pattern selection, pattern tokenization, or embedded formatter construction. DateTimeFormat compiles endpoint, date/time, interval, and distinguishing cross-date fallback programs in `New`; DurationFormat composes constructor-resolved `NumberFormat` and `ListFormat` instances.
+- Apply the resolved DateTimeFormat hour cycle to selected component, style, and interval programs; resolve `hour12` from the locale's independent clock-family preference. Localize fractional separators only in freshly compiled instance programs, keeping shared candidates numbering-system-neutral. See [SPEC 30](SPECS/30-datetimeformat.md) and [SPEC 31](SPECS/31-datetimeformat-skeleton.md).
+- Compile ListFormat's finite Spanish/Hebrew pair/end alternatives in the constructor; select them from the original next element without rewriting caller text or parsing patterns during formatting. See [SPEC 41](SPECS/41-listformat.md).
 - Keep constructor and `SupportedLocalesOf` options aligned with the JavaScript single-options-object model. Public Go entrypoints receive exactly one typed `Options` value; use `Options{}` for omitted or empty JS options instead of variadic `Options`.
 - Keep NumberFormat unit identifiers exact and case-sensitive. `Unit("METER")` must not silently become `"meter"`; native `Intl.NumberFormat` rejects non-canonical unit casing.
 - Represent optional scalar input options as pointers (`*int`, `*bool`, `*string`) and use root helpers `gointl.Int`, `gointl.Bool`, and `gointl.String` at call sites. Constructor code must copy pointed-to scalar values into internal config before storing anything on formatter instances.
@@ -265,7 +271,7 @@ Reference projects in [`.references/`](.references/) are read-only implementatio
 - No runtime JSON/ICU file loading for formatter data.
 - No public cache controls or root-level formatter option re-exports.
 - No root diagnostic APIs such as `Version()`; CLDR, ICU, and tzdata pins are internal metadata.
-- No back-compat shims, alias APIs, or parallel v2 names unless a SPEC explicitly requires them.
+- No compatibility shims, redundant alias APIs, or parallel v2 names.
 - No root-level one-shot helpers or per-locale `Intl` session APIs unless their SPEC maps them to the ECMA-402 `Intl` namespace. JavaScript `Intl` is not a constructor.
 - No public ECMA-402 abstract-operation helpers such as canonicalize-list helpers, `ResolveLocale`, `GetOption`, or `PartitionPattern`. Keep abstract operations under `internal/ecma402`, `internal/localematcher`, or formatter internals.
 - No documentation masquerading as code: do not encode spec prose as constants or tables no program consumes.
@@ -291,8 +297,12 @@ When you encounter a bug, limitation, or unexpected behavior in a dependency:
 - Use `b.Loop()` for benchmarks.
 - Run `task test` for the race-detector gate.
 - Put FormatJS-derived cases in formatter `testdata/` as JSON fixtures and assert byte-equal output.
+- Validate fixture shapes before callbacks; reject explicit null outside the `input` bridge and execute declared observations independently. Preserve false, zero, empty text, and empty arrays as observations rather than omission. See [SPEC 70](SPECS/70-conformance.md).
+- Compare complete resolved-options JSON snapshots in NumberFormat, DateTimeFormat, DurationFormat, and DisplayNames through `internal/testcontract.AssertResolvedOptionsJSON`; extra/missing properties and scalar type changes must fail. Do not add subset comparators. See [SPEC 73](SPECS/73-json-records.md).
 - Generate FormatJS-derived fixtures with `tools/gen-fixtures-from-formatjs`; generated files live under `<package>/testdata/conformance/formatjs/`. The active generated gate covers statically reducible NumberFormat `format`, `formatToParts`, `formatRange`, and `formatRangeToParts`; DateTimeFormat `format`, `formatToParts`, `formatRange`, and `formatRangeToParts`; PluralRules `select` and `selectRange`; Locale `toString`, `maximize`, `minimize`, and `Intl.getCanonicalLocales`; ListFormat `format`; RelativeTimeFormat `format`; DurationFormat `format`.
 - Keep generated extractor lanes narrow and source-owned. `notation-compact-zh-TW.test.ts` is an active NumberFormat FormatJS lane and must stay as generated fixtures, not return to `.skip-list.json`.
+- Make unsupported constructor declarations block reuse of earlier locale/options state in the FormatJS extractor; only fully understood literals may produce fixtures. See [SPEC 70](SPECS/70-conformance.md).
+- Register every hand-curated Node witness with a provenance reason in `TestCommittedNodeFixturesAreGeneratedOrExplicitlyManual`; record its actual Node version and source.
 - Unextracted or partially extracted FormatJS sources must appear in root `.skip-list.json` with `source`, `category`, `route`, and `reason`.
 - `.skip-list.json` is extraction audit only. A generated fixture that fails must be handled through `testdata/divergences.md` or `testdata/xfail.json`, never by removing it from testdata.
 - Record accepted reference mismatches in `<package>/testdata/divergences.md` only when that package has active or resolved divergence entries; empty placeholder files are not required. The ledger accepts only blank lines, `#` comments, and the documented unique fields; all records, including `status: resolved`, must be structurally complete with a valid date before active records are matched to fixtures.
@@ -307,7 +317,7 @@ When you encounter a bug, limitation, or unexpected behavior in a dependency:
 | `golang.org/x/text` | BCP 47 parsing, `language.Tag`, and Unicode/CLDR building blocks |
 | `github.com/cockroachdb/apd/v3` | Decimal math backend for Intl mathematical values and rounding |
 
-Add runtime dependencies only when an active SPEC requires them.
+Add runtime dependencies only for a demonstrated active behavior need; record their ownership and boundary in the relevant SPEC.
 
 ## Error Handling
 
@@ -336,8 +346,8 @@ Nested tool modules are checked from their own module roots. Do not use root-mod
 
 GitHub Actions runs on pushes to `main` and pull requests:
 
-- `test`: `task deps`, then `task test`
-- `lint`: `task deps`, then `task lint`
+- `test`: `task deps`, `task modules:verify`, then `task test`
+- `lint`: `task tidy-lint`, then the pinned golangci-lint GitHub Action
 - `conformance`: `task conformance:verify`
 - `generated-data`: `task data:check`, then requires a clean worktree
 - `security`: installs `govulncheck`, then runs `govulncheck ./...`
@@ -381,7 +391,7 @@ Primary local skills live in `.agents/skills/`. Use the narrowest skill that mat
 | [golangci-linting](.agents/skills/golangci-linting/) | Configuring or fixing golangci-lint v2 findings |
 | [taskfile-configuring](.agents/skills/taskfile-configuring/) | Editing `Taskfile.yml` tasks and dependencies |
 | [github-actions-configuring](.agents/skills/github-actions-configuring/) | Configuring or repairing GitHub Actions workflows for Go library CI |
-| [dependency-selecting](.agents/skills/dependency-selecting/) | Choosing Go dependencies when a SPEC requires one |
+| [dependency-selecting](.agents/skills/dependency-selecting/) | Choosing Go dependencies for a demonstrated active behavior need |
 | [concept-modeling](.agents/skills/concept-modeling/) | Clarifying and compressing overlapping concepts before naming or API work |
 | [research-analyzing](.agents/skills/research-analyzing/) | Structuring research over `.references/` before spec work |
 | [research-to-design-translating](.agents/skills/research-to-design-translating/) | Translating external research into locally owned, testable design decisions |

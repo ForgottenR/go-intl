@@ -198,7 +198,7 @@
       "end": "2021-01-20T00:00:00Z",
       "start": "2021-01-10T00:00:00Z"
     },
-    "expectedRange": "Jan 10, 2021, 12:00 AM – Jan 20, 2021, 12:00 AM"
+    "expectedRange": "Jan 10, 2021, 12:00 AM – Jan 20, 2021, 12:00 AM"
   },
   {
     "id": "datetimeformat-formatjs-format-range-test-ts-014",
@@ -218,12 +218,12 @@
       {
         "type": "month",
         "value": "Feb",
-        "source": "startRange"
+        "source": "shared"
       },
       {
         "type": "literal",
         "value": " ",
-        "source": "startRange"
+        "source": "shared"
       },
       {
         "type": "day",
@@ -233,7 +233,7 @@
       {
         "type": "literal",
         "value": " – ",
-        "source": "startRange"
+        "source": "shared"
       },
       {
         "type": "day",

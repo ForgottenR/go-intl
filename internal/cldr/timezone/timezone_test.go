@@ -115,7 +115,7 @@ func TestSmokeTimeZoneDisplayName(t *testing.T) {
 			if tc.name == "zone specific daylight" {
 				gbInstant = time.Date(2021, time.June, 10, 12, 0, 0, 0, time.UTC).UnixMilli()
 			}
-			if got := TimeZoneDisplayName(tc.loc, tc.zone, tc.form, tc.dst, gbInstant, tc.off); got != tc.want {
+			if got := TimeZoneDisplayName(tc.loc, tc.zone, tc.form, tc.dst, gbInstant, tc.off, "latn"); got != tc.want {
 				t.Fatalf("TimeZoneDisplayName(%s) = %q, want %q", tc.name, got, tc.want)
 			}
 		})
@@ -154,7 +154,7 @@ func TestSmokeGMTOffsetName(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if got := GMTOffsetName(tc.loc, tc.offsetMs, tc.form); got != tc.want {
+			if got := GMTOffsetName(tc.loc, tc.offsetMs, tc.form, "latn"); got != tc.want {
 				t.Fatalf("GMTOffsetName() = %q, want %q", got, tc.want)
 			}
 		})
@@ -164,7 +164,7 @@ func TestSmokeGMTOffsetName(t *testing.T) {
 func TestOffsetPatternKeepsLocalizedMinus(t *testing.T) {
 	t.Parallel()
 
-	if got, want := offsetPattern("+HH:mm;−HH:mm", -3*3600*1000-30*60*1000, false), "−3:30"; got != want {
+	if got, want := offsetPattern("+HH:mm;−HH:mm", -3*3600*1000-30*60*1000, false, "latn"), "−3:30"; got != want {
 		t.Fatalf("offsetPattern(localized minus) = %q, want %q", got, want)
 	}
 }

@@ -209,7 +209,7 @@ func applySkeletonToken(format *Formats, char byte, length int) {
 		format.Second = numericStyle(length)
 	case 'S':
 		format.FractionalSecondDigits = length
-	case 'a', 'b', 'B':
+	case 'B':
 		format.DayPeriod = textStyle(length)
 	case 'z':
 		format.TimeZoneName = timeZoneNameStyle(length)

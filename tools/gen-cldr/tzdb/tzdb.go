@@ -82,10 +82,13 @@ func LoadArchive(path string, pin Pin, primaryAliases map[string]string) (Regist
 	return registry, nil
 }
 
-func LoadCLDRPrimaryAliases(path string) (map[string]string, error) {
+// CLDR uses the first alias as its display-data key, independently of IANA primary spelling.
+type CLDRTimeZoneAliases struct{ Primary, Display map[string]string }
+
+func LoadCLDRTimeZoneAliases(path string) (CLDRTimeZoneAliases, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read CLDR timezone aliases %s: %w", path, err)
+		return CLDRTimeZoneAliases{}, fmt.Errorf("read CLDR timezone aliases %s: %w", path, err)
 	}
 	var doc struct {
 		Keyword struct {
@@ -95,13 +98,14 @@ func LoadCLDRPrimaryAliases(path string) (map[string]string, error) {
 		} `json:"keyword"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
-		return nil, fmt.Errorf("parse CLDR timezone aliases %s: %w", path, err)
+		return CLDRTimeZoneAliases{}, fmt.Errorf("parse CLDR timezone aliases %s: %w", path, err)
 	}
 	if len(doc.Keyword.Unicode.TimeZones) == 0 {
-		return nil, fmt.Errorf("parse CLDR timezone aliases %s: keyword.u.tz missing", path)
+		return CLDRTimeZoneAliases{}, fmt.Errorf("parse CLDR timezone aliases %s: keyword.u.tz missing", path)
 	}
-	aliases := map[string]string{}
-	for key, raw := range doc.Keyword.Unicode.TimeZones {
+	aliases := CLDRTimeZoneAliases{Primary: map[string]string{}, Display: map[string]string{}}
+	for _, key := range slices.Sorted(maps.Keys(doc.Keyword.Unicode.TimeZones)) {
+		raw := doc.Keyword.Unicode.TimeZones[key]
 		if strings.HasPrefix(key, "_") || len(raw) == 0 || raw[0] != '{' {
 			continue
 		}
@@ -110,7 +114,7 @@ func LoadCLDRPrimaryAliases(path string) (map[string]string, error) {
 			IANA  string `json:"_iana"`
 		}
 		if err := json.Unmarshal(raw, &metadata); err != nil {
-			return nil, fmt.Errorf("parse CLDR timezone alias %s: %w", key, err)
+			return CLDRTimeZoneAliases{}, fmt.Errorf("parse CLDR timezone alias %s: %w", key, err)
 		}
 		names := strings.Fields(metadata.Alias)
 		if len(names) == 0 {
@@ -121,10 +125,14 @@ func LoadCLDRPrimaryAliases(path string) (map[string]string, error) {
 			primary = names[0]
 		}
 		for _, name := range names {
-			if previous, ok := aliases[name]; ok && previous != primary {
-				return nil, fmt.Errorf("CLDR timezone alias %q maps to both %q and %q", name, previous, primary)
+			if previous, ok := aliases.Primary[name]; ok && previous != primary {
+				return CLDRTimeZoneAliases{}, fmt.Errorf("CLDR timezone alias %q maps to both %q and %q", name, previous, primary)
 			}
-			aliases[name] = primary
+			if previous, ok := aliases.Display[name]; ok && previous != names[0] {
+				return CLDRTimeZoneAliases{}, fmt.Errorf("CLDR timezone display key %s: %q maps to both %q and %q", key, name, previous, names[0])
+			}
+			aliases.Primary[name] = primary
+			aliases.Display[name] = names[0]
 		}
 	}
 	return aliases, nil

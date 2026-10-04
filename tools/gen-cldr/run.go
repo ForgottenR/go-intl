@@ -59,35 +59,31 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 		return fmt.Errorf("load cldr-json: %w", err)
 	}
 	log.InfoContext(ctx, "cldr-json checkout validated", "dir", source.Root)
-	var registry tzdb.Registry
-	var manifestExtras []manifestInputFile
-	if cfg.TimeZoneOut != "" {
-		if cfg.TZDataLock == "" {
-			return fmt.Errorf("config: -tzdata-lock is required with -timezone-out")
-		}
-		pin, err := tzdb.ReadPin(cfg.TZDataLock)
-		if err != nil {
-			return err
-		}
-		if pin.Version != want.TZData {
-			return fmt.Errorf("tzdb pin version %q, want VERSION tzdata %q", pin.Version, want.TZData)
-		}
-		if cfg.TZDataArchive == "" {
-			cfg.TZDataArchive = filepath.Join(filepath.Dir(cfg.TZDataLock), ".tzdata", "tzdata"+pin.Version+".tar.gz")
-		}
-		aliases, err := tzdb.LoadCLDRPrimaryAliases(filepath.Join(source.Root, "cldr-bcp47", "bcp47", "timezone.json"))
-		if err != nil {
-			return err
-		}
-		registry, err = tzdb.LoadArchive(cfg.TZDataArchive, pin, aliases)
-		if err != nil {
-			return err
-		}
-		log.InfoContext(ctx, "tzdb identity source validated", "version", registry.Version, "identifiers", len(registry.Records), "regions", len(registry.Regions))
-		manifestExtras = append(manifestExtras,
-			manifestInputFile{name: "tools/gen-cldr/tzdata.json", path: cfg.TZDataLock},
-			manifestInputFile{name: "iana/tzdata" + pin.Version + ".tar.gz", path: cfg.TZDataArchive},
-		)
+	if cfg.TZDataLock == "" {
+		return fmt.Errorf("config: -tzdata-lock is required to generate time-zone display data")
+	}
+	pin, err := tzdb.ReadPin(cfg.TZDataLock)
+	if err != nil {
+		return err
+	}
+	if pin.Version != want.TZData {
+		return fmt.Errorf("tzdb pin version %q, want VERSION tzdata %q", pin.Version, want.TZData)
+	}
+	if cfg.TZDataArchive == "" {
+		cfg.TZDataArchive = filepath.Join(filepath.Dir(cfg.TZDataLock), ".tzdata", "tzdata"+pin.Version+".tar.gz")
+	}
+	aliases, err := tzdb.LoadCLDRTimeZoneAliases(filepath.Join(source.Root, "cldr-bcp47", "bcp47", "timezone.json"))
+	if err != nil {
+		return err
+	}
+	registry, err := tzdb.LoadArchive(cfg.TZDataArchive, pin, aliases.Primary)
+	if err != nil {
+		return err
+	}
+	log.InfoContext(ctx, "tzdb identity source validated", "version", registry.Version, "identifiers", len(registry.Records), "regions", len(registry.Regions))
+	manifestExtras := []manifestInputFile{
+		{name: "tools/gen-cldr/tzdata.json", path: cfg.TZDataLock},
+		{name: "iana/tzdata" + pin.Version + ".tar.gz", path: cfg.TZDataArchive},
 	}
 	manifest, err := buildManifest(cfg.VersionFile, cfg.ProfileFile, source.Root, want, profile, manifestExtras...)
 	if err != nil {
@@ -103,24 +99,29 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 	currencies := extract.ExtractCurrencies(source.CurrencyFractions, source.Currencies, profile.Locales)
 	dates := extract.ExtractDates(source.Dates, profile.Locales)
 	metazones := extract.ExtractMetazones(source.Metazones, profile.Locales)
+	displayKeys, err := timeZoneDisplayKeys(metazones, registry, aliases.Display)
+	if err != nil {
+		return err
+	}
 	units := extract.ExtractUnits(source.Units, profile.Locales)
 	listPatterns := extract.ExtractListPatterns(source.ListPatterns, profile.Locales)
 	relativeTime := extract.ExtractRelativeTimeFields(source.RelativeTime, profile.Locales)
 	displayNames := extract.ExtractDisplayNames(source.DisplayNames, profile.Locales)
 	input := codegen.RuntimeInput{
-		Manifest:         manifest,
-		Locales:          locales,
-		LikelySubtags:    likely,
-		ScriptDirections: source.ScriptDirections,
-		Numbers:          numbers,
-		Currencies:       currencies,
-		Dates:            dates,
-		Preferences:      source.Preference,
-		Metazones:        metazones,
-		Units:            units,
-		ListPatterns:     listPatterns,
-		RelativeTime:     relativeTime,
-		DisplayNames:     displayNames,
+		Manifest:            manifest,
+		Locales:             locales,
+		LikelySubtags:       likely,
+		ScriptDirections:    source.ScriptDirections,
+		Numbers:             numbers,
+		Currencies:          currencies,
+		Dates:               dates,
+		Preferences:         source.Preference,
+		Metazones:           metazones,
+		TimeZoneDisplayKeys: displayKeys,
+		Units:               units,
+		ListPatterns:        listPatterns,
+		RelativeTime:        relativeTime,
+		DisplayNames:        displayNames,
 	}
 	if err := codegen.RenderRuntime(cfg.OutDir, input); err != nil {
 		return fmt.Errorf("render runtime data: %w", err)

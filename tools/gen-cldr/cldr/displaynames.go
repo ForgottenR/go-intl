@@ -4,8 +4,9 @@ import (
 	"encoding/json/v2"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	cldrpattern "github.com/agentable/go-intl/internal/pattern"
 )
 
 type DisplayNames struct {
@@ -78,7 +79,7 @@ func readDisplayNamesLocale(root, locale string) (DisplayNames, bool, error) {
 	data := DisplayNames{
 		Languages: LanguageDisplay{
 			Dialect:  splitStyleData(languages),
-			Standard: buildStandardLanguageNames(languages, territories, pattern),
+			Standard: buildStandardLanguageNames(languages),
 		},
 		Territories:     splitStyleData(territories),
 		Scripts:         splitStyleData(scripts),
@@ -167,7 +168,43 @@ func readLocaleDisplayNamesFile(root, locale string) (calendars map[string]strin
 	if data.Types == nil || len(data.Types.Calendar) == 0 {
 		return nil, "", "", fmt.Errorf("calendar display-name data missing for %s", locale)
 	}
+	for _, field := range [...]struct{ name, value string }{
+		{"localePattern", data.LocaleDisplayPattern.LocalePattern},
+		{"localeSeparator", data.LocaleDisplayPattern.LocaleSeparator},
+	} {
+		if field.value == "" {
+			continue
+		}
+		if err := validateDisplayNamesPattern(field.value); err != nil {
+			return nil, "", "", fmt.Errorf("parse %s locale %s %s: %w", path, locale, field.name, err)
+		}
+	}
 	return data.Types.Calendar, data.LocaleDisplayPattern.LocalePattern, data.LocaleDisplayPattern.LocaleSeparator, nil
+}
+
+func validateDisplayNamesPattern(text string) error {
+	parts, err := cldrpattern.Partition(text)
+	if err != nil {
+		return err
+	}
+	var found [2]bool
+	for _, part := range parts {
+		if part.Type == cldrpattern.Literal && part.Value != "" {
+			continue
+		}
+		switch part.Type {
+		case "0":
+			found[0] = true
+		case "1":
+			found[1] = true
+		default:
+			return fmt.Errorf("unknown placeholder {%s} in %q", part.Type, text)
+		}
+	}
+	if !found[0] || !found[1] {
+		return fmt.Errorf("expected {0} and {1} in %q", text)
+	}
+	return nil
 }
 
 func readDateTimeFieldNames(root, locale string) (map[string]string, error) {
@@ -256,22 +293,13 @@ func dateTimeFieldLookupCode(code string) string {
 	}
 }
 
-var regionSuffixRe = regexp.MustCompile(`-([A-Za-z]{2}|\d{3})\b`)
-
-func buildStandardLanguageNames(languages, territories map[string]string, pattern string) StyledNames {
-	if pattern == "" {
-		return splitStyleData(languages)
-	}
+func buildStandardLanguageNames(languages map[string]string) StyledNames {
 	out := newStyledNames()
 	for key, value := range languages {
-		if value == "" {
-			continue
+		base, style, _, ok := displayNameStyleKey(key)
+		if ok && value != "" && !strings.Contains(base, "-") {
+			putStyledName(out, style, base, value)
 		}
-		base, style, suffix, ok := displayNameStyleKey(key)
-		if !ok {
-			continue
-		}
-		putStyledName(out, style, base, standardLanguageValue(base, value, languages, territories, suffix, pattern))
 	}
 	return compactStyledNames(out)
 }
@@ -329,26 +357,4 @@ func compactStyledNames(out StyledNames) StyledNames {
 		out.Narrow = nil
 	}
 	return out
-}
-
-func standardLanguageValue(tag, dialectValue string, languages, territories map[string]string, territorySuffix, pattern string) string {
-	match := regionSuffixRe.FindStringIndex(tag)
-	if match == nil {
-		return dialectValue
-	}
-	region := tag[match[0]+1 : match[1]]
-	languageSubtag := tag[:match[0]] + tag[match[1]:]
-	languageName := languages[languageSubtag]
-	if languageName == "" {
-		return dialectValue
-	}
-	regionName := territories[region+territorySuffix]
-	if regionName == "" {
-		regionName = territories[region]
-	}
-	if regionName == "" {
-		regionName = region
-	}
-	result := strings.Replace(pattern, "{0}", languageName, 1)
-	return strings.Replace(result, "{1}", regionName, 1)
 }

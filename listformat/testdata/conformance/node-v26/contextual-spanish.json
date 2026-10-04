@@ -1,0 +1,1812 @@
+[
+  {
+    "id": "listformat-node-v26-context-es-0",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-1",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "Iglesia"
+    ],
+    "expected": "uno e Iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "Iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-2",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "i"
+    ],
+    "expected": "uno e i",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "i"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-3",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hijo"
+    ],
+    "expected": "uno e hijo",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "hijo"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-4",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "HI"
+    ],
+    "expected": "uno e HI",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "HI"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-5",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "historia"
+    ],
+    "expected": "uno e historia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "historia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-6",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hielo"
+    ],
+    "expected": "uno y hielo",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "hielo"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-7",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "HIA"
+    ],
+    "expected": "uno y HIA",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "HIA"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-8",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hiedra"
+    ],
+    "expected": "uno y hiedra",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "hiedra"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-9",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hipo"
+    ],
+    "expected": "uno e hipo",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "hipo"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-10",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "Italia"
+    ],
+    "expected": "uno e Italia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "Italia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-11",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "árbol"
+    ],
+    "expected": "uno y árbol",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "árbol"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-12",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      ""
+    ],
+    "expected": "uno y "
+  },
+  {
+    "id": "listformat-node-v26-context-es-13",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      " iglesia"
+    ],
+    "expected": "uno y  iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": " iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-14",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "ocho"
+    ],
+    "expected": "uno u ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-15",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "OCHO"
+    ],
+    "expected": "uno u OCHO",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "OCHO"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-16",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hoja"
+    ],
+    "expected": "uno u hoja",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "hoja"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-17",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "HO"
+    ],
+    "expected": "uno u HO",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "HO"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-18",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "8"
+    ],
+    "expected": "uno u 8",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "8"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-19",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "80"
+    ],
+    "expected": "uno u 80",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "80"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-20",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "11"
+    ],
+    "expected": "uno u 11",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "11"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-21",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "11 horas"
+    ],
+    "expected": "uno u 11 horas",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "11 horas"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-22",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "11x"
+    ],
+    "expected": "uno o 11x",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "11x"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-23",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "110"
+    ],
+    "expected": "uno o 110",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "110"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-24",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "11\t"
+    ],
+    "expected": "uno o 11\t",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "11\t"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-25",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "once"
+    ],
+    "expected": "uno u once",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "once"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-26",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "hotel"
+    ],
+    "expected": "uno u hotel",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "hotel"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-27",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      ""
+    ],
+    "expected": "uno o "
+  },
+  {
+    "id": "listformat-node-v26-context-es-28",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-29",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres y ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-30",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-31",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-32",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres y ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-33",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-34",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-35",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres y ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-36",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-37",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-38",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres u ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-39",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-40",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-41",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres u ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-42",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-43",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-44",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres u ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " u "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-45",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos o iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " o "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-46",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-47",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres y ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " y "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-48",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-49",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno e iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " e "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-50",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno, dos, tres, ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-51",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno, dos, iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-52",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "iglesia"
+    ],
+    "expected": "uno iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-53",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "tres",
+      "ocho"
+    ],
+    "expected": "uno dos tres ocho",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "tres"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "ocho"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-es-54",
+    "source": "node:v26.10.0:listformat:contextual-spanish",
+    "locale": "es",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "uno",
+      "dos",
+      "iglesia"
+    ],
+    "expected": "uno dos iglesia",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "uno"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "dos"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "iglesia"
+      }
+    ]
+  }
+]

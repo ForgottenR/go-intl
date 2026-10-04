@@ -79,6 +79,29 @@ func AdjustFieldTypes(format Formats, opts Options) Formats {
 	return format
 }
 
+// AdjustHourCycle preserves selected widths and literals while making every
+// hour field execute the constructor-resolved cycle. Skeleton remains the CLDR
+// lookup key for interval data, whose hour fields are adjusted separately.
+func AdjustHourCycle(format Formats, cycle HourCycle) Formats {
+	if cycle == "" || format.Hour == "" {
+		return format
+	}
+	char := hourPatternChar(cycle)
+	out := []byte(format.Pattern)
+	for i := 0; i < len(out); {
+		run := nextPatternRun(format.Pattern, i)
+		if !run.quoted && strings.IndexByte(hourPatternFields, run.char) >= 0 {
+			for j := i; j < run.end; j++ {
+				out[j] = char
+			}
+		}
+		i = run.end
+	}
+	format.Pattern = string(out)
+	format.HourCycle = cycle
+	return format
+}
+
 func adjustNumericField(format *Formats, current *NumericStyle, requested NumericStyle, char byte) {
 	if requested == "" || *current == requested {
 		return

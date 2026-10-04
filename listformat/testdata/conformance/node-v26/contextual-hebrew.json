@@ -1,0 +1,1391 @@
+[
+  {
+    "id": "listformat-node-v26-context-he-0",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב"
+    ],
+    "expected": "א וב",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-1",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ְ"
+    ],
+    "expected": "א וְ",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "ְ"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-2",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "־"
+    ],
+    "expected": "א ו־",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "־"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-3",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "יִ"
+    ],
+    "expected": "א ויִ",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "יִ"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-4",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-5",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "👩"
+    ],
+    "expected": "א ו-👩",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "👩"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-6",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "𐐀"
+    ],
+    "expected": "א ו-𐐀",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "𐐀"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-7",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "8"
+    ],
+    "expected": "א ו-8",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "8"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-8",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      ""
+    ],
+    "expected": "א ו"
+  },
+  {
+    "id": "listformat-node-v26-context-he-9",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      " B"
+    ],
+    "expected": "א ו- B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": " B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-10",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "中"
+    ],
+    "expected": "א ו-中",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "中"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-11",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-12",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-13",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג וד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-14",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-15",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-16",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג וד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-17",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-18",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-19",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג וד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " ו"
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-20",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-21",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-22",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג או ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-23",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-24",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-25",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג או ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-26",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-27",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב או B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-28",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "disjunction",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג או ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " או "
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-29",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א, B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-30",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-31",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג ו-ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-32",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א, B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-33",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א, ב, B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-34",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "short"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א, ב, ג, ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": ", "
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-35",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-36",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "B"
+    ],
+    "expected": "א ב B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-37",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he",
+    "feature": "format",
+    "options": {
+      "type": "unit",
+      "style": "narrow"
+    },
+    "input": [
+      "א",
+      "ב",
+      "ג",
+      "ד"
+    ],
+    "expected": "א ב ג ד",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "ב"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "ג"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "element",
+        "value": "ד"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-38",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "he-IL",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  },
+  {
+    "id": "listformat-node-v26-context-he-39",
+    "source": "node:v26.10.0:listformat:contextual-hebrew",
+    "locale": "iw",
+    "feature": "format",
+    "options": {
+      "type": "conjunction",
+      "style": "long"
+    },
+    "input": [
+      "א",
+      "B"
+    ],
+    "expected": "א ו-B",
+    "expectedParts": [
+      {
+        "type": "element",
+        "value": "א"
+      },
+      {
+        "type": "literal",
+        "value": " ו-"
+      },
+      {
+        "type": "element",
+        "value": "B"
+      }
+    ]
+  }
+]

@@ -16,45 +16,47 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceDisplayNamesOptions(t, fixture))
-		if fixture.ErrorCode == "invalidOption" {
-			testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
-				return conformanceDisplayNamesConstructorError(t, code)
-			})
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(fixture.ExpectedResolved) != 0 {
-			assertDisplayNamesResolvedOptions(t, fixture, format.ResolvedOptions())
-		}
-		var input string
-		if err := json.Unmarshal(fixture.Input, &input); err != nil {
-			t.Fatal(err)
-		}
-		got, ok, err := format.Of(input)
-		if testcontract.AssertErrorCode(t, "Of()", err, fixture.ErrorCode, func(code string) error {
-			return conformanceDisplayNamesOfError(t, code)
-		}) {
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		wantOK := true
-		if fixture.ExpectedOK != nil {
-			wantOK = *fixture.ExpectedOK
-		}
-		if ok != wantOK {
-			t.Fatalf("Of(%q) ok = %v, want %v", input, ok, wantOK)
-		}
-		want := fixture.RequiredExpected(t)
-		if got != want {
-			t.Fatalf("Of(%q) = %q, want %q", input, got, want)
-		}
-	})
+	conformance.RunFixtures(t, ".", runDisplayNamesConformanceFixture)
+}
+
+func runDisplayNamesConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
+
+	format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceDisplayNamesOptions(t, fixture))
+	if fixture.ErrorCode == "invalidOption" {
+		testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+			return conformanceDisplayNamesConstructorError(t, code)
+		})
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.Expected == nil && fixture.ExpectedOK == nil && fixture.ErrorCode == "" {
+		return
+	}
+	var input string
+	if err := json.Unmarshal(fixture.Input, &input); err != nil {
+		t.Fatal(err)
+	}
+	got, ok, err := format.Of(input)
+	if testcontract.AssertErrorCode(t, "Of()", err, fixture.ErrorCode, func(code string) error {
+		return conformanceDisplayNamesOfError(t, code)
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ExpectedOK != nil && ok != *fixture.ExpectedOK {
+		t.Fatalf("Of(%q) ok = %v, want %v", input, ok, *fixture.ExpectedOK)
+	}
+	if fixture.Expected != nil && got != *fixture.Expected {
+		t.Fatalf("Of(%q) = %q, want %q", input, got, *fixture.Expected)
+	}
 }
 
 func TestConformanceDisplayNamesOptionsPreserveExplicitEmptyString(t *testing.T) {
@@ -68,17 +70,6 @@ func TestConformanceDisplayNamesOptionsPreserveExplicitEmptyString(t *testing.T)
 	}
 	testcontract.AssertOptionError(t, err, "displaynames", intlerr.InvalidOption, "style", "", "en")
 	testcontract.AssertOptionExpected(t, err, `one of "long", "short", "narrow"`)
-}
-
-func assertDisplayNamesResolvedOptions(t *testing.T, fixture conformance.Fixture, got ResolvedOptions) {
-	t.Helper()
-
-	want := testcontract.ExpectedResolvedOptions(t, fixture)
-	testcontract.AssertResolvedString(t, want, "locale", got.Locale.String())
-	testcontract.AssertResolvedString(t, want, "style", string(got.Style))
-	testcontract.AssertResolvedString(t, want, "type", string(got.Type))
-	testcontract.AssertResolvedString(t, want, "fallback", string(got.Fallback))
-	testcontract.AssertResolvedOptionalString(t, want, "languageDisplay", got.LanguageDisplay)
 }
 
 func conformanceDisplayNamesOptions(t *testing.T, fixture conformance.Fixture) Options {

@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/agentable/go-intl/internal/localeid"
-
-	"golang.org/x/text/language"
 )
 
 var (
@@ -103,7 +101,7 @@ func canonicalDisplayNamesLanguage(code string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	tag, err := language.Parse(canonical)
+	tag, err := localeid.ParseTag(canonical)
 	if err == nil {
 		return tag.String(), true
 	}

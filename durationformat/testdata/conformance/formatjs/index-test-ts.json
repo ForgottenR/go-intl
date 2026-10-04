@@ -147,5 +147,17 @@
       "seconds": 15
     },
     "expected": "05:30:15"
+  },
+  {
+    "id": "durationformat-formatjs-index-test-ts-012",
+    "source": "formatjs:packages/intl-durationformat/tests/index.test.ts",
+    "locale": "en",
+    "options": {
+      "style": "long"
+    },
+    "input": {
+      "hours": 1234
+    },
+    "expected": "1,234 hours"
   }
 ]

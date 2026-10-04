@@ -154,24 +154,13 @@
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
-      "minimumFractionDigits": 0,
-      "type": "ordinal"
-    },
-    "input": "1",
-    "expected": "one"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-018",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "en",
-    "options": {
       "type": "ordinal"
     },
     "input": "2",
     "expected": "two"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-019",
+    "id": "pluralrules-formatjs-index-test-ts-018",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -181,7 +170,7 @@
     "expected": "few"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-020",
+    "id": "pluralrules-formatjs-index-test-ts-019",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -191,7 +180,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-021",
+    "id": "pluralrules-formatjs-index-test-ts-020",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -201,7 +190,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-022",
+    "id": "pluralrules-formatjs-index-test-ts-021",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -211,7 +200,7 @@
     "expected": "two"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-023",
+    "id": "pluralrules-formatjs-index-test-ts-022",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -221,7 +210,7 @@
     "expected": "few"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-024",
+    "id": "pluralrules-formatjs-index-test-ts-023",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -231,7 +220,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-025",
+    "id": "pluralrules-formatjs-index-test-ts-024",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -241,7 +230,7 @@
     "expected": "two"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-026",
+    "id": "pluralrules-formatjs-index-test-ts-025",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -251,7 +240,7 @@
     "expected": "few"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-027",
+    "id": "pluralrules-formatjs-index-test-ts-026",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -261,7 +250,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-028",
+    "id": "pluralrules-formatjs-index-test-ts-027",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -271,7 +260,7 @@
     "expected": "two"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-029",
+    "id": "pluralrules-formatjs-index-test-ts-028",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {
@@ -281,7 +270,7 @@
     "expected": "few"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-030",
+    "id": "pluralrules-formatjs-index-test-ts-029",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -289,7 +278,7 @@
     "expected": "many"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-031",
+    "id": "pluralrules-formatjs-index-test-ts-030",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -297,7 +286,7 @@
     "expected": "many"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-032",
+    "id": "pluralrules-formatjs-index-test-ts-031",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -305,7 +294,7 @@
     "expected": "many"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-033",
+    "id": "pluralrules-formatjs-index-test-ts-032",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -313,7 +302,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-034",
+    "id": "pluralrules-formatjs-index-test-ts-033",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {},
@@ -321,7 +310,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-035",
+    "id": "pluralrules-formatjs-index-test-ts-034",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {},
@@ -329,7 +318,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-036",
+    "id": "pluralrules-formatjs-index-test-ts-035",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {},
@@ -337,7 +326,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-037",
+    "id": "pluralrules-formatjs-index-test-ts-036",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {},
@@ -345,7 +334,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-038",
+    "id": "pluralrules-formatjs-index-test-ts-037",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "options": {},
@@ -353,83 +342,59 @@
     "expected": "other"
   },
   {
+    "id": "pluralrules-formatjs-index-test-ts-038",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
+    "options": {},
+    "input": 1500000,
+    "expected": "other"
+  },
+  {
     "id": "pluralrules-formatjs-index-test-ts-039",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {
-      "notation": "compact"
-    },
-    "input": 1000000,
-    "expected": "many"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-040",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {
-      "notation": "compact"
-    },
-    "input": 1200000,
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-041",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {
-      "notation": "compact"
-    },
-    "input": 234500000,
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-042",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {},
-    "input": 1000000,
-    "expected": "many"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-043",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {},
-    "input": 1200000,
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-044",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {
-      "notation": "compact"
-    },
-    "input": 1200000,
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-045",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {
-      "notation": "compact"
-    },
-    "input": 1000,
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-046",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "options": {
+      "minimumIntegerDigits": 12,
       "notation": "compact"
     },
     "input": 1200,
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-047",
+    "id": "pluralrules-formatjs-index-test-ts-040",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
+    "options": {
+      "maximumSignificantDigits": 2,
+      "notation": "compact"
+    },
+    "input": 999999,
+    "expected": "many"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-041",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
+    "options": {
+      "maximumSignificantDigits": 2,
+      "notation": "compact"
+    },
+    "input": 1000,
+    "expected": "other"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-042",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
+    "options": {
+      "maximumSignificantDigits": 2,
+      "notation": "compact"
+    },
+    "input": 1200,
+    "expected": "other"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-043",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -437,7 +402,7 @@
     "expected": "many"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-048",
+    "id": "pluralrules-formatjs-index-test-ts-044",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -445,7 +410,7 @@
     "expected": "many"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-049",
+    "id": "pluralrules-formatjs-index-test-ts-045",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "options": {},
@@ -453,7 +418,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-050",
+    "id": "pluralrules-formatjs-index-test-ts-046",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -465,7 +430,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-051",
+    "id": "pluralrules-formatjs-index-test-ts-047",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -477,7 +442,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-052",
+    "id": "pluralrules-formatjs-index-test-ts-048",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -489,9 +454,57 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-053",
+    "id": "pluralrules-formatjs-index-test-ts-049",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
+    "feature": "selectRange",
+    "options": {},
+    "input": {
+      "end": 1,
+      "start": 1
+    },
+    "expected": "one"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-050",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "en",
+    "feature": "selectRange",
+    "options": {},
+    "input": {
+      "end": 2,
+      "start": 2
+    },
+    "expected": "other"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-051",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "en",
+    "feature": "selectRange",
+    "options": {},
+    "input": {
+      "end": 0,
+      "start": 0
+    },
+    "expected": "other"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-052",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
+    "feature": "selectRange",
+    "options": {},
+    "input": {
+      "end": 0,
+      "start": 0
+    },
+    "expected": "one"
+  },
+  {
+    "id": "pluralrules-formatjs-index-test-ts-053",
+    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
+    "locale": "fr",
     "feature": "selectRange",
     "options": {},
     "input": {
@@ -503,77 +516,29 @@
   {
     "id": "pluralrules-formatjs-index-test-ts-054",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "en",
+    "locale": "fr",
     "feature": "selectRange",
     "options": {},
     "input": {
       "end": 2,
-      "start": 2
+      "start": 0
     },
     "expected": "other"
   },
   {
     "id": "pluralrules-formatjs-index-test-ts-055",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "en",
+    "locale": "fr",
     "feature": "selectRange",
     "options": {},
     "input": {
-      "end": 0,
-      "start": 0
+      "end": 2,
+      "start": 1
     },
     "expected": "other"
   },
   {
     "id": "pluralrules-formatjs-index-test-ts-056",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "feature": "selectRange",
-    "options": {},
-    "input": {
-      "end": 0,
-      "start": 0
-    },
-    "expected": "one"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-057",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "feature": "selectRange",
-    "options": {},
-    "input": {
-      "end": 1,
-      "start": 1
-    },
-    "expected": "one"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-058",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "feature": "selectRange",
-    "options": {},
-    "input": {
-      "end": 2,
-      "start": 0
-    },
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-059",
-    "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
-    "locale": "fr",
-    "feature": "selectRange",
-    "options": {},
-    "input": {
-      "end": 2,
-      "start": 1
-    },
-    "expected": "other"
-  },
-  {
-    "id": "pluralrules-formatjs-index-test-ts-060",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "fr",
     "feature": "selectRange",
@@ -585,7 +550,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-061",
+    "id": "pluralrules-formatjs-index-test-ts-057",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -597,7 +562,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-062",
+    "id": "pluralrules-formatjs-index-test-ts-058",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -609,7 +574,7 @@
     "expected": "other"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-063",
+    "id": "pluralrules-formatjs-index-test-ts-059",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -621,7 +586,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-064",
+    "id": "pluralrules-formatjs-index-test-ts-060",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -635,7 +600,7 @@
     "expected": "one"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-065",
+    "id": "pluralrules-formatjs-index-test-ts-061",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",
@@ -649,7 +614,7 @@
     "expected": "two"
   },
   {
-    "id": "pluralrules-formatjs-index-test-ts-066",
+    "id": "pluralrules-formatjs-index-test-ts-062",
     "source": "formatjs:packages/intl-pluralrules/tests/index.test.ts",
     "locale": "en",
     "feature": "selectRange",

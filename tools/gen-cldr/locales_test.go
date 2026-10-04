@@ -39,7 +39,7 @@ func TestRunGeneratesLocalesAndLikelySubtags(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func TestRunFallsBackToFullAvailableLocales(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	reconstructed := readGeneratedStringTable(t, filepath.Join(out, "locale", "data.go"))
@@ -129,7 +129,7 @@ func TestRunAcceptsNestedAvailableLocales(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 }

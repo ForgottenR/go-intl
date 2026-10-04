@@ -74,6 +74,7 @@ func encodeNumbers(input RuntimeInput, table *StringTable) ([]byte, error) {
 // and compact pattern tree.
 func encodeNumberLocale(e *blobEncoder, n cldr.Numbers, table *StringTable) {
 	e.appendStringRef(table.Add(n.DefaultNumberingSystem))
+	e.appendUvarint(uint64(n.MinimumGroupingDigits))
 	encodeNumberSymbols(e, n.Symbols, table)
 	e.appendStringRefMap(n.DecimalPatterns, table)
 	e.appendStringRefMap(n.PercentPatterns, table)

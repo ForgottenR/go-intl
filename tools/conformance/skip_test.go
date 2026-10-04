@@ -12,6 +12,19 @@ import (
 
 const runFixturesFailureRoot = "GO_INTL_RUN_FIXTURES_FAILURE_ROOT"
 
+func TestRunFixturesRejectsMalformedShapeBeforeCallbacks(t *testing.T) {
+	if runFixturesFailureChild(t) {
+		return
+	}
+
+	root := t.TempDir()
+	writeConformanceFixtureFile(t, root, `[
+		{"id":"valid","source":"manual","locale":"en","options":{},"input":1,"expected":"1"},
+		{"id":"bad-shape","source":"manual","locale":"en","options":42,"input":1,"expected":"1"}
+	]`)
+	assertRunFixturesFailsBeforeCallbacks(t, root, "TestRunFixturesRejectsMalformedShapeBeforeCallbacks", errInvalidFixtureShape.Error())
+}
+
 func TestRunFixturesRejectsMalformedDivergenceBeforeCallbacks(t *testing.T) {
 	if runFixturesFailureChild(t) {
 		return
@@ -483,6 +496,13 @@ func TestFixtureHasNativeExpectationRecognizesObservableFields(t *testing.T) {
 		want    bool
 	}{
 		{name: "empty fixture"},
+		{name: "empty output", fixture: Fixture{Expected: new("")}, want: true},
+		{name: "false ok", fixture: Fixture{ExpectedOK: new(false)}, want: true},
+		{name: "empty locales", fixture: Fixture{ExpectedLocales: []string{}}, want: true},
+		{name: "empty parts", fixture: Fixture{ExpectedParts: []Part{}}, want: true},
+		{name: "empty range output", fixture: Fixture{ExpectedRange: new("")}, want: true},
+		{name: "empty range parts", fixture: Fixture{ExpectedRangeParts: []RangePart{}}, want: true},
+		{name: "empty resolved options", fixture: Fixture{ExpectedResolved: jsontext.Value(`{}`)}, want: true},
 		{name: "expected output", fixture: Fixture{Expected: &text}, want: true},
 		{name: "expected ok", fixture: Fixture{ExpectedOK: &ok}, want: true},
 		{name: "expected locales", fixture: Fixture{ExpectedLocales: []string{"en"}}, want: true},

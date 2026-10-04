@@ -26,7 +26,7 @@ func TestRunGeneratesNumbersAndCurrencies(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

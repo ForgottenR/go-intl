@@ -14,65 +14,50 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		loc := intltest.Locale(t, fixture.Locale)
-		format, err := New(locale.List{loc}, conformanceDateTimeOptions(t, fixture))
-		if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
-			return conformanceDateTimeError(t, code)
-		}) {
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(fixture.ExpectedResolved) > 0 {
-			assertDateTimeResolvedOptions(t, fixture, format.ResolvedOptions())
-		}
-		if fixture.ExpectedRange != nil {
-			start, end := conformanceDateTimeRangeInput(t, fixture)
-			got := mustDateFormatRange(t, format, start, end)
-			testcontract.AssertExpectedRange(t, "FormatRange", got, fixture.ExpectedRange)
-			if len(fixture.ExpectedRangeParts) > 0 {
-				parts := mustDateFormatRangeToParts(t, format, start, end)
-				testcontract.AssertRangeParts(t, "FormatRangeToParts", parts, fixture.ExpectedRangeParts, conformanceDateTimeRangePart)
-			}
-			return
-		}
-		input := conformanceDateTimeInput(t, fixture)
-		want := fixture.RequiredExpected(t)
-		if got := mustDateFormat(t, format, input); got != want {
-			t.Fatalf("Format(%v) = %q, want %q", input, got, want)
-		}
-		if len(fixture.ExpectedParts) > 0 {
-			parts := mustDateFormatToParts(t, format, input)
-			testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceDateTimePart)
-		}
-	})
+	conformance.RunFixtures(t, ".", runDateTimeConformanceFixture)
 }
 
-func assertDateTimeResolvedOptions(t *testing.T, fixture conformance.Fixture, got ResolvedOptions) {
+func runDateTimeConformanceFixture(t *testing.T, fixture conformance.Fixture) {
 	t.Helper()
 
-	want := testcontract.ExpectedResolvedOptions(t, fixture)
-	testcontract.AssertResolvedString(t, want, "locale", got.Locale.String())
-	testcontract.AssertResolvedString(t, want, "calendar", got.Calendar)
-	testcontract.AssertResolvedString(t, want, "numberingSystem", got.NumberingSystem)
-	testcontract.AssertResolvedString(t, want, "timeZone", got.TimeZone)
-	testcontract.AssertResolvedOptionalString(t, want, "hourCycle", got.HourCycle)
-	testcontract.AssertResolvedOptionalBool(t, want, "hour12", got.Hour12)
-	testcontract.AssertResolvedOptionalString(t, want, "weekday", got.Weekday)
-	testcontract.AssertResolvedOptionalString(t, want, "era", got.Era)
-	testcontract.AssertResolvedOptionalString(t, want, "year", got.Year)
-	testcontract.AssertResolvedOptionalString(t, want, "month", got.Month)
-	testcontract.AssertResolvedOptionalString(t, want, "day", got.Day)
-	testcontract.AssertResolvedOptionalString(t, want, "dayPeriod", got.DayPeriod)
-	testcontract.AssertResolvedOptionalString(t, want, "hour", got.Hour)
-	testcontract.AssertResolvedOptionalString(t, want, "minute", got.Minute)
-	testcontract.AssertResolvedOptionalString(t, want, "second", got.Second)
-	testcontract.AssertResolvedOptionalInt(t, want, "fractionalSecondDigits", got.FractionalSecondDigits)
-	testcontract.AssertResolvedOptionalString(t, want, "timeZoneName", got.TimeZoneName)
-	testcontract.AssertResolvedOptionalString(t, want, "dateStyle", got.DateStyle)
-	testcontract.AssertResolvedOptionalString(t, want, "timeStyle", got.TimeStyle)
+	loc := intltest.Locale(t, fixture.Locale)
+	format, err := New(locale.List{loc}, conformanceDateTimeOptions(t, fixture))
+	if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+		return conformanceDateTimeError(t, code)
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil {
+		start, end := conformanceDateTimeRangeInput(t, fixture)
+		if fixture.ExpectedRange != nil {
+			got := mustDateFormatRange(t, format, start, end)
+			testcontract.AssertExpectedRange(t, "FormatRange", got, fixture.ExpectedRange)
+		}
+		if fixture.ExpectedRangeParts != nil {
+			parts := mustDateFormatRangeToParts(t, format, start, end)
+			testcontract.AssertRangeParts(t, "FormatRangeToParts", parts, fixture.ExpectedRangeParts, conformanceDateTimeRangePart)
+		}
+		return
+	}
+	if fixture.Expected == nil && fixture.ExpectedParts == nil {
+		return
+	}
+	input := conformanceDateTimeInput(t, fixture)
+	if fixture.Expected != nil {
+		if got := mustDateFormat(t, format, input); got != *fixture.Expected {
+			t.Fatalf("Format(%v) = %q, want %q", input, got, *fixture.Expected)
+		}
+	}
+	if fixture.ExpectedParts != nil {
+		parts := mustDateFormatToParts(t, format, input)
+		testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceDateTimePart)
+	}
 }
 
 func conformanceDateTimeError(t *testing.T, code string) error {

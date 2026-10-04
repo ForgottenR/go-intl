@@ -168,7 +168,7 @@ End int64 //, MaxInt64 means +∞
        RegionFormat string // exactly one {0}, replaced by the exemplar city
    }
    ```
-4. accessor `internal/cldr/timezone.TimeZoneDisplayName(loc timezone.Locale, zone string, form TimeZoneName, isDST bool, instant int64, offsetMs int64) string` **MUST** implement ECMA-402 §13.1.5 fallback chain:
+4. accessor `internal/cldr/timezone.TimeZoneDisplayName(loc timezone.Locale, zone string, form TimeZoneName, isDST bool, instant int64, offsetMs int64, numberingSystem string) string` **MUST** implement ECMA-402 §13.1.5 fallback chain:
    ```text
 1. Check zone-specific and metazone names for the requested form → return if hit
 2. Check exemplarCities[locale][zone] → interpolate the city into the locale's CLDR regionFormat
@@ -425,3 +425,25 @@ From, To time.Duration // Time offset from 00:00 on the current day
 - [SPEC 31 §Skeleton character table](./31-datetimeformat-skeleton.md) — `z/Z/O/v/V/X` character → `TimeZoneName` mapping
 - [SPEC 50 §Codegen](./50-cldr-data.md#codegen) — `tools/gen-cldr` generator architecture
 - [SPEC 50 §Version Pin](./50-cldr-data.md#version-pin) — `internal/cldr/VERSION` file structure
+
+GMT offset fields use one-digit hours for short forms, two-digit hours for
+long forms, and two-digit minutes in both. Whole-hour short forms truncate
+the locale hour pattern after its hour field, preserving non-ASCII signs and
+removing the complete minute separator. Fixed zero with longOffset remains
+GMT+00:00 in English. Resolved numbering-system digits apply only to the
+generated numeric fields; localized names and pattern literals retain their
+source bytes.
+
+Named-zone offsets preserve transition seconds. Nonzero seconds extend the
+CLDR HM pattern to HMS by repeating its hour/minute separator, as ICU does;
+minute and second fields stay two digits under the resolved numbering system.
+Minute-aligned offsets add no seconds. Explicit offset-identifier syntax stays
+limited to the ECMA-402 hour/minute grammar.
+
+The generator joins verified primary identifiers to CLDR’s first `_alias`
+display key in a narrow `_tzDisplayKeyBlob`. All period, zone-name and city
+lookups use that relation; the source rows and full histories remain intact.
+Conflicting primary/display rows fail generation with their source and keys.
+This relation owns display lookup only, with no identifier legality, region or
+transition policy. Kolkata/Calcutta, Kyiv/Kiev and UTC/Etc/UTC share display
+facts while resolved identifiers retain the pinned primary spelling.

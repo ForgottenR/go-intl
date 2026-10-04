@@ -7,6 +7,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -15,6 +16,7 @@ import (
 
 type Numbers struct {
 	DefaultNumberingSystem string
+	MinimumGroupingDigits  int
 	Symbols                map[string]NumberSymbols
 	DecimalPatterns        map[string]string
 	PercentPatterns        map[string]string
@@ -98,6 +100,19 @@ func loadNumbers(root string, locales []string) (map[string]Numbers, error) {
 		}
 		if num.DefaultNumberingSystem == "" {
 			return nil, fmt.Errorf("defaultNumberingSystem missing for %s", locale)
+		}
+		// CLDR full JSON has resolved inheritance. ICU defaults an absent minimum to 1.
+		num.MinimumGroupingDigits = 1
+		if raw, ok := fields["minimumGroupingDigits"]; ok {
+			var value string
+			if err := json.Unmarshal(raw, &value); err != nil {
+				return nil, fmt.Errorf("parse %s minimumGroupingDigits: %w", path, err)
+			}
+			minimum, err := strconv.Atoi(value)
+			if err != nil || minimum < 1 {
+				return nil, fmt.Errorf("parse %s minimumGroupingDigits: invalid positive integer %q", path, value)
+			}
+			num.MinimumGroupingDigits = minimum
 		}
 		for _, ns := range numberSystemLoadOrder(num.DefaultNumberingSystem) {
 			if err := loadNumberSystemFields(path, locale, fields, ns, &num); err != nil {

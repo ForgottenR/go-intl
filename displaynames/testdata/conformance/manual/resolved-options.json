@@ -13,8 +13,7 @@
       "locale": "en",
       "style": "long",
       "type": "region",
-      "fallback": "code",
-      "languageDisplay": null
+      "fallback": "code"
     }
   },
   {

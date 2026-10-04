@@ -31,6 +31,9 @@ func TestNumberRoundTrip(t *testing.T) {
 			t.Errorf("DefaultNumberingSystem(%q) = %q, want %q", localeTag, got, numbers.DefaultNumberingSystem)
 		}
 
+		if got := loc.MinimumGroupingDigits(); got != numbers.MinimumGroupingDigits {
+			t.Errorf("MinimumGroupingDigits(%q) = %d, want %d", localeTag, got, numbers.MinimumGroupingDigits)
+		}
 		for ns, want := range numbers.Symbols {
 			if got := loc.NumberSymbols(ns); got != number.NumberSymbols(want) {
 				t.Errorf("NumberSymbols(%q, %q) = %+v, want %+v", localeTag, ns, got, want)

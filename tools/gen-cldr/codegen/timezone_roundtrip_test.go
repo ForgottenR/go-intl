@@ -57,7 +57,7 @@ func TestTimezoneRoundTrip(t *testing.T) {
 			continue
 		}
 		const offsetMs = int64(2*3600*1000 + 30*60*1000)
-		got := timezone.GMTOffsetName(loc, offsetMs, timezone.TimeZoneNameLongOffset)
+		got := timezone.GMTOffsetName(loc, offsetMs, timezone.TimeZoneNameLongOffset, "latn")
 		if got == "" {
 			t.Errorf("GMTOffsetName(%q) = \"\" for encoded formats %+v", locale, formats)
 		}
@@ -78,7 +78,7 @@ func assertZoneNames(t *testing.T, loc timezone.Locale, locale string, data extr
 			}
 			// Use an instant with no metazone period so the metazone branch yields
 			// "" and the zone-specific name is the resolved value.
-			got := timezone.TimeZoneDisplayName(loc, zone, check.form, false, noMetazoneInstant, 0)
+			got := timezone.TimeZoneDisplayName(loc, zone, check.form, false, noMetazoneInstant, 0, "latn")
 			if got != want {
 				t.Errorf("TimeZoneDisplayName(%q, %q, %q) zone name = %q, want %q", locale, zone, check.form, got, want)
 			}
@@ -98,7 +98,7 @@ func assertExemplarCities(t *testing.T, loc timezone.Locale, locale string, data
 			continue
 		}
 		want := strings.Replace(data.Formats[locale].RegionFormat, "{0}", city, 1)
-		got := timezone.TimeZoneDisplayName(loc, zone, timezone.TimeZoneNameLongGeneric, false, noMetazoneInstant, 0)
+		got := timezone.TimeZoneDisplayName(loc, zone, timezone.TimeZoneNameLongGeneric, false, noMetazoneInstant, 0, "latn")
 		if got != want {
 			t.Errorf("TimeZoneDisplayName(%q, %q) exemplar = %q, want %q", locale, zone, got, want)
 		}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/agentable/go-intl/internal/cldr/displaynames"
+	"github.com/agentable/go-intl/internal/pattern"
 	"github.com/agentable/go-intl/tools/gen-cldr/cldr"
 	"github.com/agentable/go-intl/tools/gen-cldr/extract"
 )
@@ -16,7 +17,7 @@ import (
 // It exercises encoder, blob, decoder, and accessor as one chain — not internal
 // structures.
 //
-// The accessor walks the truncation parent chain and falls back to "en", so a
+// The accessor walks only the truncation parent chain, so a
 // row is verified only when its own locale is the first chain entry. Because the
 // walk starts at the locale itself and the encoder stores no empty entries, the
 // locale's own code always resolves on the first hop, making Of(locale, …) an
@@ -46,6 +47,21 @@ func TestDisplayNamesRoundTrip(t *testing.T) {
 	wantTags := sortedLocaleKeys(data)
 	gotTags := displaynames.SupportedLocales()
 	assertStringSliceEqual(t, "SupportedLocales", gotTags, wantTags)
+}
+
+func TestDisplayNamesCompositionRoundTrip(t *testing.T) {
+	t.Parallel()
+	input := loadRoundTripSource(t)
+	data := extract.ExtractDisplayNames(input.source.DisplayNames, input.profile)
+	for _, tag := range []string{"en", "zh"} {
+		d := data[tag]
+		components := pattern.FormatIndexed(d.LocaleSeparator, d.Scripts.Long["Cyrl"], d.Territories.Long["US"])
+		want := pattern.FormatIndexed(d.LocalePattern, d.Languages.Standard.Long["en"], components)
+		got, ok := displaynames.Of(tag, "language", "long", "standard", "en-Cyrl-US", true)
+		if !ok || got != want {
+			t.Errorf("%s composition = %q, %t, source expects %q", tag, got, ok, want)
+		}
+	}
 }
 
 // checkStyled asserts that every long/short/narrow code in s resolves back

@@ -77,8 +77,8 @@ The character table source **MUST** be an LDML TR35 Date Field Symbol Table. `DA
 | `m mm` | `Minute` | `numeric/2-digit` |
 | `s ss` | `Second` | `numeric/2-digit` |
 | `S SS SSS` | `FractionalSecondDigits` | 1/2/3 |
-| `a aa aaa aaaa aaaaa` | `DayPeriod` | `short`/`long`/`narrow` |
-| `b bb ... B BB ...` | `DayPeriod`(flexible)| Same as a |
+| `a aa aaa aaaa aaaaa / b bb ...` | Automatic day-period tokens; no resolved `DayPeriod` property | `short`/`long`/`narrow` token width |
+| `B BB BBB BBBB BBBBB` | `DayPeriod`(flexible) | `short`/`long`/`narrow` |
 | `z zz zzz zzzz` | `TimeZoneName` | `short` / `long`(`zzzz`) |
 | `Z ZZ ZZZ ZZZZ` | `TimeZoneName` | `shortOffset` / `longOffset`(`ZZZZ`) |
 | `O OOOO` | `TimeZoneName` | `shortOffset` / `longOffset` |
@@ -108,6 +108,8 @@ The character table source **MUST** be an LDML TR35 Date Field Symbol Table. `DA
        TimeZoneName           TimeZoneName
    }
    ```
+   The constructor adjusts selected hour characters to the resolved cycle after matching, preserving field widths and the original interval lookup skeleton. Basic matching still skips width adjustment. Interval programs apply the same cycle after adjusting their selected field widths; cross-date fallbacks reuse the effective endpoint time pattern.
+
    `go-intl` does not retain a dormant `Pattern12` slot in the skeleton candidate. ECMA-402 and FormatJS model an optional 12-hour pattern record; this implementation stores the selected active `Pattern` plus `HourCycle`, and carries no field unless runtime code consumes it.
 
 > **Why**: The LDML character table is the consistent point across ICU/CLDR implementations; Generated reference has completed authoritative transplantation on the TS side, and mechanical translation on the Go side can ensure byte equality.
@@ -175,6 +177,13 @@ score -= delta == 2 ? longMore: shortMore // or longLess / shortLess
 1. After selecting the best `Formats`, `adjustFieldTypes(format, options)` must be called to modify the character length of the corresponding field in `format.Pattern` according to the field value of `options`. Example: `format.Year = numeric` but `options.Year = 2-digit`, replace `y` in pattern with `yy`.
 2. Replacement rules **MUST** be consistent with generated-reference `BestFitFormatMatcher.ts`: alphabetic pattern can be adjusted to the requested width, but numeric pattern must not be forcibly changed to alphabetic month/day-period form. Example: Chinese `yMEd` patterns keep the numeric month token even when the localized pattern contains year/month/day markers even if `month: "long"` is requested, aligned with Generated reference.
 2a. `AdjustFieldTypes` **MUST** skip `minute` and `second`: it does not rewrite their widths, matching the reference `BestFitFormatMatcher` which `continue`s past minute/second ("Don't mess with minute/second"). Rewriting them corrupts the interval (`FormatRange`) path, which parses the pattern as the skeleton; for example `FormatRange(09:05 → 09:07)` en-US `{hour, minute: numeric}` must render `"9:05 – 9:07 AM"`, not `"9:5 – 9:7 AM"`. `FractionalSecondDigits` width is still adjusted.
+2b. Cached fractional candidates remain numbering-system-neutral. In `New`, the freshly compiled endpoint, interval, and cross-date fallback separator tokens consume `internal/cldr/number.Locale.NumberSymbols(resolvedNumberingSystem).Decimal`; fractional parts contain digits only. Missing symbol rows follow that accessor’s same-locale default fallback. French arab therefore retains the pinned French decimal comma; extending number-symbol data is outside this rule.
+
+    Evidence: `datetimeformat/fraction_separator_test.go` covers French,
+    ar-EG latn/arab, intervals, cross-date fallback, and cache isolation.
+    `datetimeformat/pattern_program.go` owns the private compiled tokens;
+    `.references/node/deps/icu-small/source/i18n/dtptngen.cpp` supplies the
+    localized fractional-separator precedent.
 3. Pattern scanning of `adjustFieldTypes` must maintain ASCII byte level: LDML pattern field characters are all ASCII, and field membership can use `strings.IndexByte` and other stdlib byte helpers; it is forbidden to change to rune/regex scanning.
 4. Pattern scanning loop **MUST** retain explicit index advancement, because quoted literal and repeated field width will skip multi-byte segments at one time; it is prohibited to hide index jumps in the loop body after mechanically changing to `for range len(pattern)`.
 5. After `adjustFieldTypes`, `format.Pattern` is the final pattern string and can be directly sent to `FormatDateTimePattern`.

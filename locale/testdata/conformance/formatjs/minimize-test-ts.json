@@ -1,0 +1,11 @@
+[
+  {
+    "id": "locale-formatjs-formatjs-packages-intl-locale-tests-minimize-test-ts-000",
+    "source": "formatjs:packages/intl-locale/tests/minimize.test.ts",
+    "locale": "und-fonipa-u-nu-arab",
+    "feature": "minimize",
+    "options": {},
+    "input": "und-fonipa-u-nu-arab",
+    "expected": "en-fonipa-u-nu-arab"
+  }
+]

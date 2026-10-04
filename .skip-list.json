@@ -1,5 +1,11 @@
 [
   {
+    "source": "formatjs:packages/intl-datetimeformat/tests/CalendarDateFromTime.test.ts",
+    "category": "unsupported-extractor-shape",
+    "route": "extractor",
+    "reason": "unsupported Vitest assertion shape"
+  },
+  {
     "source": "formatjs:packages/intl-datetimeformat/tests/abstract/BestFitFormatMatcher.test.ts",
     "category": "unsupported-extractor-shape",
     "route": "extractor",
@@ -7,6 +13,12 @@
   },
   {
     "source": "formatjs:packages/intl-datetimeformat/tests/abstract/skeleton.test.ts",
+    "category": "unsupported-extractor-shape",
+    "route": "extractor",
+    "reason": "unsupported Vitest assertion shape"
+  },
+  {
+    "source": "formatjs:packages/intl-datetimeformat/tests/calendar-loading.test.ts",
     "category": "unsupported-extractor-shape",
     "route": "extractor",
     "reason": "unsupported Vitest assertion shape"
@@ -37,6 +49,18 @@
   },
   {
     "source": "formatjs:packages/intl-datetimeformat/tests/offset-timezone.test.ts",
+    "category": "unsupported-extractor-shape",
+    "route": "extractor",
+    "reason": "unsupported Vitest assertion shape"
+  },
+  {
+    "source": "formatjs:packages/intl-datetimeformat/tests/temporal-polyfill.test.ts",
+    "category": "unsupported-extractor-shape",
+    "route": "extractor",
+    "reason": "unsupported Vitest assertion shape"
+  },
+  {
+    "source": "formatjs:packages/intl-datetimeformat/tests/temporal.test.ts",
     "category": "unsupported-extractor-shape",
     "route": "extractor",
     "reason": "unsupported Vitest assertion shape"
@@ -85,9 +109,9 @@
   },
   {
     "source": "formatjs:packages/intl-locale/tests/minimize.test.ts",
-    "category": "unsupported-extractor-shape",
+    "category": "partial-extraction",
     "route": "extractor",
-    "reason": "unsupported Vitest assertion shape"
+    "reason": "mechanical assertions outside current generated fixture gate"
   },
   {
     "source": "formatjs:packages/intl-numberformat/tests/currency-code.test.ts",

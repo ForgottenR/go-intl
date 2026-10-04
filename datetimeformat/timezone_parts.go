@@ -30,21 +30,21 @@ func (f *DateTimeFormat) offsetTimeZonePatternName(t time.Time) string {
 	if ecma402.ResolvedScalarValue(f.resolved.TimeZoneName) == LongOffsetTimeZoneName {
 		form = cldrtimezone.TimeZoneNameLongOffset
 	}
-	return cldrtimezone.GMTOffsetName(cldrtimezone.Locale(f.cldrLoc), info.OffsetMs, form)
+	return cldrtimezone.GMTOffsetName(cldrtimezone.Locale(f.cldrLoc), info.OffsetMs, form, f.resolved.NumberingSystem)
 }
 
 func (f *DateTimeFormat) localizedTimeZonePatternName(form cldrtimezone.TimeZoneName, width int, t time.Time) string {
 	loc := cldrtimezone.Locale(f.cldrLoc)
 	zone, info := resolvedTimeZoneInfo(f.resolved.TimeZone, f.location, t)
 	if zone != "" && zone != "Local" {
-		if name := cldrtimezone.TimeZoneDisplayName(loc, zone, form, info.IsDST, t.UnixMilli(), info.OffsetMs); name != "" {
+		if name := cldrtimezone.TimeZoneDisplayName(loc, zone, form, info.IsDST, t.UnixMilli(), info.OffsetMs, f.resolved.NumberingSystem); name != "" {
 			return name
 		}
 	}
 	if form == cldrtimezone.TimeZoneNameShort && width < 4 && info.Abbrv != "" {
 		return info.Abbrv
 	}
-	return cldrtimezone.GMTOffsetName(loc, info.OffsetMs, form)
+	return cldrtimezone.GMTOffsetName(loc, info.OffsetMs, form, f.resolved.NumberingSystem)
 }
 
 func resolvedTimeZoneInfo(zone string, location *time.Location, t time.Time) (string, tz.ZoneInfo) {

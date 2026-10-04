@@ -93,7 +93,7 @@ Display-name data comes from generated CLDR payloads in `internal/cldr/displayna
 
 | Type | CLDR source | Notes |
 |------|-------------|-------|
-| Language | `cldr-localenames-full/main/<locale>/languages.json` | `-alt-short` keys map to `Style=ShortStyle`, `-alt-narrow` keys map to `Style=NarrowStyle`; both fall back to long. `LanguageDisplay=StandardLanguageDisplay` rebuilds region-suffixed tags (e.g. `en-GB`) by composing the bare language and territory through `localeDisplayPattern`. Script-suffixed tags fall through to the dialect entry. |
+| Language | `cldr-localenames-full/main/<locale>/languages.json` | `-alt-short` keys map to `Style=ShortStyle`, `-alt-narrow` keys map to `Style=NarrowStyle`; both fall back to long. `LanguageDisplay=StandardLanguageDisplay` starts from a bare language/style name and composes all script, region, and variant names once through `localePattern` / `localeSeparator`. Generated standard rows contain bare languages only; composite dialect rows remain exclusive to dialect lookup. |
 | Region | `cldr-localenames-full/main/<locale>/territories.json` | `-alt-short` mapped to ShortStyle. Numeric UN M.49 region codes are returned as-is when they are not a CLDR-carried macro-region (e.g. `of("840")` → `"840"`), matching V8/Node — go-intl does not synthesize an M.49→alpha-2 alias table. |
 | Script | `cldr-localenames-full/main/<locale>/scripts.json` | |
 | Currency | `cldr-numbers-full/main/<locale>/currencies.json`. All styles return the localized `displayName` (singular noun, exposed through `cldr.Locale.CurrencyCanonicalName`); `of("USD")` is `"US Dollar"` for long/short/narrow alike, matching V8/Node. Currency *symbols* (`$`, `symbol-alt-narrow`) are not exposed through DisplayNames — that surface belongs to NumberFormat. | |
@@ -150,3 +150,9 @@ components use pinned CLDR script/territory/variant names and
 locale. `fallback=code` inserts a missing component code, while `none` yields no
 name. Lookups never borrow a name from unrelated English data. Currency names
 are no longer restricted to an arbitrary common-currency allowlist.
+
+Language code canonicalization shares x/text's default parse followed by
+`(Macro | CLDR).Canonicalize` through `internal/localeid.ParseTag` with Locale,
+preserving the `no`/`nb` distinction. DisplayNames retains its narrower
+language-identifier grammar and fallback handling for legitimate unrecognized
+codes; extensions and private use remain invalid for `Of`.

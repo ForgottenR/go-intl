@@ -31,7 +31,7 @@ func TestRunGeneratesDatesAndPreference(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -90,7 +90,7 @@ func TestRunAcceptsUnwrappedDayPeriodRules(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	payload, err := os.ReadFile(filepath.Join(out, "date", "data.go"))
@@ -136,7 +136,7 @@ func TestRunFillsWeekDataFromWorldDefaults(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	// The week-data world-default fill is an extract-layer decision verified

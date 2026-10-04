@@ -168,7 +168,26 @@ MUST rules:
 7. Template decomposition must use `internal/ecma402.PartitionPattern`; do not hand-parse placeholders in `listformat`.
 8. Part records must use only `element` and `literal`.
 
-The implementation may use a single deterministic template set per locale/type/style. ECMA-402 permits implementation-defined selection among multiple template records for context-sensitive languages; this project does not add that complexity until CLDR extraction exposes multiple alternatives.
+ECMA-402 permits contextual templates. For a resolved Spanish data locale,
+exact `{0} y {1}` / `{0} o {1}` pair/end templates receive constructor-compiled
+e/u alternatives. The finite ICU prefix rules select e for i/hi except hia/hie,
+and u for o/ho/8 and exact 11 or a `11 ` prefix. Only the original next element
+selects the connecting literal; elements remain unchanged, and other
+templates/locales use their selected CLDR pattern.
+
+For a resolved Hebrew data locale, an exact `{0} ו{1}` pair/end template
+receives a vav-dash alternative when the first Unicode scalar of the next
+nonempty element has a script other than Hebrew. Use the stdlib Hebrew script
+table, including marks and presentation forms; do not guess from ASCII or text
+direction. Empty next elements keep the original template. DurationFormat
+consumes this same ListFormat behavior.
+
+Source: `listformat/context.go` and `listformat/format.go`. Direct reference:
+`.references/ecma402/spec/listformat.html` (`CreatePartsFromList`) and
+`.references/node/deps/icu-small/source/i18n/listformatter.cpp`.
+Native witnesses: `listformat/testdata/conformance/node-v26/contextual-spanish.json`
+and `listformat/testdata/conformance/node-v26/contextual-hebrew.json`, from
+Node 26.10.0 / ICU 78.3 / CLDR 48.0.
 
 ---
 

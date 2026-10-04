@@ -16,31 +16,36 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		if fixture.IsSupportedLocalesOf() {
-			runSupportedLocalesFixture(t, fixture)
-			return
-		}
+	conformance.RunFixtures(t, ".", runListConformanceFixture)
+}
 
-		format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceListOptions(t, fixture))
-		if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
-			return conformanceListConstructorError(t, code)
-		}) {
-			return
+func runListConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
+
+	if fixture.IsSupportedLocalesOf() {
+		runSupportedLocalesFixture(t, fixture)
+		return
+	}
+
+	format, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformanceListOptions(t, fixture))
+	if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+		return conformanceListConstructorError(t, code)
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := conformanceStringListInput(t, fixture)
+	if fixture.Expected != nil {
+		if got := format.Format(input); got != *fixture.Expected {
+			t.Fatalf("Format(%v) = %q, want %q", input, got, *fixture.Expected)
 		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		input := conformanceStringListInput(t, fixture)
-		want := fixture.RequiredExpected(t)
-		if got := format.Format(input); got != want {
-			t.Fatalf("Format(%v) = %q, want %q", input, got, want)
-		}
-		if len(fixture.ExpectedParts) > 0 {
-			parts := format.FormatToParts(input)
-			testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceListPart)
-		}
-	})
+	}
+	if fixture.ExpectedParts != nil {
+		parts := format.FormatToParts(input)
+		testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceListPart)
+	}
 }
 
 func TestConformanceListOptionsPreserveExplicitEmptyString(t *testing.T) {

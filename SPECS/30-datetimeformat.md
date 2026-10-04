@@ -220,8 +220,8 @@ type Options struct {
 1. The resolved hour-cycle value **MUST** be linked with `Locale.HourCycle()`(BCP 47 `-u-hc-...`) + explicit `Options.HourCycle` + `Options.Hour12`, according to ECMA-402 §13.1.1.1 step resolution:
    ```text
    if Hour12 != nil:
-       resolved.HourCycle := Hour12 ? "h11"|"h12" (locale default 12-system location): "h23"|"h24"
-       (The specific choice between the two is determined by dataLocale by default)
+       resolved.HourCycle := first cycle in the requested 12/24 family
+       (Use pinned regional timeData; maximize a missing region for lookup only.)
    else if HourCycle is set explicitly:
        resolved.HourCycle := HourCycle
    else if Locale.HourCycle() != "":
@@ -229,8 +229,17 @@ type Options struct {
    else:
        resolved.HourCycle := dataLocale default (taken from CLDR `timeData.json` `preferred`)
    ```
-2. **Disable** to let `Hour12 = false` overwrite `Locale.HourCycle() = h11` by default (must follow the above priority).
-3. The simultaneous existence of `Options{HourCycle: gointl.String(string(H11HourCycle)), Hour12: gointl.Bool(false)}` MUST let `Hour12` take precedence over `HourCycle` (ECMA-402 §13.1.1.1).
+2. All four explicit cycles (`h11`, `h12`, `h23`, `h24`) are legal through options and Unicode `hc`; regional preferences determine defaults, not capability. Constructor-selected hour fields execute the resolved cycle while retaining the selected pattern width.
+3. Style endpoint patterns, interval fields, and distinguishing cross-date fallback programs must use that same resolved cycle. Switching between 12/24-hour families selects the locale’s complete alternative time pattern, including day-period position and literals; style resolved records continue to omit component fields.
+4. When hour12 is present, Unicode hc is excluded from locale negotiation and does not survive in the resolved locale, even if it equals the selected cycle. Japanese tags with or without JP use the pinned JP preference h11 for hour12=true; the inferred region never changes the public locale tag.
+5. The simultaneous existence of `Options{HourCycle: gointl.String(string(H11HourCycle)), Hour12: gointl.Bool(false)}` MUST let `Hour12` take precedence over `HourCycle` (ECMA-402 §13.1.1.1).
+
+Evidence: `internal/cldr/date/accessors.go`, `datetimeformat/hour_cycle_test.go`,
+and pinned `tools/gen-cldr/.cldr-json/node_modules/cldr-core/supplemental/timeData.json`.
+The readable option-resolution reference is
+`.references/formatjs/packages/ecma402-abstract/DateTimeFormat/InitializeDateTimeFormat.ts`.
+Node 26.10.0 selects h12 for unqualified `ja` and h11 for `ja-JP`; this library
+uses the pinned JP preference for both without adding JP to the public tag.
 
 > **Why**: HourCycle is a high-error field in the reference fixture corpus and must strictly follow §13.1.1.1.
 
@@ -358,7 +367,7 @@ Active generated pattern data currently covers Gregorian/ISO-8601 observable beh
 `Format` and `FormatToParts` share the main process `PartitionDateTimePattern`, defined in `formatjs/.../PartitionDateTimePattern.ts` + `ToLocalTime.ts` + `FormatDateTimePattern.ts`:
 
 ```text
-1. instant := t.UTC().UnixMilli()
+1. instant := normalizeInstant(t) // Validate TimeClip, then truncate toward zero to milliseconds
 2. localTime := ToLocalTime(instant, calendar, location)
    // localTime = {era, year, month, day, weekday, hour, minute, second, ms, dst, offset}
 3. program := f.pattern.program // Selected and compiled once in New
@@ -372,13 +381,14 @@ Active generated pattern data currently covers Gregorian/ISO-8601 observable beh
 **MUST** Rules:
 
 1. `Format` **MUST** be equivalent to `strings.Join(part.Value for part in FormatToParts(t), "")` - the output string bytes of the two are equal, as asserted by the conformance test.
-2. `time.Time` input **MUST** be rounded and converted through the cached `*time.Location` before any calendar fields are read.
+2. `time.Time` input **MUST** be validated, truncated toward zero to milliseconds, and converted through the cached `*time.Location` before any calendar fields are read.
 3. ECMA-402 `ToLocalTime` semantics **MUST** be centralized behind one local-time projection path. Active `gregory` and `iso8601` use Gregorian fields, including ECMA-402 BCE display-year conversion (`year <= 0` formats as `1 - year`); future calendars must extend that projection instead of scattering calendar conditionals through pattern code.
 4. Pattern token → Field formatted lookup table **MUST** pass [SPEC 31 §Skeleton character table](./31-datetimeformat-skeleton.md).
 5. The `Part.Type` output by `FormatField` **MUST** qualify ECMA-402 §15.5.1 Table 9 for a total of 15 spec strings: `era | year | month | day | hour | minute | second | weekday | dayPeriod | timeZoneName | literal | fractionalSecond | relatedYear | yearName | unknown`. The option, resolved property, and pattern field remain `fractionalSecondDigits`; only the emitted part type is `fractionalSecond`, exposed as `PartFractionalSecond`. The AM/PM mark is triggered by the token `a/b/B` inside the pattern, but the output part type is still `"dayPeriod"` (spec §15.5.4), and `"ampm"` must not be emitted directly because it is not an ECMA-402 part type. `relatedYear / yearName / unknown` will not be emitted in Gregorian-only scope, but the constants must exist so consumer switches can stay exhaustive. **It is forbidden** to emit option names or non-spec strings such as `fractionalSecondDigits`, `hour24`, `hour11`, `dayperiod`, or `ampm` as part types.
 6. `DateTimeFormat` **MUST** cache `selectedPattern` and compile its endpoint, date, time, interval, and distinguishing fallback programs in `New`. `Format`, `FormatToParts`, `FormatRange`, and `FormatRangeToParts` execute those immutable programs; they must not tokenize patterns, repeat skeleton lookup, adjust fields, or construct fallback patterns on the hot path. The selected record owns effective date/time formats, date+time interpolation, and the compiled range record used by both range sinks.
 7. `localeMatcher` and `formatMatcher` **MUST** be kept separate: `localeMatcher` only affects the CLDR data locale selection; `formatMatcher` only affects the component options → pattern selection. **BANNED** Substituting locale fallback results for formatMatcher decisions.
 8. Component-style `ResolvedOptions` **MUST** be projected from the effective selected patterns after matcher adjustments and appended fields, not copied from the caller's requested option bag. Fields absent from the effective pattern remain nil; hour-cycle fields are absent when the selected pattern has no hour.
+9. Automatic AM/PM tokens `a` and `b` do not declare the flexible `dayPeriod` resolved property. Only a selected `B` token contributes its width to that property. All three tokens still emit `PartDayPeriod` partition records.
 
 ```go
 type Part struct {

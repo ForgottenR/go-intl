@@ -7,6 +7,7 @@ import (
 
 	cldrdate "github.com/agentable/go-intl/internal/cldr/date"
 	cldrlocale "github.com/agentable/go-intl/internal/cldr/locale"
+	cldrnumber "github.com/agentable/go-intl/internal/cldr/number"
 	"github.com/agentable/go-intl/internal/ecma402"
 	"github.com/agentable/go-intl/internal/localematcher"
 	"github.com/agentable/go-intl/internal/tz"
@@ -44,7 +45,7 @@ func New(locales locale.List, opts Options) (*DateTimeFormat, error) {
 	if err != nil {
 		return nil, err
 	}
-	hourCycle, hour12 := resolveHourCycle(cfg, resolution.hourCycle)
+	hourCycle, hour12 := resolveHourCycle(cfg, resolution.hourCycle, resolution.locale.String())
 	cldrLoc, gregorian := resolveDateData(resolution.cldrLoc, cfg)
 	patterns := patternDataFor(cldrLoc, gregorian)
 	numberingSystem := resolution.numberingSystem
@@ -79,6 +80,13 @@ func New(locales locale.List, opts Options) (*DateTimeFormat, error) {
 	uses24Hour = resolvedUses24HourTime(resolved)
 	pattern.rangeRecord = newRangePatternRecord(pattern, patterns, FormatMatcher(cfg.formatMatcher), gregorian)
 	pattern.compilePrograms()
+	if resolved.FractionalSecondDigits != nil {
+		decimal := cldrnumber.Locale(cldrLoc).NumberSymbols(numberingSystem).Decimal
+		if decimal == "" {
+			return nil, ecma402.UnsupportedOptionErrorExpected(dateTimeFormatOwner, "numberingSystem", numberingSystem, resolution.locale.String(), "generated decimal symbols", nil)
+		}
+		pattern.localizeFractionalSeparators(decimal)
+	}
 	return &DateTimeFormat{
 		resolved:   resolved,
 		cldrLoc:    cldrLoc,
@@ -103,19 +111,18 @@ func resolveLocale(locales locale.List, fallback locale.Locale, cfg config) loca
 		{Key: ecma402.UnicodeExtensionKeyHourCycle, Value: cfg.hourCycle},
 		{Key: ecma402.UnicodeExtensionKeyNumberingSystem, Value: cfg.numberingSystem},
 	}
+	keys := []ecma402.UnicodeExtensionKey{ecma402.UnicodeExtensionKeyCalendar, ecma402.UnicodeExtensionKeyHourCycle, ecma402.UnicodeExtensionKeyNumberingSystem}
 	if cfg.hasHour12 {
-		if cfg.hour12 {
-			options[1].Value = string(H12HourCycle)
-		} else {
-			options[1].Value = string(H23HourCycle)
-		}
+		// hour12 makes hc irrelevant, including an equal Unicode hc value.
+		options = []ecma402.UnicodeExtensionOption{options[0], options[2]}
+		keys = []ecma402.UnicodeExtensionKey{ecma402.UnicodeExtensionKeyCalendar, ecma402.UnicodeExtensionKeyNumberingSystem}
 	}
 	resolution := ecma402.ResolveConstructorLocale(ecma402.ConstructorLocaleOptions{
 		Locales:               locales,
 		Fallback:              fallback,
 		LocaleMatcher:         cfg.localeMatcher,
 		Matcher:               dateLocaleMatcher(),
-		RelevantExtensionKeys: []ecma402.UnicodeExtensionKey{ecma402.UnicodeExtensionKeyCalendar, ecma402.UnicodeExtensionKeyHourCycle, ecma402.UnicodeExtensionKeyNumberingSystem},
+		RelevantExtensionKeys: keys,
 		OptionValues:          options,
 		LocaleData:            dateLocaleData{},
 	})
@@ -160,9 +167,12 @@ func unsupportedTimeZone(value, locName string, err error) error {
 	return ecma402.UnsupportedOptionErrorExpected(dateTimeFormatOwner, "timeZone", value, locName, timeZoneExpected, err)
 }
 
-func resolveHourCycle(cfg config, resolvedHourCycle string) (HourCycle, *bool) {
+func resolveHourCycle(cfg config, resolvedHourCycle, dataLocale string) (HourCycle, *bool) {
 	if cfg.hour == "" && cfg.timeStyle == "" {
 		return "", nil
+	}
+	if cfg.hasHour12 {
+		resolvedHourCycle = cldrdate.HourCycleFor(dataLocale, cfg.hour12)
 	}
 	if resolvedHourCycle == "" {
 		resolvedHourCycle = string(H23HourCycle)

@@ -21,7 +21,7 @@ func main() {
 	flag.StringVar(&cfg.LocaleIDOut, "localeid-out", "../../internal/localeid/unicode_alias_data.go", "output file for generated Unicode type aliases")
 	flag.StringVar(&cfg.LocaleMatcherOut, "localematcher-out", "../../internal/localematcher/profile_data.go", "output file for generated language matching profile")
 	flag.StringVar(&cfg.TimeZoneOut, "timezone-out", "", "output file for generated IANA time-zone registry")
-	flag.StringVar(&cfg.TZDataLock, "tzdata-lock", "", "path to the pinned tzdata lock JSON")
+	flag.StringVar(&cfg.TZDataLock, "tzdata-lock", "tzdata.json", "path to the required pinned tzdata lock JSON")
 	flag.StringVar(&cfg.TZDataArchive, "tzdata-archive", "", "path to the pinned IANA tzdata tarball")
 	flag.StringVar(&cfg.VersionFile, "version-file", "", "path to internal/cldr/VERSION (defaults to <out>/VERSION)")
 	flag.StringVar(&cfg.ProfileFile, "profile", "", "path to tools/locale-profile.json")

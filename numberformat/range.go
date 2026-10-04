@@ -50,6 +50,10 @@ func partitionNumberRange(start, end decimal.Decimal, formatState *decimalFormat
 	}
 	prefix, startParts, endParts, suffix := collapseRangeEndpointParts(startParts, endParts)
 	separator := numberRangeSeparator(startParts, formatState.symbols.RangeSign)
+	for len(endParts) > 0 && endParts[0].Type == PartLiteral && strings.TrimFunc(endParts[0].Value, isBidiSignMark) == "" {
+		separator += endParts[0].Value
+		endParts = endParts[1:]
+	}
 	out := make([]RangePart, len(prefix)+len(startParts)+1+len(endParts)+len(suffix))
 	n := len(prefix)
 	fillRangeParts(out[:n], prefix, SourceShared)
@@ -90,14 +94,11 @@ func numberRangeSeparator(startParts []Part, sign string) string {
 	if sign == "" {
 		sign = "–"
 	}
-	if len(startParts) > 0 && (isSignPart(startParts[0].Type) || startParts[0].Type == PartPercentSign) {
+	leadingSign, _ := splitLeadingSign(startParts)
+	if leadingSign.Type != "" || (len(startParts) > 0 && startParts[0].Type == PartPercentSign) {
 		return " " + sign + " "
 	}
 	return sign
-}
-
-func isSignPart(typ PartType) bool {
-	return typ == PartMinusSign || typ == PartPlusSign
 }
 
 func partValuesEqual(startParts, endParts []Part) bool {

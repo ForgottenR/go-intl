@@ -52,9 +52,6 @@ func normalizeLanguageAliases(tag string) string {
 	if len(parts) == 0 {
 		return tag
 	}
-	if parts[0] == "twi" {
-		parts[0] = "ak"
-	}
 	if parts[0] == "und" && len(parts) >= 3 && parts[1] == "armn" && parts[2] == "su" {
 		parts[2] = "am"
 	}

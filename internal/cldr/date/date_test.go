@@ -326,13 +326,13 @@ func TestDateLocaleDataEnglishHourCyclePreference(t *testing.T) {
 	t.Parallel()
 
 	first := DateLocaleData{}.For("en", "hc")
-	if want := []string{"h12", "h23"}; !slices.Equal(first, want) {
+	if want := []string{"h12", "h11", "h23", "h24"}; !slices.Equal(first, want) {
 		t.Fatalf(`DateLocaleData.For("en", "hc") = %v, want %v`, first, want)
 	}
 	first[0] = "mutated"
 
 	got := DateLocaleData{}.For("en", "hc")
-	if want := []string{"h12", "h23"}; !slices.Equal(got, want) {
+	if want := []string{"h12", "h11", "h23", "h24"}; !slices.Equal(got, want) {
 		t.Fatalf(`DateLocaleData.For("en", "hc") after caller mutation = %v, want %v`, got, want)
 	}
 }

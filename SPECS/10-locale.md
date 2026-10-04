@@ -533,7 +533,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
   - ❌ Don't: `numberformat.New("en-US", numberformat.Options{})`.
 
 - **Rewrite BCP 47 parsing**: Violation of CLAUDE.md "no reinventing locale parsing".
-- ✅ Do: Internally superimpose `-u-` on top of `language.Parse(s)` for extended processing.
+- ✅ Do: Internally superimpose `-u-` on top of `internal/localeid.ParseTag(s)` for extended processing.
 - ❌ Don't: Write `parseBCP47(s string)` yourself.
 
 - **Reimplement or fork the likelySubtags algorithm**: reinvent maximize/minimize instead of consuming generated CLDR data.
@@ -672,3 +672,10 @@ Calendar preference identifiers are canonicalized at generation, not repaired
 by runtime parsing. `GetCalendars` retains region/world fallback, filters the
 generated preference against supported calendars, and uses `gregory` when that
 intersection is empty. Explicit `ca` presence bypasses that list selection.
+
+Language identifier parsing and language/script/region replacement share
+`internal/localeid.ParseTag`, using x/text's default parse followed by
+`(Macro | CLDR).Canonicalize`. Separating the stages canonicalizes `twi` to
+`ak` while preserving the `no`/`nb` distinction and explicit scripts such as
+`en-Latn`; grammar validation and Unicode keyword handling remain Locale-owned.
+Variants, transformed extensions and private use survive subtag replacement.

@@ -30,7 +30,7 @@ func Parse(s string) (Locale, error) {
 		return Locale{}, invalidLocaleValue("languageTag", s, err)
 	}
 	base = normalizeLanguageAliases(base)
-	tag, err := language.Parse(base)
+	tag, err := localeid.ParseTag(base)
 	if err != nil {
 		return Locale{}, invalidLocaleValue("languageTag", s, err)
 	}

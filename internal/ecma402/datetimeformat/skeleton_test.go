@@ -142,7 +142,7 @@ func TestParsePatternHasTimeZoneNameIgnoresQuotedFields(t *testing.T) {
 func TestParseSkeletonNarrowTextFields(t *testing.T) {
 	t.Parallel()
 
-	got := Parse("GGGGGEEEEEbbbbb", "GGGGG EEEEE bbbbb", nil, "")
+	got := Parse("GGGGGEEEEEBBBBB", "GGGGG EEEEE BBBBB", nil, "")
 	if got.Era != FieldNarrow {
 		t.Fatalf("Era = %q, want %q", got.Era, FieldNarrow)
 	}
@@ -151,6 +151,24 @@ func TestParseSkeletonNarrowTextFields(t *testing.T) {
 	}
 	if got.DayPeriod != FieldNarrow {
 		t.Fatalf("DayPeriod = %q, want %q", got.DayPeriod, FieldNarrow)
+	}
+}
+
+func TestParseSkeletonSeparatesAMPMFromFlexibleDayPeriod(t *testing.T) {
+	t.Parallel()
+
+	for _, token := range []string{"a", "aaaa", "b", "bbbbb"} {
+		t.Run(token, func(t *testing.T) {
+			t.Parallel()
+
+			got := Parse("h "+token, "h "+token, nil, "")
+			if got.DayPeriod != "" {
+				t.Fatalf("AM/PM token %s produced flexible dayPeriod %q", token, got.DayPeriod)
+			}
+			if got.Hour != NumericNumeric || got.HourCycle != HourCycleH12 {
+				t.Fatalf("hour fields changed: %+v", got)
+			}
+		})
 	}
 }
 

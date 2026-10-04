@@ -14,7 +14,7 @@ A Go implementation of the active ECMA-402 `Intl` API with typed constructors an
 - **Reusable formatters**: Construct once and reuse; constructors resolve locale, options, and data so repeated formatting stays on the cached path.
 - **Host-friendly records**: Resolved options, parts, ranges, locale info, and durations marshal with ECMA-402 JSON field names for API and JS-host boundaries.
 - **Structured errors**: Root sentinels work with `errors.Is`, and `gointl.Error` exposes stable kind, owner, option, value, locale, and expected-value guidance.
-- **CLDR-backed data**: Ship generated CLDR data as Go source; applications do not load JSON, ICU, or time-zone data files at runtime.
+- **CLDR-backed data**: Ship generated CLDR data as Go source; formatter output needs no runtime CLDR JSON loading or ICU engine.
 - **Reference fixtures**: Verify formatter output against ECMA-402-derived FormatJS fixtures and native Intl snapshots.
 
 ## Installation
@@ -155,6 +155,9 @@ if direction := loc.GetTextInfo().Direction; direction != nil {
 `GetTextInfo().Direction` is present only when the generated CLDR script
 metadata has a known `ltr` or `rtl` value. Unknown direction remains `nil` and
 is omitted from JSON instead of being guessed.
+
+Canonicalization follows CLDR language aliases: `twi` becomes `ak`, while
+`no` and `nb` retain their distinct canonical identities.
 
 Short examples below use a local `mustLocaleList` helper for brevity; production code should call `locale.ParseList` and handle the returned error.
 
@@ -341,6 +344,11 @@ for _, part := range format.FormatToParts(numberformat.Float(1234.5)) {
 }
 ```
 
+Keep literal parts when rebuilding the output. They include spacing and
+invisible direction marks needed by Arabic and Persian text; concatenating all
+part values reproduces `Format`. Range parts additionally report `startRange`,
+`endRange`, or `shared` ownership.
+
 ### Format Number Ranges
 
 `FormatRange` and `FormatRangeToParts` preserve input order and use native Intl
@@ -396,6 +404,13 @@ fmt.Println(string(data))
 `durationformat.Duration` and locale `WeekInfo` / `TextInfo` also use ECMA-402
 field names.
 
+Inactive resolved-option properties are omitted. Explicit zero and false values
+remain present: a disabled NumberFormat grouping mode marshals as the JSON
+boolean `"useGrouping": false`, and a resolved 24-hour clock includes
+`"hour12": false`. Date/time styles report their style options without exposing
+the individual component fields. See [JSON records](SPECS/73-json-records.md)
+for the complete presence policy.
+
 ### Format Dates and Ranges
 
 `datetimeformat` accepts `time.Time` and supports style-based or field-based formatting:
@@ -415,15 +430,54 @@ end := start.Add(2 * time.Hour)
 
 text, err := format.Format(start)
 if err != nil {
-    return err
+	return err
 }
 fmt.Println(text)
 rangeText, err := format.FormatRange(start, end)
 if err != nil {
-    return err
+	return err
 }
 fmt.Println(rangeText)
 ```
+
+### Choose Hour Cycles and Fractional Seconds
+
+Set `HourCycle` when the clock's numeric range matters. `h11` uses 0–11,
+`h12` uses 1–12, `h23` uses 0–23, and `h24` uses 1–24. These choices apply to
+components, time styles, and ranges. `Hour12`, when supplied, takes precedence
+and chooses the locale's preferred cycle in the requested 12- or 24-hour family.
+
+Use field options to show milliseconds with the locale's decimal separator:
+
+```go
+format, err := datetimeformat.New(mustLocaleList("fr-FR"), datetimeformat.Options{
+	Hour:                   gointl.String(datetimeformat.TwoDigitFieldStyle),
+	Minute:                 gointl.String(datetimeformat.TwoDigitFieldStyle),
+	Second:                 gointl.String(datetimeformat.TwoDigitFieldStyle),
+	FractionalSecondDigits: gointl.Int(3),
+	HourCycle:              gointl.String(datetimeformat.H24HourCycle),
+	TimeZone:               gointl.String("UTC"),
+})
+if err != nil {
+	return err
+}
+
+instant := time.Date(2026, time.May, 8, 0, 0, 7, 987_000_000, time.UTC)
+text, err := format.Format(instant)
+if err != nil {
+	return err
+}
+fmt.Println(text)
+```
+
+Output:
+
+```text
+24:00:07,987
+```
+
+`FractionalSecondDigits` accepts 1, 2, or 3. Fractional-second parts contain
+digits; their decimal separator is a literal part.
 
 ### Select Plural Categories
 
@@ -499,6 +553,24 @@ fmt.Println(list.Format([]string{"red", "green", "blue"}))
 fmt.Println(out)
 ```
 
+ListFormat selects contextual conjunctions from the original element text:
+Spanish changes `y` to `e` or `o` to `u` for the matching prefixes, and Hebrew
+adds a dash before non-Hebrew text. The same literals appear in `FormatToParts`.
+
+```go
+spanish, err := listformat.New(mustLocaleList("es"), listformat.Options{})
+if err != nil {
+	return err
+}
+fmt.Println(spanish.Format([]string{"madre", "hijo"})) // madre e hijo
+
+hebrew, err := listformat.New(mustLocaleList("he"), listformat.Options{})
+if err != nil {
+	return err
+}
+fmt.Println(hebrew.Format([]string{"א", "Go"})) // א ו-Go
+```
+
 Relative-time values always use ECMAScript Number semantics. `Int` and `Uint`
 are convenience conversions through `float64`, so integers beyond `2^53` round
 exactly as native `Intl.RelativeTimeFormat`; `Float` preserves negative zero.
@@ -568,6 +640,31 @@ if ok {
 }
 ```
 
+Choose `StandardLanguageDisplay` for a language followed by its script, region,
+and variant names. The default dialect mode can use names such as
+`American English` for `en-US`.
+
+```go
+names, err := displaynames.New(mustLocaleList("en"), displaynames.Options{
+	Type:            gointl.String(displaynames.Language),
+	LanguageDisplay: gointl.String(displaynames.StandardLanguageDisplay),
+})
+if err != nil {
+	return err
+}
+name, ok, err := names.Of("en-Cyrl-US")
+if err != nil {
+	return err
+}
+if ok {
+	fmt.Println(name) // English (Cyrillic, United States)
+}
+```
+
+Names use the resolved locale and its parents. With `NoneFallback`, a missing
+component returns `ok == false`; with `CodeFallback`, the canonical code appears
+in its place.
+
 ## Supported Data
 
 `tools/locale-profile.json` defines the CLDR locale profile used by generated
@@ -606,10 +703,11 @@ matches identifiers using ECMA-402 ASCII-case-insensitive rules. Links such as
 `US/Eastern`, `Atlantic/Jan_Mayen`, and `Pacific/Truk` resolve to stable primary
 identifiers. `SupportedTimeZones` returns the complete primary projection, and
 `Locale.GetTimeZones` returns the `zone.tab` primary identifiers for the
-locale's explicit region. Localized time-zone names remain CLDR display data;
-Go's `time.LoadLocation` supplies transitions from `ZONEINFO`, host paths,
-GOROOT, then embedded `time/tzdata` as fallback. IANA identity, CLDR display
-names, and the transition source have separate owners.
+locale's explicit region. A primary identifier can use the display names of its
+CLDR alias without changing `ResolvedOptions().TimeZone`. Go's
+`time.LoadLocation` supplies transitions from `ZONEINFO`, host paths, GOROOT,
+then embedded `time/tzdata` as fallback. Historical GMT offsets retain seconds
+when the transition data contains them.
 
 `DateTimeFormat.FormatRange` and `FormatRangeToParts` preserve caller-provided
 endpoint order. A later first argument is valid and remains `startRange`; the
@@ -623,9 +721,11 @@ failures remain construction errors.
 
 ## Known Divergences
 
-`go-intl` matches observable ECMA-402 output where it can and documents every accepted difference. Two categories exist:
+`go-intl` targets observable ECMA-402 behavior. Typed Go bridges and differences
+from reference output are documented separately:
 
 - **Typed bridges** turn JavaScript dynamic shapes into idiomatic Go signatures. They are intentional and stable.
+- **Pinned data** can produce different preferences and symbols from a host's ICU version, as described below.
 - **Conformance divergences** are accepted reference mismatches; each one is enumerated and audited by `task conformance:verify`.
 
 ### Typed bridges
@@ -637,6 +737,23 @@ failures remain construction errors.
 | JS `new Intl.X(locales, options?)` | `New(locales, opts Options)` accepting a `locale.List` plus exactly one typed `Options` value | Callers express omitted locales with `nil` / `locale.List{}` and use `Options{}` for the empty or omitted JS options object. |
 | `format(value)` accepting `Number \| BigInt \| string` | Opaque `numberformat.Value` constructors plus `Format`, `FormatToParts`, `FormatRange`, and `FormatRangeToParts` | Preserves type safety without a public `any` hot path. |
 | Resolved option properties that JS omits when inactive (e.g. PluralRules `compactDisplay`, DateTimeFormat component fields, or DisplayNames `languageDisplay`) | Pointer fields on `ResolvedOptions` that are `nil` when the spec hides them | Distinguishes "not set" from "explicitly zero" without ambiguity. |
+
+### Data-dependent behavior
+
+Pinned CLDR data can differ from a host's ICU data. Two current DateTimeFormat
+boundaries matter when comparing output:
+
+- `Hour12` set to `gointl.Bool(true)` for `ja` and `ja-JP` selects the Japanese
+  `h11` preference, so midnight uses hour 0. Node 26.10.0 selects `h12` for plain `ja` and `h11`
+  for `ja-JP`; set `HourCycle` explicitly to choose a numeric clock range.
+- The French data has no `arab` number-symbol row. French fractional seconds with
+  `NumberingSystem` set to `gointl.String("arab")` use Arabic digits and the
+  French decimal comma; native ICU can use the Arabic decimal separator. Arabic-Egyptian `latn` and
+  `arab` requests have separate symbol rows.
+
+See [hour-cycle selection](SPECS/30-datetimeformat.md#22-hourcycle-linkage-13111)
+and [fractional-second separators](SPECS/31-datetimeformat-skeleton.md) for the
+data policy.
 
 ### Conformance divergences
 
@@ -704,6 +821,7 @@ task deps                 # Download modules and tidy go.mod/go.sum
 task fmt                  # Format Go code
 task vet                  # Run go vet
 task test                 # Run go test -race -p 1 ./...
+task modules:verify       # Test, vet, and check tidy diff in all four release modules
 task lint                 # Run go mod tidy check and golangci-lint
 task codegraph:source        # Build a source-only CodeGraph mirror under .tmp/codegraph-source
 task codegraph:source:status # Verify mirror/worktree sync, then show CodeGraph index status
@@ -718,31 +836,8 @@ task build:size:cold      # Report the same size table after clearing Go's build
 task bench:run            # Run one-shot benchmark telemetry
 task bench                # Produce a non-blocking benchmark report, optionally with BASELINE=<file>
 task vuln                 # Run govulncheck
-task verify               # Run deps, fmt, vet, lint, test, conformance, data contract, and vuln checks
+task verify               # Run deps, fmt, vet, lint, race/module tests, conformance, data contract, and vuln
 ```
-
-Use `task codegraph:source` before structural exploration. The generated mirror
-excludes `.references/` and lives under ignored `.tmp/codegraph-source`, so
-current-source questions do not accidentally traverse the vendored reference
-trees. `task codegraph:source:status` checks that the mirror still matches the
-working tree before reporting the CodeGraph index status; use
-`task codegraph:source:sync-check` when you only need the mirror freshness
-check. Reference projects keep their own CodeGraph indexes when a comparison
-needs implementation evidence.
-
-Measure aggregate root facade cost separately from per-surface formatter cost.
-Treat `go list -deps .` as root aggregate evidence only; use direct subpackage
-commands for single-formatter dependency measurements.
-
-```bash
-go list -deps . | wc -l
-go list -deps ./numberformat | wc -l
-go list -deps ./datetimeformat | wc -l
-task build:size  # CLDR linker smoke for generated data changes
-task build:size:cold  # CLDR cold-build smoke for profile changes
-```
-
-For binary-size checks, label root facade harnesses separately from formatter-only harnesses.
 
 Run a targeted package while developing:
 

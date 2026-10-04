@@ -138,7 +138,7 @@ nf, _ := numberformat.New(mustLocaleList("en-US"),
 1. Enum-like options taken from the union of ECMA-402 string literals (`style` / `notation` / `compactDisplay` / `currencyDisplay` / `currencySign` / `unitDisplay` / `signDisplay` / `useGrouping` / `roundingPriority` / `roundingMode` / `trailingZeroDisplay`) **MUST** have package named types and constants as vocabulary, while constructor option fields use `*string`; nil means omitted and `gointl.String("")` is invalid.
 2. `numberingSystem` uses `*string`, because it is a Unicode extension type whose omitted/default state and explicit empty value are distinct.
 3. `Currency` and `Unit` are direct ECMA-402 identifier option values carried as `*string`. Currency case normalization and unit validation belong to `New`; unit lowercase fallback must not be done in the constructor.
-4. The `false` value of `useGrouping` is expressed by `UseGroupingFalse` on the Go side, and the underlying layer is still serialized as `"false"`.
+4. The disabled `useGrouping` value uses `UseGroupingFalse` in Go. Its JSON projection is Boolean `false`; `auto`, `min2`, and `always` remain strings. `UseGrouping.MarshalJSON` owns this projection without changing the typed formatter state.
 5. Verification **MUST** be completed centrally in `New`. Failure to wrap `ErrInvalidOption` and display the value passed in by the user.
 
 > **Why**: typed values retain ECMA-402 strings as wire/resolved form while improving call sites from "guessing strings" to selecting explicit constants. Fixture loaders and external adapters map at their own boundary without downgrading the public API to JSON form.
@@ -349,7 +349,7 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 4. `currencyDisplay = "name"` **MUST** use the same plural category for both the localized currency name and its generated `unitPattern-count-*` placement; unit patterns consume the same style category. The category comes from the unlocalized formatted decimal, not `Rounded.String()`: standard notation retains digit-option zeros such as `1.00`, while scientific, engineering, and compact mantissas are restored to their full magnitude with the selected exponent before operand construction. Compact suffix selection remains the separate scaled-mantissa contract in §4.1. A missing category falls back to `other`; a missing numbering-system row falls back to the validated default row inside the same locale. The constructor compiles all reachable placements once; formatting inserts the complete number partition at `{0}` and the selected localized name (or unknown code) at `{1}`.
 5. A currency-name pattern **MUST NOT** apply the currency-symbol accounting sub-pattern. The number partition retains its own sign, and any ALM/LRM/RLM carried around the CLDR sign symbol is emitted as adjacent `literal` parts so `FormatToParts` preserves native part boundaries.
 6. Compact suffix selection **MUST** first determine the plural category according to §4.1, and then check CLDR `numbers.json` `decimalFormats.{short|long}.decimalFormat[length].decimal-format-pattern.<category>`; when category is missing, fall back to `other`.
-7. `useGrouping = "min2"` **MUST** only insert groups when the integer part is ≥ 5 bits (aligned generated-reference `useGrouping` implementation).
+7. Grouping is decided from displayed integer digits after rounding. `auto` uses CLDR `minimumGroupingDigits`, `min2` uses `max(2, minimumGroupingDigits)` as ICU does, and `always` uses a minimum of one. The threshold is primary group size plus that minimum; `false` disables grouping. The constructor freezes this strategy alongside primary and secondary sizes.
 
 ---
 
@@ -360,7 +360,7 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 1. `FormatRange(a, b)` and `FormatRangeToParts(a, b)` **MUST** consume one package-private number-range partition. That partition alone formats both endpoints, decides the approximate branch from visible endpoint text, selects the range separator, collapses shared affixes, and assigns sources. `FormatRange` only joins its `Value` fields; `FormatRangeToParts` returns the partition without recomputing range decisions.
 2. Approximate range equality **MUST** compare the final visible endpoint text produced by the NumberFormat partition pipeline. A rounded-decimal shortcut is forbidden because notation, exponent, sign, currency, unit, compact, and literal parts can make two equal rounded numeric values visibly different.
 3. `CollapseNumberRange` **MUST** consume the `NumberFormatPart{Type, Value}` sequence after approximate equality has failed. Prefix/suffix collapse remains package-local; **BANNED** sharing an abstract generic `CollapseRange[T]` with DateTimeFormat.
-4. The shared range literal **MUST** come from the constructor-resolved CLDR number symbols `rangeSign`; formatter code must not hard-code the English en dash. When the start range already carries a sign part, the literal may insert spacing around the locale range sign to match native ICU readability.
+4. The shared range literal **MUST** come from the constructor-resolved CLDR number symbols `rangeSign`; formatter code must not hard-code the English en dash. Separator spacing considers the remaining endpoint sign after skipping leading bidi literals. A leading bidi literal from the end endpoint joins the shared separator; its sign remains `endRange` unless the complete compatible affix pair collapses.
 5. Range source **MUST** be limited to ECMA-402 three values: `"startRange" | "shared" | "endRange"`;`approximatelySign` is a part type, not a source.
 6. `FormatRange` / `FormatRangeToParts` **MUST** return `ErrInvalidValue` for `NaN` endpoints instead of signaling errors with empty strings or nil parts. Positive and negative infinity remain valid ECMA-402 mathematical values and must format through the normal parts pipeline.
 7. `a > b` **MUST NOT** be locally normalized, transposed, rejected, or added `~`; numeric ranges are formatted in input order and then collapsed.
@@ -474,6 +474,7 @@ green.
 | Constructor, invalid option, NaN, decimal parse, accounting sign, compact long, and rounding-priority behavior are covered by package tests and Node/manual fixtures. | `numberformat/format_test.go`; `numberformat/resolved_options_test.go`; `numberformat/range_test.go`; `numberformat/testdata/conformance/node-v26/*.json`; `numberformat/testdata/conformance/manual/*.json` | Satisfied |
 | Number ranges select shared unit and currency-name morphology from the cardinal range category, and paired sign/percent affixes preserve native text, parts, and sources. | `numberformat/range_test.go`; `numberformat/testdata/conformance/node-v26/edge.json`; `tools/node-witness/main.go`; `tools/conformance/product_contract_test.go`; `task conformance:verify` | Satisfied |
 | Resolved optional scalar fields preserve ECMA-402 absence semantics with pointers. | `numberformat/resolved_options_test.go`; `numberformat/conformance_unified_test.go` | Satisfied |
+| Locale grouping thresholds and JSON Boolean false remain observable; all sign/exponent bidi boundaries and mixed-sign range sources are preserved. | `numberformat/grouping_minimum_test.go`; `numberformat/grouping_json_test.go`; `numberformat/bidi_parts_test.go` | Satisfied |
 | NumberFormat compact suffix selection is independent from public PluralRules compact source-decimal selection. | `compact_contract_test.go`; SPEC 40 Node compact fixtures | Satisfied |
 | NumberFormat keeps decimal rounding centralized in `internal/ecma402/numberformat` and does not expose public compact-plural helpers. | `internal/ecma402/numberformat/*`; absence of `SelectFormatted` / `ResolvePlural` in Go source | Satisfied |
 | Race and vet gates pass for the package. | `go test -race ./numberformat/...`; `go vet ./numberformat/...` | Required verification |
@@ -539,3 +540,9 @@ Pinned CLDR 48.1 percent spacing remains the source of truth, including NBSP
 in French compact-percent output; a newer/different ICU witness may use ASCII
 space there. The test uses ar-EG for generated arab symbols and ar for latn;
 this does not widen the existing default-plus-latn generated symbol profile.
+
+All numeric styles and scientific/engineering exponent signs use the same
+private symbol partition: ALM/LRM/RLM surrounding a sign are `literal` parts,
+and the sign part contains only its core. Style affixes consume the complete
+leading sign partition so currency/percent patterns do not duplicate controls.
+Text remains the projection of these parts, including range source attribution.

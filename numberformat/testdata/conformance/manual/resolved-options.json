@@ -38,13 +38,18 @@
     "expected": "1.0",
     "expectedResolvedOptions": {
       "locale": "en",
+      "numberingSystem": "latn",
       "style": "decimal",
       "minimumIntegerDigits": 1,
-      "minimumFractionDigits": null,
-      "maximumFractionDigits": null,
       "minimumSignificantDigits": 2,
       "maximumSignificantDigits": 21,
-      "roundingPriority": "auto"
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
     }
   },
   {
@@ -60,13 +65,46 @@
     "expected": "$1.234E3",
     "expectedResolvedOptions": {
       "locale": "en",
+      "numberingSystem": "latn",
       "style": "currency",
       "currency": "USD",
       "currencyDisplay": "symbol",
       "currencySign": "standard",
+      "minimumIntegerDigits": 1,
       "minimumFractionDigits": 0,
       "maximumFractionDigits": 3,
-      "notation": "scientific"
+      "useGrouping": "auto",
+      "notation": "scientific",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-resolved-disabled-grouping",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "useGrouping": false
+    },
+    "input": 1000,
+    "expected": "1000",
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": false,
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
     }
   }
 ]

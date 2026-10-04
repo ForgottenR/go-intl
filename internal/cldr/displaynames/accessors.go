@@ -14,7 +14,10 @@ import (
 )
 
 const (
-	defaultLocalePattern = "{0} ({1})"
+	// ICU LocaleDisplayNamesImpl::initialize supplies this pattern and the
+	// separator below when localeDisplayPattern data is absent.
+	defaultLocalePattern   = "{0} ({1})"
+	defaultLocaleSeparator = "{0}, {1}"
 )
 
 // Of returns the localized display name for a code and whether one exists.
@@ -87,10 +90,10 @@ func lookupInLocale(tag, kind, style, languageDisplay, code string, fallbackCode
 		if languageDisplay == "standard" {
 			display = rec.display.standard
 		}
-		if value, ok := resolveStyled(display, style, code); ok {
+		if value, ok := resolveStyled(display, style, code); ok && (languageDisplay != "standard" || !strings.Contains(code, "-")) {
 			return value, true
 		}
-		return resolveLanguage(tag, rec.localePattern, rec.localeSeparator, display, style, code, fallbackCode)
+		return resolveLanguage(tag, rec.localePattern, rec.localeSeparator, display, style, code, fallbackCode, languageDisplay != "standard")
 	case "region":
 		return resolveStyledForTag(territoryData(), tag, style, code)
 	case "script":
@@ -113,7 +116,7 @@ func resolveStyledForTag(byLocale map[string]styledNames, tag, style, code strin
 	return resolveStyled(s, style, code)
 }
 
-func resolveLanguage(tag, localePattern, localeSeparator string, display styledNames, style, code string, fallbackCode bool) (string, bool) {
+func resolveLanguage(tag, localePattern, localeSeparator string, display styledNames, style, code string, fallbackCode, dialect bool) (string, bool) {
 	parts := strings.Split(code, "-")
 	if len(parts) == 1 {
 		return "", false
@@ -135,20 +138,20 @@ func resolveLanguage(tag, localePattern, localeSeparator string, display styledN
 	}
 	// A dialect row may consume the script and/or region. A standard name
 	// deliberately starts from the bare language and composes every component.
-	if script != "" && region != "" {
+	if dialect && script != "" && region != "" {
 		if value, found := resolveStyled(display, style, parts[0]+"-"+script+"-"+region); found {
 			base = value
 			script = ""
 			region = ""
 		}
 	}
-	if script != "" {
+	if dialect && script != "" {
 		if value, found := resolveStyled(display, style, parts[0]+"-"+script); found {
 			base = value
 			script = ""
 		}
 	}
-	if region != "" {
+	if dialect && region != "" {
 		if value, found := resolveStyled(display, style, parts[0]+"-"+region); found {
 			base = value
 			region = ""
@@ -188,7 +191,7 @@ func resolveLanguage(tag, localePattern, localeSeparator string, display styledN
 	}
 	joined := components[0]
 	if localeSeparator == "" {
-		localeSeparator = "{0}, {1}"
+		localeSeparator = defaultLocaleSeparator
 	}
 	for _, part := range components[1:] {
 		joined = pattern.FormatIndexed(localeSeparator, joined, part)

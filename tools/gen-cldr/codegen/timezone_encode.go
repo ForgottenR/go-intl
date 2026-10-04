@@ -39,7 +39,10 @@ func encodeTimezone(input RuntimeInput, table *StringTable) ([]byte, error) {
 		return nil, err
 	}
 
+	var displayKeys blobEncoder
+	displayKeys.appendStringRefMap(input.TimeZoneDisplayKeys, table)
 	return renderPayloadFile("timezone", table,
+		payloadBlob{"_tzDisplayKeyBlob", displayKeys.bytes()},
 		payloadBlob{"_tzMetazonePeriodBlob", periods.bytes()},
 		payloadBlob{"_tzNamesBlob", names.bytes()},
 		payloadBlob{"_tzFormatsBlob", formats.bytes()},

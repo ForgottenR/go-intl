@@ -223,16 +223,30 @@ func numberingSystemLocaleData(locale string) []string {
 }
 
 func hourCycleLocaleData(locale string) []string {
-	region := localeRegion(locale)
-	if region == "" && localeLanguage(locale) == "en" {
-		return localeid.RelevantExtensionValues("", "h12", "h23")
-	}
-	return localeid.RelevantExtensionValues("", cldrlocale.HourCyclePreference(region)...)
+	defaultCycle := hourCyclePreferences(locale)[0]
+	return localeid.RelevantExtensionValues(defaultCycle, "h11", "h12", "h23", "h24")
 }
 
-func localeLanguage(locale string) string {
-	language, _, _ := strings.Cut(locale, "-")
-	return language
+// HourCycleFor selects the independent regional preference for hour12. Region
+// maximization is used only to look up data; it never changes the public tag.
+func HourCycleFor(locale string, hour12 bool) string {
+	for _, cycle := range hourCyclePreferences(locale) {
+		if hour12 == (cycle == "h11" || cycle == "h12") {
+			return cycle
+		}
+	}
+	if hour12 {
+		return "h12"
+	}
+	return "h23"
+}
+
+func hourCyclePreferences(locale string) []string {
+	region := localeRegion(locale)
+	if region == "" {
+		region = localeRegion(cldrlocale.Maximize(locale))
+	}
+	return cldrlocale.HourCyclePreference(region)
 }
 
 func localeRegion(locale string) string {

@@ -51,6 +51,32 @@ func (p *selectedPattern) compilePrograms() {
 	p.dateTimeProgram = compileDateTimeProgram(p.dateTime)
 }
 
+func (p *selectedPattern) localizeFractionalSeparators(decimal string) {
+	p.timeProgram.localizeFractionalSeparators(decimal)
+	for _, program := range p.rangeRecord.dateFallbacks {
+		program.localizeFractionalSeparators(decimal)
+	}
+	for _, program := range p.rangeRecord.timeFields {
+		for i := 1; i < len(program); i++ {
+			localizeFractionalSeparator(&program[i-1].token, program[i].token, decimal)
+		}
+	}
+}
+
+func (p patternProgram) localizeFractionalSeparators(decimal string) {
+	for i := 1; i < len(p); i++ {
+		localizeFractionalSeparator(&p[i-1], p[i], decimal)
+	}
+}
+
+func localizeFractionalSeparator(previous *patternToken, current patternToken, decimal string) {
+	// Fractional candidates stay numbering-system-neutral in the locale cache;
+	// only the instance's freshly compiled separator token receives the symbol.
+	if current.field == 'S' && previous.literal == "." {
+		previous.literal = decimal
+	}
+}
+
 func (p selectedPattern) parts(f *DateTimeFormat, t localTime) []Part {
 	switch p.kind {
 	case patternDate:

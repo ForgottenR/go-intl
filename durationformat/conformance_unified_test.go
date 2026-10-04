@@ -13,48 +13,44 @@ import (
 func TestDurationFormatConformance(t *testing.T) {
 	t.Parallel()
 
-	fixtures, err := conformance.LoadFixtures(".")
-	if err != nil {
-		t.Fatal(err)
+	conformance.RunFixtures(t, testcontract.FixtureRunnerRoot("."), runDurationConformanceFixture)
+}
+
+func runDurationConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
+
+	loc := intltest.Locale(t, fixture.Locale)
+	format, err := New(locale.List{loc}, conformanceDurationOptions(t, fixture))
+	if testcontract.AssertErrorCode(t, "New("+fixture.Locale+")", err, fixture.ErrorCode, func(code string) error {
+		return conformanceDurationError(t, code)
+	}) {
+		return
 	}
-	for _, fixture := range fixtures {
-		t.Run(fixture.ID, func(t *testing.T) {
-			t.Parallel()
-			loc := intltest.Locale(t, fixture.Locale)
-			format, err := New(locale.List{loc}, conformanceDurationOptions(t, fixture))
-			if testcontract.AssertErrorCode(t, "New("+fixture.Locale+")", err, fixture.ErrorCode, func(code string) error {
-				return conformanceDurationError(t, code)
-			}) {
-				return
-			}
-			if err != nil {
-				t.Fatalf("New(%q) error = %v", fixture.Locale, err)
-			}
-			if len(fixture.ExpectedResolved) != 0 {
-				assertDurationResolvedOptions(t, fixture, format.ResolvedOptions())
-			}
-			input := conformanceDurationInput(t, fixture)
-			if fixture.Expected != nil {
-				got, err := format.Format(input)
-				if err != nil {
-					t.Fatalf("Format(%v) error = %v", input, err)
-				}
-				if got != *fixture.Expected {
-					t.Fatalf("Format(%v) = %q, want %q", input, got, *fixture.Expected)
-				}
-			}
-			if len(fixture.ExpectedParts) > 0 {
-				got, err := format.FormatToParts(input)
-				if err != nil {
-					t.Fatalf("FormatToParts(%v) error = %v", input, err)
-				}
-				testcontract.AssertParts(t, "FormatToParts", got, fixture.ExpectedParts, conformanceDurationPart)
-				return
-			}
-			if fixture.Expected == nil {
-				t.Fatalf("fixture %s has no expected output", fixture.ID)
-			}
-		})
+	if err != nil {
+		t.Fatalf("New(%q) error = %v", fixture.Locale, err)
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.Expected == nil && fixture.ExpectedParts == nil {
+		return
+	}
+	input := conformanceDurationInput(t, fixture)
+	if fixture.Expected != nil {
+		got, err := format.Format(input)
+		if err != nil {
+			t.Fatalf("Format(%v) error = %v", input, err)
+		}
+		if got != *fixture.Expected {
+			t.Fatalf("Format(%v) = %q, want %q", input, got, *fixture.Expected)
+		}
+	}
+	if fixture.ExpectedParts != nil {
+		got, err := format.FormatToParts(input)
+		if err != nil {
+			t.Fatalf("FormatToParts(%v) error = %v", input, err)
+		}
+		testcontract.AssertParts(t, "FormatToParts", got, fixture.ExpectedParts, conformanceDurationPart)
 	}
 }
 
@@ -151,34 +147,4 @@ func conformanceDurationInput(t *testing.T, fixture conformance.Fixture) Duratio
 
 func conformanceDurationPart(part Part) conformance.Part {
 	return conformance.Part{Type: string(part.Type), Value: part.Value, Unit: string(part.Unit)}
-}
-
-func assertDurationResolvedOptions(t *testing.T, fixture conformance.Fixture, got ResolvedOptions) {
-	t.Helper()
-
-	want := testcontract.ExpectedResolvedOptions(t, fixture)
-	testcontract.AssertResolvedString(t, want, "locale", got.Locale.String())
-	testcontract.AssertResolvedString(t, want, "numberingSystem", got.NumberingSystem)
-	testcontract.AssertResolvedString(t, want, "style", string(got.Style))
-	testcontract.AssertResolvedString(t, want, "years", string(got.Years))
-	testcontract.AssertResolvedString(t, want, "yearsDisplay", string(got.YearsDisplay))
-	testcontract.AssertResolvedString(t, want, "months", string(got.Months))
-	testcontract.AssertResolvedString(t, want, "monthsDisplay", string(got.MonthsDisplay))
-	testcontract.AssertResolvedString(t, want, "weeks", string(got.Weeks))
-	testcontract.AssertResolvedString(t, want, "weeksDisplay", string(got.WeeksDisplay))
-	testcontract.AssertResolvedString(t, want, "days", string(got.Days))
-	testcontract.AssertResolvedString(t, want, "daysDisplay", string(got.DaysDisplay))
-	testcontract.AssertResolvedString(t, want, "hours", string(got.Hours))
-	testcontract.AssertResolvedString(t, want, "hoursDisplay", string(got.HoursDisplay))
-	testcontract.AssertResolvedString(t, want, "minutes", string(got.Minutes))
-	testcontract.AssertResolvedString(t, want, "minutesDisplay", string(got.MinutesDisplay))
-	testcontract.AssertResolvedString(t, want, "seconds", string(got.Seconds))
-	testcontract.AssertResolvedString(t, want, "secondsDisplay", string(got.SecondsDisplay))
-	testcontract.AssertResolvedString(t, want, "milliseconds", string(got.Milliseconds))
-	testcontract.AssertResolvedString(t, want, "millisecondsDisplay", string(got.MillisecondsDisplay))
-	testcontract.AssertResolvedString(t, want, "microseconds", string(got.Microseconds))
-	testcontract.AssertResolvedString(t, want, "microsecondsDisplay", string(got.MicrosecondsDisplay))
-	testcontract.AssertResolvedString(t, want, "nanoseconds", string(got.Nanoseconds))
-	testcontract.AssertResolvedString(t, want, "nanosecondsDisplay", string(got.NanosecondsDisplay))
-	testcontract.AssertResolvedOptionalInt(t, want, "fractionalDigits", got.FractionalDigits)
 }

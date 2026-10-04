@@ -16,13 +16,13 @@ import (
 func applyCurrencyPatternForPlural(parts []Part, plural pluralop.Category, resolved ResolvedOptions, currencyLoc cldrcurrency.Locale, currency currencyPatternSet) []Part {
 	if ecma402.ResolvedScalarValue(resolved.CurrencyDisplay) == CurrencyDisplayName {
 		name := currencyDisplayForNumberFormat(currencyLoc, resolved, plural.String())
-		return currency.name.pattern(plural).append(splitBidiSignPart(parts), name)
+		return currency.name.pattern(plural).append(parts, name)
 	}
 	sign, unsigned := splitLeadingSign(parts)
 	pattern, consumedSign := currency.pattern(sign.Type == PartMinusSign)
 	out := pattern.append(unsigned)
 	if sign.Type != "" && !consumedSign {
-		return prependPart(sign, out)
+		return prependBidiSymbol(sign, out)
 	}
 	return out
 }
@@ -184,12 +184,8 @@ func appendLiteral(parts []Part, value string) []Part {
 	return append(parts, Part{Type: PartLiteral, Value: value})
 }
 
-func splitBidiSignPart(parts []Part) []Part {
-	if len(parts) == 0 || (parts[0].Type != PartMinusSign && parts[0].Type != PartPlusSign) {
-		return parts
-	}
-	out := appendBidiSymbol(nil, parts[0])
-	return append(out, parts[1:]...)
+func prependBidiSymbol(part Part, parts []Part) []Part {
+	return append(appendBidiSymbol(nil, part), parts...)
 }
 
 func appendBidiSymbol(parts []Part, part Part) []Part {
@@ -398,14 +394,23 @@ func (p simpleUnitPattern) append(parts []Part) []Part {
 	return joinPatternParts(p.prefix, parts, p.suffix)
 }
 
+// splitLeadingSign consumes only the leading sign partition. Its bidi literals
+// move with the sign when a style program supplies the corresponding affix.
 func splitLeadingSign(parts []Part) (Part, []Part) {
-	if len(parts) == 0 {
+	i := 0
+	for i < len(parts) && parts[i].Type == PartLiteral && strings.TrimFunc(parts[i].Value, isBidiSignMark) == "" {
+		i++
+	}
+	if i == len(parts) || (parts[i].Type != PartMinusSign && parts[i].Type != PartPlusSign) {
 		return Part{}, parts
 	}
-	if parts[0].Type != PartMinusSign && parts[0].Type != PartPlusSign {
-		return Part{}, parts
+	sign := parts[i]
+	end := i + 1
+	for end < len(parts) && parts[end].Type == PartLiteral && strings.TrimFunc(parts[end].Value, isBidiSignMark) == "" {
+		end++
 	}
-	return parts[0], parts[1:]
+	sign.Value = partsText(parts[:end])
+	return sign, parts[end:]
 }
 
 func appendPatternTextParts(parts []Part, text string, typ PartType) []Part {

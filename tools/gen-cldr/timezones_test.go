@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -30,7 +32,7 @@ func TestRunGeneratesTimezoneDomain(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
@@ -86,7 +88,7 @@ func TestRunAcceptsSingleMetazoneObject(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir)}, log); err != nil {
+	if err := Run(context.Background(), Config{CLDRDir: root, OutDir: out, VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t)}, log); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 }
@@ -107,6 +109,51 @@ func writeTimeZoneCLDRFixture(t *testing.T, root string) {
 	metaZones := `{"supplemental":{"metaZones":{"metazoneInfo":{"timezone":{"America":{"Los_Angeles":[{"usesMetazone":{"_mzone":"America_Pacific"}}],"New_York":[{"usesMetazone":{"_mzone":"America_Eastern"}}]},"Europe":{"London":[{"usesMetazone":{"_mzone":"GMT"}}],"Moscow":[{"usesMetazone":{"_mzone":"Moscow","_to":"2011-01-01 00:00"}},{"usesMetazone":{"_mzone":"Europe_Further_Eastern","_from":"2011-01-01 00:00","_to":"2013-12-01 00:00"}},{"usesMetazone":{"_mzone":"Moscow","_from":"2013-12-01 00:00"}}]}}}}}}`
 	if err := os.WriteFile(filepath.Join(supp, "metaZones.json"), []byte(metaZones), 0o666); err != nil {
 		t.Fatalf("write metaZones: %v", err)
+	}
+	aliases := `{"keyword":{"u":{"tz":{"utc":{"_alias":"Etc/UTC UTC"},"inccu":{"_alias":"Asia/Calcutta Asia/Kolkata","_iana":"Asia/Kolkata"}}}}}`
+	if err := os.WriteFile(filepath.Join(root, "cldr-bcp47", "bcp47", "timezone.json"), []byte(aliases), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRunDisplayIdentityDoesNotDependOnRegistryOutput(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	root := filepath.Join(dir, "node_modules")
+	writeRuntimeCLDRFixtures(t, root)
+	versionPath := filepath.Join(dir, "VERSION")
+	if err := os.WriteFile(versionPath, []byte("cldr=48.1.0\nicu=78\ntzdata=2025b\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := Config{CLDRDir: root, OutDir: filepath.Join(dir, "with-registry"), VersionFile: versionPath, ProfileFile: writeLocaleProfileFixture(t, dir), TZDataLock: writeTZDataFixture(t), TimeZoneOut: filepath.Join(dir, "registry_data.go")}
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	if err := Run(t.Context(), cfg, log); err != nil {
+		t.Fatal(err)
+	}
+	want, err := os.ReadFile(filepath.Join(cfg.OutDir, "timezone", "data.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !containsAll(dewrapStringLiterals(string(want)), "Asia/Kolkata", "Asia/Calcutta") {
+		t.Fatal("full generation omitted the pinned display relation")
+	}
+	cfg.OutDir, cfg.TimeZoneOut = filepath.Join(dir, "without-registry"), ""
+	if err := Run(t.Context(), cfg, log); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(cfg.OutDir, "timezone", "data.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatal("omitting optional registry output changed the runtime display payload")
+	}
+	cfg.OutDir, cfg.TZDataLock = filepath.Join(dir, "missing-input"), ""
+	if err := Run(t.Context(), cfg, log); err == nil || !strings.Contains(err.Error(), "-tzdata-lock") {
+		t.Fatalf("missing identity source error = %v, want -tzdata-lock context", err)
+	}
+	if _, err := os.Stat(filepath.Join(cfg.OutDir, "timezone", "data.go")); !os.IsNotExist(err) {
+		t.Fatalf("failed generation wrote a display payload: %v", err)
 	}
 }
 

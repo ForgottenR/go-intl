@@ -17,11 +17,11 @@ func TestPinnedRegistryWitnesses(t *testing.T) {
 	if _, err := os.Stat(archive); os.IsNotExist(err) {
 		t.Skip("pinned tzdb archive not fetched")
 	}
-	aliases, err := LoadCLDRPrimaryAliases("../.cldr-json/node_modules/cldr-bcp47/bcp47/timezone.json")
+	aliases, err := LoadCLDRTimeZoneAliases("../.cldr-json/node_modules/cldr-bcp47/bcp47/timezone.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	registry, err := LoadArchive(archive, pin, aliases)
+	registry, err := LoadArchive(archive, pin, aliases.Primary)
 	if err != nil {
 		t.Fatal(err)
 	}

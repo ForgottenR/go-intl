@@ -148,18 +148,16 @@ func TestValidateSkipListRejectsInvalidNativeWitnessRoutes(t *testing.T) {
 	writeCoverageFixtureFile(t, packageDir, "node-v26/range.json", `[
 		{"id":"datetimeformat-node-v26-range","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"},"expectedRange":"Jan 10 - Jan 20"}
 	]`)
-	writeCoverageFixtureFile(t, packageDir, "node-v26/no-expectation.json", `[
-		{"id":"datetimeformat-node-v26-empty","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"}}
-	]`)
 	writeCoverageFixtureFile(t, packageDir, "manual/range.json", `[
 		{"id":"datetimeformat-manual-range","source":"manual","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"},"expectedRange":"Jan 10 - Jan 20"}
 	]`)
 
 	tests := []struct {
-		name  string
-		entry string
-		roots []string
-		want  error
+		name         string
+		entry        string
+		roots        []string
+		unobservable bool
+		want         error
 	}{
 		{
 			name:  "invalid route",
@@ -183,19 +181,27 @@ func TestValidateSkipListRejectsInvalidNativeWitnessRoutes(t *testing.T) {
 			want:  errInvalidSkipListWitness,
 		},
 		{
-			name:  "native witness must be observable",
-			entry: `{"source":"formatjs:covered","category":"unsupported-extractor-shape","route":"native-witness","witness":"datetimeformat-node-v26-empty","reason":"native lane owns this observable case"}`,
-			roots: []string{packageDir},
-			want:  errInvalidSkipListWitness,
+			name:         "native witness must be observable",
+			entry:        `{"source":"formatjs:covered","category":"unsupported-extractor-shape","route":"native-witness","witness":"datetimeformat-node-v26-empty","reason":"native lane owns this observable case"}`,
+			unobservable: true,
+			want:         errInvalidFixtureShape,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			roots := tc.roots
+			if tc.unobservable {
+				packageDir := filepath.Join(t.TempDir(), "datetimeformat")
+				writeCoverageFixtureFile(t, packageDir, "node-v26/no-expectation.json", `[
+					{"id":"datetimeformat-node-v26-empty","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"}}
+				]`)
+				roots = []string{packageDir}
+			}
 			path := filepath.Join(t.TempDir(), ".skip-list.json")
 			writeSkipListFile(t, path, "["+tc.entry+"]")
-			err := ValidateSkipList(path, tc.roots)
+			err := ValidateSkipList(path, roots)
 			if !errors.Is(err, tc.want) {
 				t.Fatalf("ValidateSkipList() error = %v, want %v", err, tc.want)
 			}
@@ -495,9 +501,6 @@ func TestValidateDivergencesRequiresDateTimeFormatNativeWitness(t *testing.T) {
 	writeCoverageFixtureFile(t, packageDir, "node-v26/range.json", `[
 		{"id":"datetimeformat-node-v26-range","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"},"expectedRange":"Jan 10 - Jan 20","expectedRangeParts":[{"type":"month","value":"Jan","source":"shared"}]}
 	]`)
-	writeCoverageFixtureFile(t, packageDir, "node-v26/no-expectation.json", `[
-		{"id":"datetimeformat-node-v26-empty","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"}}
-	]`)
 	writeCoverageFixtureFile(t, packageDir, "manual/range.json", `[
 		{"id":"datetimeformat-manual-range","source":"manual","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"},"expectedRange":"Jan 10 - Jan 20"}
 	]`)
@@ -543,7 +546,7 @@ func TestValidateDivergencesRequiresDateTimeFormatNativeWitness(t *testing.T) {
 		{
 			name:          "native witness must have an observable expectation",
 			nativeWitness: "datetimeformat-node-v26-empty",
-			want:          errInvalidDivergenceWitness,
+			want:          errInvalidFixtureShape,
 		},
 		{
 			name:          "valid native witness",
@@ -552,6 +555,16 @@ func TestValidateDivergencesRequiresDateTimeFormatNativeWitness(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.nativeWitness == "datetimeformat-node-v26-empty" {
+				writeCoverageFixtureFile(t, packageDir, "node-v26/no-expectation.json", `[
+					{"id":"datetimeformat-node-v26-empty","source":"node:v26.0.0:datetimeformat:p4-deep-contract","locale":"en","options":{},"input":{"start":"2021-01-10T00:00:00Z","end":"2021-01-20T00:00:00Z"}}
+				]`)
+				t.Cleanup(func() {
+					if err := os.Remove(filepath.Join(conformanceFixturesPath(packageDir), "node-v26", "no-expectation.json")); err != nil {
+						t.Fatal(err)
+					}
+				})
+			}
 			writeDivergenceFile(t, packageDir, divergence(tc.nativeWitness))
 
 			err := ValidateDivergences(packageDir)

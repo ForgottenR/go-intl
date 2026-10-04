@@ -23,9 +23,7 @@ func formatCompactAppend(parts []Part, d decimal.Decimal, state *decimalFormatSt
 	result := ecma402nf.FormatNumericToString(scaled, digitOptions)
 	formatted := result.Formatted
 	pattern := compactPatternForFormatted(entry, formatted, cardinalRule)
-	if shouldUseGrouping(resolved.UseGrouping, formatted) {
-		formatted = groupDecimal(formatted, grouping)
-	}
+	formatted = groupDecimal(formatted, grouping)
 	parts = appendDecimalParts(parts, formatted, symbols)
 	parts = applySignDisplay(parts, d.Negative(), signDisplay, symbols)
 	return pattern.append(parts), stylePluralOperand{formatted: result.Formatted, exponent: entry.exponent, finite: true}
@@ -61,15 +59,13 @@ func formatScientificAppend(parts []Part, d decimal.Decimal, notation Notation, 
 	scaled := decimal.Scale10(d, -int32(exponent)) // #nosec G115 -- exponent came from decimal.Log10Floor int32.
 	result := ecma402nf.FormatNumericToString(scaled, digitOptions)
 	formatted := result.Formatted
-	if shouldUseGrouping(resolved.UseGrouping, formatted) {
-		formatted = groupDecimal(formatted, grouping)
-	}
+	formatted = groupDecimal(formatted, grouping)
 	parts = appendDecimalParts(parts, formatted, symbols)
 	parts = applySignDisplay(parts, d.Negative(), signDisplay, symbols)
 	parts = append(parts, Part{Type: PartExponentSeparator, Value: symbols.Exponential})
 	pluralExponent := exponent
 	if exponent < 0 {
-		parts = append(parts, Part{Type: PartExponentMinusSign, Value: symbols.Minus})
+		parts = appendBidiSymbol(parts, Part{Type: PartExponentMinusSign, Value: symbols.Minus})
 		exponent = -exponent
 	}
 	exponentInteger := strconv.Itoa(exponent)

@@ -10,6 +10,8 @@ package timezone
 import (
 	"strconv"
 	"strings"
+
+	"github.com/agentable/go-intl/internal/numbering"
 )
 
 // TimeZoneName is one ECMA-402 timeZoneName option value.
@@ -47,6 +49,7 @@ const (
 // TimeZoneMetazone returns the metazone in force for the zone at the given
 // unix-milli instant, or "" when no period covers it.
 func TimeZoneMetazone(zone string, instant int64) string {
+	zone = displayKey(zone)
 	metazonePeriodOnce.Do(loadMetazonePeriods)
 	for _, period := range metazonePeriodsForZone(zone) {
 		if instant >= period.start && instant < period.end {
@@ -67,9 +70,10 @@ func metazonePeriodsForZone(zone string) []metazonePeriod {
 // TimeZoneDisplayName resolves the localized display name for a zone, falling
 // back through zone-specific names, metazone names, exemplar city, and finally
 // the GMT offset.
-func TimeZoneDisplayName(loc Locale, zone string, form TimeZoneName, isDST bool, instant int64, offsetMs int64) string {
+func TimeZoneDisplayName(loc Locale, zone string, form TimeZoneName, isDST bool, instant int64, offsetMs int64, numberingSystem string) string {
+	zone = displayKey(zone)
 	if isOffsetTimeZoneName(form) {
-		return GMTOffsetName(loc, offsetMs, form)
+		return GMTOffsetName(loc, offsetMs, form, numberingSystem)
 	}
 	kind := displayNameKind(form, isDST)
 	if name := zoneSpecificName(loc, zone, kind); name != "" {
@@ -81,7 +85,7 @@ func TimeZoneDisplayName(loc Locale, zone string, form TimeZoneName, isDST bool,
 	if city := exemplarCity(loc, zone); city != "" {
 		return strings.Replace(timeZoneFormats(loc).regionFormat, "{0}", city, 1)
 	}
-	return GMTOffsetName(loc, offsetMs, form)
+	return GMTOffsetName(loc, offsetMs, form, numberingSystem)
 }
 
 func isOffsetTimeZoneName(form TimeZoneName) bool {
@@ -180,17 +184,17 @@ func timeZoneFormatsForLocale(loc Locale) timeZoneFormatRefs {
 }
 
 // GMTOffsetName formats an offset time-zone name using locale GMT patterns.
-func GMTOffsetName(loc Locale, offsetMs int64, form TimeZoneName) string {
+func GMTOffsetName(loc Locale, offsetMs int64, form TimeZoneName, numberingSystem string) string {
 	formats := timeZoneFormats(loc)
 	long := form == TimeZoneNameLongOffset || form == TimeZoneNameLong
-	offset := offsetPattern(formats.hourFormat, offsetMs, long)
+	offset := offsetPattern(formats.hourFormat, offsetMs, long, numberingSystem)
 	if offset == "" && !long {
 		return formats.gmtZeroFormat
 	}
 	return strings.ReplaceAll(formats.gmtFormat, "{0}", offset)
 }
 
-func offsetPattern(hourFormat string, offsetMs int64, long bool) string {
+func offsetPattern(hourFormat string, offsetMs int64, long bool, numberingSystem string) string {
 	positive, negative, ok := strings.Cut(hourFormat, ";")
 	if !ok {
 		positive, negative = rootPositiveHourFormat, rootNegativeHourFormat
@@ -200,46 +204,57 @@ func offsetPattern(hourFormat string, offsetMs int64, long bool) string {
 		pattern = negative
 		offsetMs = -offsetMs
 	}
-	totalMinutes := offsetMs / 60000
-	hours := totalMinutes / 60
-	minutes := totalMinutes % 60
-	if !long {
+	totalSeconds := offsetMs / 1000
+	hours := int(totalSeconds / 3600)
+	minutes := int(totalSeconds / 60 % 60)
+	seconds := int(totalSeconds % 60)
+	if seconds != 0 {
+		pattern = expandSecondField(pattern)
+	} else if !long {
 		if hours == 0 && minutes == 0 {
 			return ""
 		}
 		if minutes == 0 {
 			pattern = removeMinuteField(pattern)
 		}
-		return replaceOffsetFields(pattern, int(hours), int(minutes), false)
 	}
-	return replaceOffsetFields(pattern, int(hours), int(minutes), true)
+	out := replaceOffsetFields(pattern, hours, minutes, long, numberingSystem)
+	return replaceFieldRun(out, 's', numbering.LocalizeDigits(twoDigitASCII(seconds), numberingSystem))
 }
 
-func removeMinuteField(pattern string) string {
-	i := strings.IndexByte(pattern, 'm')
-	if i < 0 {
+// CLDR supplies HM; ICU derives HMS by repeating the hour/minute separator.
+func expandSecondField(pattern string) string {
+	h := strings.LastIndexByte(pattern, 'H')
+	m := strings.IndexByte(pattern, 'm')
+	if h < 0 || m <= h {
 		return pattern
 	}
-	start := i
-	if start > 0 && pattern[start-1] == ':' {
-		start--
-	}
-	end := i
+	end := m
 	for end < len(pattern) && pattern[end] == 'm' {
 		end++
 	}
-	return pattern[:start] + pattern[end:]
+	return pattern[:end] + pattern[h+1:m] + "ss" + pattern[end:]
 }
 
-func replaceOffsetFields(pattern string, hours int, minutes int, padded bool) string {
+func removeMinuteField(pattern string) string {
+	i := strings.IndexByte(pattern, 'H')
+	if i < 0 {
+		return pattern
+	}
+	for i < len(pattern) && pattern[i] == 'H' {
+		i++
+	}
+	return pattern[:i]
+}
+
+func replaceOffsetFields(pattern string, hours int, minutes int, padded bool, numberingSystem string) string {
 	hour := strconv.Itoa(hours)
-	minute := strconv.Itoa(minutes)
+	minute := twoDigitASCII(minutes)
 	if padded {
 		hour = twoDigitASCII(hours)
-		minute = twoDigitASCII(minutes)
 	}
-	out := replaceFieldRun(pattern, 'H', hour)
-	out = replaceFieldRun(out, 'm', minute)
+	out := replaceFieldRun(pattern, 'H', numbering.LocalizeDigits(hour, numberingSystem))
+	out = replaceFieldRun(out, 'm', numbering.LocalizeDigits(minute, numberingSystem))
 	return out
 }
 
@@ -260,4 +275,11 @@ func twoDigitASCII(value int) string {
 		return "0" + strconv.Itoa(value)
 	}
 	return strconv.Itoa(value)
+}
+
+func displayKey(zone string) string {
+	if key := displayKeys()[zone]; key != "" {
+		return key
+	}
+	return zone
 }

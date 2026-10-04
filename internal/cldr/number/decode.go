@@ -31,6 +31,7 @@ type NumberSymbols struct {
 // numbering system.
 type numberData struct {
 	defaultNumberingSystem       string
+	minimumGroupingDigits        int
 	symbols                      numberSymbolsByNumberingSystem
 	decimal, percent, scientific numberPatternsByNumberingSystem
 	currency                     currencyPatternsByNumberingSystem
@@ -73,6 +74,7 @@ func loadNumbers() {
 func decodeNumberLocale(r *codec.Reader) numberData {
 	return numberData{
 		defaultNumberingSystem: r.StringRef(_data),
+		minimumGroupingDigits:  int(r.Uvarint()),
 		symbols:                decodeNumberSymbols(r),
 		decimal:                decodeNumberPatterns(r),
 		percent:                decodeNumberPatterns(r),

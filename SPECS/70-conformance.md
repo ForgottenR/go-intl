@@ -49,12 +49,14 @@ Each fixture **MUST** conform to the following schema (JSON object):
 | `source` | Required | string | `<source>:<path>` —— `formatjs:` or `manual:` |
 | `locale` | Required | string | BCP 47 locale tag, the Go end uses `locale.Parse(string)` to parse at the fixture boundary |
 | `options` | Required | object | ECMA-402 option; key name spec original text (camelCase) |
-| `input` | Required | number / string / array / object | Numeric literal, string list (ListFormat), ISO-8601 string (DateTimeFormat), `{start, end}` object (Range), `{value, unit}` object (RelativeTimeFormat), duration record object (DurationFormat) |
+| `input` | Required | number / string / array / object / null | Numeric literal (`null` is the NumberFormat NaN bridge), string list (ListFormat), ISO-8601 string (DateTimeFormat), `{start, end}` object (Range), `{value, unit}` object (RelativeTimeFormat), duration record object (DurationFormat) |
 | `expected` | optional | string | `Format` output; FormatToParts-only fixture can be omitted |
+| `expectedOk` | Optional | boolean | DisplayNames `Of` result presence; false is an observation |
 | `expectedLocales` | Optional | array | `SupportedLocalesOf` output; omitting means no verification supported locales |
 | `expectedParts` | Optional | array | `FormatToParts` output; RelativeTimeFormat number parts can include `unit`; omitting means not checking parts |
 | `expectedRange` | optional | string | `FormatRange` output |
 | `expectedRangeParts` | optional | array | `FormatRangeToParts` output |
+| `expectedResolvedOptions` | Optional | object | Complete resolved-options JSON record; property presence, JSON types, and values are compared |
 | `errorCode` | Optional | string | Error case (replacing `expected`), corresponding to go-intl sentinel name |
 
 **Rules**:
@@ -72,6 +74,28 @@ Each fixture **MUST** conform to the following schema (JSON object):
    preserved. Constructor option failures use `invalid_option`, while invalid
    input tags use `invalid_value`.
 8. **It is prohibited** to embed JS functions, callbacks, and Date literals in fixtures; parts that cannot be mechanically extracted are classified according to the SPEC §2.4 process.
+9. Loading rejects unknown record fields, non-object options, non-object
+   resolved expectations, and records without an expectation or `errorCode`.
+   Typed formatter input/options validation remains in the package adapter.
+10. Omission means no observation. Empty text, false, empty expected arrays,
+    and an empty resolved object remain declared observations through JSON
+    encoding, loading, coverage, and native-witness validation. Explicit null
+    is invalid for record fields other than the `input` bridge; it does not
+    stand for an empty array or an omitted expectation.
+11. Fixture shape errors fail the complete suite before any callback runs.
+    Diagnostics identify the source file and field or JSON location; semantic
+    validation also identifies the fixture when its ID is available.
+12. Within the operation's valid input family, adapters execute their declared
+    text, parts, range text, and range parts observations independently, without
+    an unrelated text prerequisite. NumberFormat, DateTimeFormat, DurationFormat,
+    and DisplayNames also execute resolved-options snapshots independently;
+    their resolved-only records do not parse a formatting input. This snapshot
+    lane does not add resolved-only support to the other package adapters.
+    Empty expected arrays are asserted rather than skipped.
+13. Resolved-options snapshots describe the complete object. Missing, extra,
+    or unknown properties fail comparison; null differs from an absent
+    property, and false, zero, and empty strings retain their JSON values.
+    Object property order does not affect equality.
 
 > **Why**: The unified schema is universal across formatters and lets the shared harness validate every active surface without formatter-specific fixture loaders.
 > **Rejected**: Each formatter custom schema (NumberFormat `"value"` vs DateTimeFormat `"date"`) - 4 sets of harness, 4 sets of loaders, DRY violation.
@@ -135,7 +159,15 @@ The generated-fixture extractor **Required**:
    - Static locale, options, string array input and string expectation assertions in `ListFormat.format`.
    - Static locale, options, numeric input, unit string and string expectation assertions in `RelativeTimeFormat.format`.
    - Static locale, options, duration object input and string expectation assertions in `DurationFormat.format`.
-   - Simple JS object literal options: string / number / boolean values.
+   - Simple JS object literal options: string / number / boolean values. The
+     extractor must consume the complete options expression, including trivia
+     and the closing object boundary. Duplicate keys retain their last literal
+     value in source order. Unsupported values, spreads, computed keys, and
+     other incompletely understood expressions do not produce partial options.
+     A recognized but unsupported later constructor declaration blocks reuse
+     of an earlier declaration with the same name. Such assertions remain in
+     the existing source-owned extraction audit; supported assertions in the
+     same source remain active.
    - PluralRules BigInt input is written to the fixture as a decimal string to avoid using float64 to carry integer semantics on the Go side.
 5. The following `.test.ts` source **MUST** be written to `.skip-list.json`, each contains `source`, `category`, `route`, and `reason`, and silent discarding is prohibited:
 - Table-driven arrays, callbacks, variable expected values, and other test shapes that cannot be restored statically without loss.
@@ -335,6 +367,13 @@ governance rules that cannot be proven by a Go test.
 |----------|----------|--------|
 | Conformance fixture files are JSON arrays matching §1.1, with globally unique IDs and source-directory consistency. | `tools/conformance/fixtures.go`; `tools/conformance/skip_test.go`; `tools/check-conformance/main.go`; `task conformance:verify` | Satisfied |
 | Error fixtures live in `errors.json` lanes and assert sentinel behavior through package runners. | `*/testdata/conformance/node-v26/errors.json`; package `conformance_unified_test.go` files | Satisfied |
+| NumberFormat independently executes single/range text, parts, and resolved observations, including empty expected arrays; deliberately incorrect observations fail the actual callback. | `numberformat/conformance_observations_test.go`; `numberformat/conformance_unified_test.go` | Satisfied |
+| DateTimeFormat, ListFormat, and RelativeTimeFormat execute parts observations without a text prerequisite and assert empty expected arrays. | Package `conformance_observations_test.go` and `conformance_unified_test.go` files | Satisfied |
+| DurationFormat uses the shared validated suite, executes text/parts/resolved observations independently, and rejects malformed or expired ledgers before its callback. | `durationformat/conformance_observations_test.go`; `durationformat/conformance_unified_test.go` | Satisfied |
+| DisplayNames compares complete resolved-options JSON snapshots, including omitted languageDisplay; the shared comparator preserves scalar types and zero values. | `displaynames/conformance_snapshots_test.go`; `internal/testcontract/resolved_json_test.go` | Satisfied |
+| NumberFormat compares complete snapshots, including Boolean false grouping and absent fraction properties for significant-digit rounding. | `numberformat/conformance_snapshots_test.go`; `numberformat/testdata/conformance/manual/resolved-options.json` | Satisfied |
+| DateTimeFormat compares complete snapshots, including hour-cycle and style properties and the absence of automatic dayPeriod. | `datetimeformat/conformance_snapshots_test.go`; existing Node resolved-options fixtures | Satisfied |
+| DurationFormat compares complete snapshots and distinguishes omitted fractionalDigits from explicit zero; no formatter uses the former subset comparator. | `durationformat/conformance_snapshots_test.go`; `internal/testcontract/resolved_json.go` | Satisfied |
 | `tools/gen-fixtures-from-formatjs/` is a standalone module and owns generated FormatJS lanes for currently extractable surfaces. | `tools/gen-fixtures-from-formatjs/go.mod`; `tools/gen-fixtures-from-formatjs/main.go`; generated `testdata/conformance/formatjs` fixtures | Satisfied |
 | Native witness validation enforces required topics, constructor error/refusal coverage, and explicit intentional gaps. | `tools/conformance/node_witness.go`; `tools/conformance/node_witness_test.go`; `tools/conformance/product_contract_test.go`; `task conformance:verify` | Satisfied |
 | `.skip-list.json` audits non-extracted and partially extracted reference sources with `source`, `category`, `route`, and `reason`. | `.skip-list.json`; `tools/conformance/coverage.go`; `tools/conformance/coverage_test.go` | Satisfied |

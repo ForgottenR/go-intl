@@ -133,3 +133,8 @@ func decodeTimeZoneFormatRefs(r *codec.Reader) timeZoneFormatRefs {
 		regionFormat:  r.StringRef(_data),
 	}
 }
+
+var displayKeys = sync.OnceValue(func() map[string]string {
+	r := codec.NewReader(_tzDisplayKeyBlob)
+	return r.StringRefMap(_data)
+})

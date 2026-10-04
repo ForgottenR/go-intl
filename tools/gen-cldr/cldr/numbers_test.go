@@ -854,3 +854,35 @@ func currencyNamesEqual(got, want CurrencyNames) bool {
 		got.Narrow == want.Narrow &&
 		maps.Equal(got.Display, want.Display)
 }
+
+func TestLoadMinimumGroupingDigits(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		raw  string
+		want int
+	}{{"", 1}, {`"1"`, 1}, {`"2"`, 2}, {`"3"`, 3}, {`"0"`, 0}, {`"bad"`, 0}, {`2`, 0}} {
+		t.Run(tc.raw, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			field := ""
+			if tc.raw != "" {
+				field = `"minimumGroupingDigits":` + tc.raw + `,`
+			}
+			path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+			mustWriteFile(t, path, numbersDocument(`{`+field+`"defaultNumberingSystem":"latn","symbols-numberSystem-latn":`+minimalNumberSymbolsJSON+`,"decimalFormats-numberSystem-latn":{"standard":"#,##0.###"},"percentFormats-numberSystem-latn":{"standard":"#,##0%"},"scientificFormats-numberSystem-latn":{"standard":"#E0"},"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}"}}`))
+			got, err := loadNumbers(root, []string{"en"})
+			if tc.want == 0 {
+				if err == nil || !strings.Contains(err.Error(), path) || !strings.Contains(err.Error(), "minimumGroupingDigits") {
+					t.Fatalf("error = %v", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got["en"].MinimumGroupingDigits != tc.want {
+				t.Errorf("minimum = %d, want %d", got["en"].MinimumGroupingDigits, tc.want)
+			}
+		})
+	}
+}

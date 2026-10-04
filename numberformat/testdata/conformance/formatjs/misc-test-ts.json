@@ -1,0 +1,12 @@
+[
+  {
+    "id": "numberformat-formatjs-misc-test-ts-013",
+    "source": "formatjs:packages/intl-numberformat/tests/misc.test.ts",
+    "locale": "en",
+    "options": {
+      "useGrouping": "min2"
+    },
+    "input": 1000,
+    "expected": "1000"
+  }
+]

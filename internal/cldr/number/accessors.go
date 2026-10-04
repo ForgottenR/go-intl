@@ -218,3 +218,6 @@ func numberingSystemLocaleData(locale string) []string {
 	}
 	return localeid.RelevantExtensionValues(defaultNumberingSystem, numbering.SimpleNumberingSystems()...)
 }
+
+// MinimumGroupingDigits returns the locale minimum for the leading group.
+func (l Locale) MinimumGroupingDigits() int { return numberDataForLocale(l).minimumGroupingDigits }

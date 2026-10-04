@@ -1,0 +1,274 @@
+[
+  {
+    "id": "datetimeformat-node-v26-10-0-range-spacing-cross-date",
+    "source": "node:v26.10.0:datetimeformat:range-spacing-review",
+    "locale": "en",
+    "feature": "formatRange",
+    "options": {
+      "day": "numeric",
+      "hour": "numeric",
+      "minute": "numeric",
+      "month": "short",
+      "year": "numeric",
+      "timeZone": "UTC"
+    },
+    "input": {
+      "start": "2021-01-10T00:00:00Z",
+      "end": "2021-01-20T00:00:00Z"
+    },
+    "expectedRange": "Jan 10, 2021, 12:00 AM – Jan 20, 2021, 12:00 AM",
+    "expectedRangeParts": [
+      {
+        "type": "month",
+        "value": "Jan",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2021",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "12",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "minute",
+        "value": "00",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "Jan",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "20",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2021",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "12",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "minute",
+        "value": "00",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "endRange"
+      }
+    ]
+  },
+  {
+    "id": "datetimeformat-node-v26-10-0-range-spacing-new-york",
+    "source": "node:v26.10.0:datetimeformat:range-spacing-review",
+    "locale": "en",
+    "feature": "formatRange",
+    "options": {
+      "day": "numeric",
+      "hour": "numeric",
+      "minute": "numeric",
+      "month": "numeric",
+      "timeZone": "America/New_York",
+      "year": "numeric"
+    },
+    "input": {
+      "start": "2021-05-19T09:00:00Z",
+      "end": "2021-06-19T17:00:00Z"
+    },
+    "expectedRange": "5/19/2021, 5:00 AM – 6/19/2021, 1:00 PM",
+    "expectedRangeParts": [
+      {
+        "type": "month",
+        "value": "5",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "19",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2021",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "5",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "minute",
+        "value": "00",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "6",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "19",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2021",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "1",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "minute",
+        "value": "00",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "PM",
+        "source": "endRange"
+      }
+    ]
+  }
+]

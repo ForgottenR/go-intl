@@ -10,6 +10,7 @@ import (
 type digitGrouping struct {
 	primary   int
 	secondary int
+	minimum   int
 }
 
 func groupingForNumberFormat(loc cldrnumber.Locale, opts ResolvedOptions) digitGrouping {
@@ -24,11 +25,21 @@ func groupingForNumberFormat(loc cldrnumber.Locale, opts ResolvedOptions) digitG
 	case DecimalStyle, UnitStyle:
 	default:
 	}
-	return groupingFromPattern(pattern)
+	grouping := groupingFromPattern(pattern)
+	switch opts.UseGrouping {
+	case UseGroupingFalse:
+		grouping.minimum = 0
+	case UseGroupingAuto:
+		grouping.minimum = loc.MinimumGroupingDigits()
+	case UseGroupingMin2:
+		grouping.minimum = max(2, loc.MinimumGroupingDigits())
+	case UseGroupingAlways:
+	}
+	return grouping
 }
 
 func groupingFromPattern(pattern string) digitGrouping {
-	grouping := digitGrouping{primary: 3, secondary: 3}
+	grouping := digitGrouping{primary: 3, secondary: 3, minimum: 1}
 	positive, _, _ := strings.Cut(pattern, ";")
 	start, end := numberPatternBounds(positive)
 	if start < 0 {
@@ -91,29 +102,8 @@ func groupInteger(integer string, grouping digitGrouping) string {
 	return b.String()
 }
 
-func shouldUseGrouping(policy UseGrouping, formatted string) bool {
-	return shouldUseGroupingDigits(policy, integerDigitCount(formatted))
-}
-
-func shouldUseGroupingDigits(policy UseGrouping, digits int) bool {
-	switch policy {
-	case UseGroupingFalse:
-		return false
-	case UseGroupingMin2:
-		return digits >= 5
-	case UseGroupingAuto, UseGroupingAlways:
-	}
-	return true
-}
-
-func integerDigitCount(formatted string) int {
-	formatted = strings.TrimPrefix(formatted, "-")
-	integer, _, _ := strings.Cut(formatted, ".")
-	return len(integer)
-}
-
 func needsGrouping(digits int, grouping digitGrouping) bool {
-	return digits > grouping.primary
+	return grouping.minimum > 0 && digits >= grouping.primary+grouping.minimum
 }
 
 func groupSeparatorCount(digits int, grouping digitGrouping) int {

@@ -20,6 +20,7 @@ var (
 	errDuplicateFixtureID   = errors.New("duplicate fixture id")
 	errInvalidErrorFixture  = errors.New("invalid error fixture file")
 	errFixtureSourceDir     = errors.New("fixture source directory mismatch")
+	errInvalidFixtureShape  = errors.New("invalid fixture shape")
 )
 
 type Fixture struct {
@@ -29,13 +30,13 @@ type Fixture struct {
 	Feature            string         `json:"feature,omitempty"`
 	Options            jsontext.Value `json:"options"`
 	Input              jsontext.Value `json:"input"`
-	Expected           *string        `json:"expected,omitempty"`
+	Expected           *string        `json:"expected,omitzero"`
 	ExpectedOK         *bool          `json:"expectedOk,omitempty"`
-	ExpectedLocales    []string       `json:"expectedLocales,omitempty"`
-	ExpectedParts      []Part         `json:"expectedParts,omitempty"`
-	ExpectedRange      *string        `json:"expectedRange,omitempty"`
-	ExpectedRangeParts []RangePart    `json:"expectedRangeParts,omitempty"`
-	ExpectedResolved   jsontext.Value `json:"expectedResolvedOptions,omitempty"`
+	ExpectedLocales    []string       `json:"expectedLocales,omitzero"`
+	ExpectedParts      []Part         `json:"expectedParts,omitzero"`
+	ExpectedRange      *string        `json:"expectedRange,omitzero"`
+	ExpectedRangeParts []RangePart    `json:"expectedRangeParts,omitzero"`
+	ExpectedResolved   jsontext.Value `json:"expectedResolvedOptions,omitzero"`
 	ErrorCode          string         `json:"errorCode,omitempty"`
 }
 
@@ -117,9 +118,9 @@ func LoadFixtures(root string) ([]Fixture, error) {
 		if err != nil {
 			return err
 		}
-		var fileFixtures []Fixture
-		if err := json.Unmarshal(data, &fileFixtures); err != nil {
-			return fmt.Errorf("%s: %w", path, err)
+		fileFixtures, err := decodeFixtures(path, data)
+		if err != nil {
+			return err
 		}
 		if err := validateFixtureFile(path, rel, fileFixtures, validateDateTimeInputs); err != nil {
 			return err
@@ -129,6 +130,30 @@ func LoadFixtures(root string) ([]Fixture, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	return fixtures, nil
+}
+
+func decodeFixtures(path string, data []byte) ([]Fixture, error) {
+	if jsontext.Value(data).Kind() != '[' {
+		return nil, fmt.Errorf("%s: fixtures must be an array: %w", path, errInvalidFixtureShape)
+	}
+	var fixtures []Fixture
+	if err := json.Unmarshal(data, &fixtures, json.RejectUnknownMembers(true)); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	// Typed pointers and slices preserve empty values, but null and omission
+	// both decode to nil. Check explicit nulls before using typed presence.
+	var records []map[string]jsontext.Value
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	for i, record := range records {
+		for field, value := range record {
+			if field != "input" && value.Kind() == 'n' {
+				return nil, fmt.Errorf("%s: fixture %q field %q must not be null: %w", path, fixtures[i].ID, field, errInvalidFixtureShape)
+			}
+		}
 	}
 	return fixtures, nil
 }
@@ -178,6 +203,15 @@ func validateFixture(path, rel string, fixture Fixture, inErrorsFile bool, valid
 func validateFixtureShape(path string, fixture Fixture) error {
 	if field := missingFixtureField(fixture); field != "" {
 		return fmt.Errorf("%s: missing required field %q: %w", path, field, errMissingFixtureField)
+	}
+	if fixture.Options.Kind() != '{' {
+		return fmt.Errorf("%s: fixture %q options must be an object: %w", path, fixture.ID, errInvalidFixtureShape)
+	}
+	if fixture.ExpectedResolved != nil && fixture.ExpectedResolved.Kind() != '{' {
+		return fmt.Errorf("%s: fixture %q expectedResolvedOptions must be an object: %w", path, fixture.ID, errInvalidFixtureShape)
+	}
+	if !fixtureHasNativeExpectation(fixture) {
+		return fmt.Errorf("%s: fixture %q has no expectation or errorCode: %w", path, fixture.ID, errInvalidFixtureShape)
 	}
 	return nil
 }
@@ -246,10 +280,10 @@ func fixtureSourceKindOf(source string) fixtureSourceKind {
 func fixtureHasNativeExpectation(fixture Fixture) bool {
 	return fixture.Expected != nil ||
 		fixture.ExpectedOK != nil ||
-		len(fixture.ExpectedLocales) > 0 ||
-		len(fixture.ExpectedParts) > 0 ||
+		fixture.ExpectedLocales != nil ||
+		fixture.ExpectedParts != nil ||
 		fixture.ExpectedRange != nil ||
-		len(fixture.ExpectedRangeParts) > 0 ||
+		fixture.ExpectedRangeParts != nil ||
 		len(fixture.ExpectedResolved) > 0 ||
 		fixture.ErrorCode != ""
 }

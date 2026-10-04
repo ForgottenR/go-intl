@@ -18,48 +18,56 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		loc := intltest.Locale(t, fixture.Locale)
-		format, err := New(locale.List{loc}, conformanceNumberOptions(t, fixture))
-		if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
-			return conformanceNumberError(t, code)
-		}) {
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(fixture.ExpectedResolved) != 0 {
-			assertNumberFormatResolvedOptions(t, fixture, format.ResolvedOptions())
-		}
-		if fixture.ExpectedRange != nil || len(fixture.ExpectedRangeParts) > 0 {
-			rangeInput := conformanceNumberRangeInput(t, fixture)
-			if fixture.ExpectedRange != nil {
-				got, err := format.FormatRange(rangeInput.Start, rangeInput.End)
-				if err != nil {
-					t.Fatalf("FormatRange() error = %v", err)
-				}
-				testcontract.AssertExpectedRange(t, "FormatRange", got, fixture.ExpectedRange)
+	conformance.RunFixtures(t, ".", runNumberConformanceFixture)
+}
+
+func runNumberConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
+
+	loc := intltest.Locale(t, fixture.Locale)
+	format, err := New(locale.List{loc}, conformanceNumberOptions(t, fixture))
+	if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+		return conformanceNumberError(t, code)
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil {
+		rangeInput := conformanceNumberRangeInput(t, fixture)
+		if fixture.ExpectedRange != nil {
+			got, err := format.FormatRange(rangeInput.Start, rangeInput.End)
+			if err != nil {
+				t.Fatalf("FormatRange() error = %v", err)
 			}
-			if len(fixture.ExpectedRangeParts) > 0 {
-				parts, err := format.FormatRangeToParts(rangeInput.Start, rangeInput.End)
-				if err != nil {
-					t.Fatalf("FormatRangeToParts() error = %v", err)
-				}
-				testcontract.AssertRangeParts(t, "FormatRangeToParts", parts, fixture.ExpectedRangeParts, conformanceNumberRangePart)
+			testcontract.AssertExpectedRange(t, "FormatRange", got, fixture.ExpectedRange)
+		}
+		if fixture.ExpectedRangeParts != nil {
+			parts, err := format.FormatRangeToParts(rangeInput.Start, rangeInput.End)
+			if err != nil {
+				t.Fatalf("FormatRangeToParts() error = %v", err)
 			}
-			return
+			testcontract.AssertRangeParts(t, "FormatRangeToParts", parts, fixture.ExpectedRangeParts, conformanceNumberRangePart)
 		}
-		input := conformanceNumberInput(t, fixture.Input)
-		want := fixture.RequiredExpected(t)
-		if got := format.Format(input); got != want {
-			t.Fatalf("Format() = %q, want %q", got, want)
+		return
+	}
+	if fixture.Expected == nil && fixture.ExpectedParts == nil {
+		return
+	}
+	input := conformanceNumberInput(t, fixture.Input)
+	if fixture.Expected != nil {
+		if got := format.Format(input); got != *fixture.Expected {
+			t.Fatalf("Format() = %q, want %q", got, *fixture.Expected)
 		}
-		if len(fixture.ExpectedParts) > 0 {
-			parts := format.FormatToParts(input)
-			testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceNumberPart)
-		}
-	})
+	}
+	if fixture.ExpectedParts != nil {
+		parts := format.FormatToParts(input)
+		testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceNumberPart)
+	}
 }
 
 func TestConformanceNumberOptionsPreserveExplicitEmptyString(t *testing.T) {
@@ -73,33 +81,6 @@ func TestConformanceNumberOptionsPreserveExplicitEmptyString(t *testing.T) {
 	}
 	testcontract.AssertOptionError(t, err, "numberformat", intlerr.InvalidOption, "style", "", "en")
 	testcontract.AssertOptionExpected(t, err, `one of "decimal", "percent", "currency", "unit"`)
-}
-
-func assertNumberFormatResolvedOptions(t *testing.T, fixture conformance.Fixture, got ResolvedOptions) {
-	t.Helper()
-
-	want := testcontract.ExpectedResolvedOptions(t, fixture)
-	testcontract.AssertResolvedString(t, want, "locale", got.Locale.String())
-	testcontract.AssertResolvedString(t, want, "numberingSystem", got.NumberingSystem)
-	testcontract.AssertResolvedString(t, want, "style", string(got.Style))
-	testcontract.AssertResolvedOptionalString(t, want, "currency", got.Currency)
-	testcontract.AssertResolvedOptionalString(t, want, "currencyDisplay", got.CurrencyDisplay)
-	testcontract.AssertResolvedOptionalString(t, want, "currencySign", got.CurrencySign)
-	testcontract.AssertResolvedOptionalString(t, want, "unit", got.Unit)
-	testcontract.AssertResolvedOptionalString(t, want, "unitDisplay", got.UnitDisplay)
-	testcontract.AssertResolvedInt(t, want, "minimumIntegerDigits", got.MinimumIntegerDigits)
-	testcontract.AssertResolvedOptionalInt(t, want, "minimumFractionDigits", got.MinimumFractionDigits)
-	testcontract.AssertResolvedOptionalInt(t, want, "maximumFractionDigits", got.MaximumFractionDigits)
-	testcontract.AssertResolvedOptionalInt(t, want, "minimumSignificantDigits", got.MinimumSignificantDigits)
-	testcontract.AssertResolvedOptionalInt(t, want, "maximumSignificantDigits", got.MaximumSignificantDigits)
-	testcontract.AssertResolvedString(t, want, "useGrouping", string(got.UseGrouping))
-	testcontract.AssertResolvedString(t, want, "notation", string(got.Notation))
-	testcontract.AssertResolvedOptionalString(t, want, "compactDisplay", got.CompactDisplay)
-	testcontract.AssertResolvedString(t, want, "signDisplay", string(got.SignDisplay))
-	testcontract.AssertResolvedInt(t, want, "roundingIncrement", got.RoundingIncrement)
-	testcontract.AssertResolvedString(t, want, "roundingMode", string(got.RoundingMode))
-	testcontract.AssertResolvedString(t, want, "roundingPriority", string(got.RoundingPriority))
-	testcontract.AssertResolvedString(t, want, "trailingZeroDisplay", string(got.TrailingZeroDisplay))
 }
 
 func conformanceNumberPart(part Part) conformance.Part {

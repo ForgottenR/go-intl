@@ -1112,7 +1112,7 @@ func TestDateTimeFormatFormatsLocalizedTimeZoneNameForms(t *testing.T) {
 	}{
 		{name: "short specific", style: ShortTimeZoneName, want: "7 AM EST"},
 		{name: "long specific", style: LongTimeZoneName, want: "7 AM Eastern Standard Time"},
-		{name: "default utc", style: ShortTimeZoneName, want: "12 PM GMT"},
+		{name: "default utc", style: ShortTimeZoneName, want: "12 PM UTC"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

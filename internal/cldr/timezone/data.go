@@ -16552,7 +16552,18 @@ const _data = "" +
 	"n {0}ග්\u200dරිමවේ{0}ග්\u200dරිමවේ{0} ව\xe0" +
 	"\xb7\x9aලාව{0} (lokalni čas)Ora: {0}{0}tidSaa za {0}{0} நே\xe0" +
 	"\xae\xb0ம்{0} సమయంเวลา{0}{0} Saatiчас: {0}{0} \xd9" +
-	"\x88قتGiờ {0}{0}时间" +
+	"\x88قتGiờ {0}{0}时间Africa/AsmaraAmerica/Argentina/Buenos_Air" +
+	"esAmerica/Argentina/CatamarcaAmerica/Argentina/CordobaAmerica/Ar" +
+	"gentina/JujuyAmerica/Argentina/MendozaAmerica/AtikokanAmerica/In" +
+	"diana/IndianapolisAmerica/Kentucky/LouisvilleAmerica/NuukAsia/Ho" +
+	"_Chi_MinhAsia/KathmanduAsia/KolkataAsia/YangonAtlantic/FaroeEuro" +
+	"pe/KyivFactoryPacific/ChuukPacific/KantonPacific/Pohnpei" +
+	""
+
+const _tzDisplayKeyBlob = "" +
+	"\x15\x97\xd1@\rg\r\xa4\xd1@\x1e\x9f\v\x14\xc2\xd1@\x1b\x91\f\x11\xdd\xd1@\x19\xa4\r\x0f\xf6\xd1@\x17\xb3\x13\r\x8d\xd2@\x19\xc7\x15\x0f\xa6\xd2@\x10\x8f\r\x15\xb6\xd2@\x1c\xf3\x12\x14\xd2\xd2@\x1b\xb3\x14\x12\xed" +
+	"\xd2@\f\xfb\x0f\x0f\xf9\xd2@\x10\xa7)\v\x89\xd3@\x0e\xfd%\r\x97\xd3@\f\xf0\"\r\xa3\xd3@\v\x89)\f\xae\xd3@\x0e\x96-\x0f\xbc\xd3@\v\x803\v\xc7\xd3@\a\x87s\v\xce\xd3@\r\x8d?\f\xdb\xd3" +
+	"@\x0e\xf59\x11\xe9\xd3@\x0f\xee=\x0e\xe3k\x03\xbek\a" +
 	""
 
 const _tzMetazonePeriodBlob = "" +

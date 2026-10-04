@@ -37,9 +37,8 @@ func selectPattern(patterns *patternData, formatMatcher FormatMatcher, resolved 
 	timeStyle := ecma402.ResolvedScalarValue(resolved.TimeStyle)
 	if dateStyle != "" && timeStyle != "" {
 		datePattern := dateStylePattern(gregorian, dateStyle)
-		timePattern := timeStylePattern(gregorian, timeStyle)
+		timePattern, timeFormat := resolvedTimeStyle(patterns, gregorian, timeStyle, formatMatcher, ecma402dtf.HourCycle(ecma402.ResolvedScalarValue(resolved.HourCycle)))
 		dateFormat := styleDateIntervalFormat(patterns, dateStyle, formatMatcher, appendItems)
-		timeFormat := styleTimeIntervalFormat(patterns, timeStyle, formatMatcher, appendItems)
 		return selectedPattern{
 			kind:       patternDateTime,
 			date:       datePattern,
@@ -59,8 +58,7 @@ func selectPattern(patterns *patternData, formatMatcher FormatMatcher, resolved 
 		}
 	}
 	if timeStyle != "" {
-		timePattern := timeStylePattern(gregorian, timeStyle)
-		timeFormat := styleTimeIntervalFormat(patterns, timeStyle, formatMatcher, appendItems)
+		timePattern, timeFormat := resolvedTimeStyle(patterns, gregorian, timeStyle, formatMatcher, ecma402dtf.HourCycle(ecma402.ResolvedScalarValue(resolved.HourCycle)))
 		return selectedPattern{
 			kind:       patternTime,
 			time:       timePattern,
@@ -165,10 +163,20 @@ func styleDateIntervalFormat(patterns *patternData, style Style, formatMatcher F
 	return format
 }
 
-func styleTimeIntervalFormat(patterns *patternData, style Style, formatMatcher FormatMatcher, appendItems map[string]string) ecma402dtf.Formats {
+func resolvedTimeStyle(patterns *patternData, gregorian cldrdate.Gregorian, style Style, matcher FormatMatcher, cycle ecma402dtf.HourCycle) (string, ecma402dtf.Formats) {
+	raw := timeStylePattern(gregorian, style)
 	opts := patterns.style(style).timeOptions
-	format, _ := matchComponentPattern(formatMatcher, opts, patterns.timePatternCandidates(opts.FractionalSecondDigits), appendItems)
-	return format
+	sameFamily := opts.Hour12 != nil && *opts.Hour12 == *hourCycleImpliesHour12(HourCycle(cycle))
+	opts.HourCycle = cycle
+	opts.Hour12 = hourCycleImpliesHour12(HourCycle(cycle))
+	format, _ := matchComponentPattern(matcher, opts, patterns.timePatternCandidates(opts.FractionalSecondDigits), gregorian.AppendItems)
+	if sameFamily {
+		parsed := ecma402dtf.Parse(raw, raw, nil, "")
+		return ecma402dtf.AdjustHourCycle(parsed, cycle).Pattern, format
+	}
+	// A different clock family needs the locale's complete alternative pattern,
+	// including the day-period position and its surrounding literals.
+	return format.Pattern, format
 }
 
 func timeStylePatternOptions(pattern string) ecma402dtf.Options {
@@ -286,6 +294,7 @@ func matchComponentPattern(formatMatcher FormatMatcher, opts ecma402dtf.Options,
 	if opts.TimeZoneName != "" && format.Pattern != "" && !format.PatternHasTimeZoneName {
 		format = appendTimeZoneName(format, opts.TimeZoneName, appendItems)
 	}
+	format = ecma402dtf.AdjustHourCycle(format, opts.HourCycle)
 	format = effectiveFormat(format)
 	return format, format.Pattern != ""
 }

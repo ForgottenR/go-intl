@@ -177,7 +177,9 @@ func adjustedRangePattern(pattern string, format ecma402dtf.Formats) intervalPro
 		return nil
 	}
 	parsed := ecma402dtf.Parse(pattern, pattern, nil, "")
-	return compileIntervalPattern(ecma402dtf.AdjustFieldTypes(parsed, formatOptions(format)).Pattern)
+	adjusted := ecma402dtf.AdjustFieldTypes(parsed, formatOptions(format))
+	adjusted = ecma402dtf.AdjustHourCycle(adjusted, format.HourCycle)
+	return compileIntervalPattern(adjusted.Pattern)
 }
 
 func (r rangePatternRecord) dateRelation(start, end localTime) rangeRelation {

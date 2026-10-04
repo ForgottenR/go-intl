@@ -18,6 +18,12 @@ Go record types that mirror ECMA-402 objects use `encoding/json/v2` tags as the 
 
 `record_json_test.go` is the project-wide guard for this policy. Formatter-specific conformance tests remain responsible for comparing values against Generated reference / native fixtures.
 
+Resolved-options conformance snapshots compare the complete marshaled record,
+including its property set and JSON value types. Omission is represented by an
+absent property, never by null; explicit zero, false, and empty strings remain
+values. The shared comparison entry is
+`internal/testcontract.AssertResolvedOptionsJSON`.
+
 The guard must exercise host-boundary records through real constructors or public accessors wherever possible, not only by marshaling hand-built structs. It must cover every record family branch whose JSON presence can change without a Go type change:
 
 - NumberFormat and PluralRules fraction-digit, significant-digit, and precision branches.
@@ -62,6 +68,9 @@ Part records keep ECMA-402 method vocabulary distinct from option vocabulary. In
 
 NumberFormat branch-only resolved options (`currency`, `currencyDisplay`, `currencySign`, `unit`, `unitDisplay`, and `compactDisplay`) use pointer fields plus `omitempty`; `nil` is the Go bridge for an absent ECMA-402 property.
 
+`UseGrouping` always emits a property. Its disabled value marshals as Boolean
+`false`; the enabled strategies marshal as `"auto"`, `"min2"`, or `"always"`.
+
 ### Intl.DateTimeFormat
 
 | Go field | ECMA-402 / JSON field | Presence |
@@ -87,6 +96,9 @@ NumberFormat branch-only resolved options (`currency`, `currencyDisplay`, `curre
 | `TimeStyle` | `timeStyle` | When style shortcut is used |
 
 DateTimeFormat branch-only resolved options (`hourCycle`, `hour12`, component fields, `fractionalSecondDigits`, `timeZoneName`, `dateStyle`, and `timeStyle`) use pointer fields plus `omitempty`; `nil` is the Go bridge for an absent ECMA-402 property. `hour12` is present whenever `hourCycle` is present and is derived from the resolved hour cycle rather than from user option presence.
+
+Automatic AM/PM parts do not imply a `dayPeriod` resolved property. That
+property reports the width of a selected flexible day-period field.
 
 ### Other Constructors
 

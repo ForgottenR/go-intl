@@ -1,6 +1,8 @@
 package numberformat
 
 import (
+	"encoding/json/v2"
+
 	"github.com/agentable/go-intl/internal/ecma402"
 	"github.com/agentable/go-intl/locale"
 )
@@ -19,6 +21,14 @@ type UnitDisplay string
 
 // UseGrouping selects integer grouping behavior. Mirrors Intl.NumberFormat option "useGrouping".
 type UseGrouping string
+
+// MarshalJSON preserves the Boolean false value of Intl's grouping slot.
+func (g UseGrouping) MarshalJSON() ([]byte, error) {
+	if g == UseGroupingFalse {
+		return []byte("false"), nil
+	}
+	return json.Marshal(string(g))
+}
 
 // Notation selects standard, scientific, engineering, or compact notation. Mirrors Intl.NumberFormat option "notation".
 type Notation string

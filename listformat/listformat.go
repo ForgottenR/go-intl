@@ -39,6 +39,6 @@ func New(locales locale.List, opts Options) (*ListFormat, error) {
 			Type:   Type(cfg.typ),
 			Style:  Style(cfg.style),
 		},
-		templates: compileListTemplates(cldrlist.Pattern(cldrLoc, cfg.typ, cfg.style)),
+		templates: compileListTemplates(cldrlist.Pattern(cldrLoc, cfg.typ, cfg.style), ecma402.ResolveDataLocaleTag(resolution)),
 	}, nil
 }

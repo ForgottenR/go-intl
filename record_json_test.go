@@ -23,6 +23,7 @@ func TestECMA402RecordJSONShapes(t *testing.T) {
 	loc := intltest.Locale(t, "en-US-u-nu-latn")
 	hour12 := false
 	defaultNumber := mustNumberFormat(t, numberformat.Options{}).ResolvedOptions()
+	disabledGrouping := mustNumberFormat(t, numberformat.Options{UseGrouping: new("false")}).ResolvedOptions()
 	significantNumber := mustNumberFormat(t, numberformat.Options{MinimumSignificantDigits: intPtr(3)}).ResolvedOptions()
 	defaultPlural := mustPluralRules(t, pluralrules.Options{}).ResolvedOptions()
 	significantPlural := mustPluralRules(t, pluralrules.Options{MinimumSignificantDigits: intPtr(2)}).ResolvedOptions()
@@ -76,6 +77,11 @@ func TestECMA402RecordJSONShapes(t *testing.T) {
 				`"trailingZeroDisplay":"auto"`,
 			},
 			absent: []string{`"currency"`, `"unit"`, `"minimumSignificantDigits"`},
+		},
+		{
+			name:  "number disabled grouping JSON",
+			value: disabledGrouping,
+			want:  []string{`"useGrouping":false`},
 		},
 		{
 			name:  "number significant digit resolved options",

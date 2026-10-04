@@ -46,18 +46,8 @@ func TestLoadDisplayNamesMapsAndInherits(t *testing.T) {
 				},
 			},
 			Standard: StyledNames{
-				Long: map[string]string{
-					"en":    "English",
-					"en-US": "English (United States)",
-					"fr":    "French",
-				},
-				Short: map[string]string{
-					"en-US": "English (US)",
-					"fr":    "Fr.",
-				},
-				Narrow: map[string]string{
-					"en-US": "English (U.S.)",
-				},
+				Long:  map[string]string{"en": "English", "fr": "French"},
+				Short: map[string]string{"fr": "Fr."},
 			},
 		},
 		Territories: StyledNames{

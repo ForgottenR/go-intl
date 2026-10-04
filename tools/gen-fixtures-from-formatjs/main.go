@@ -38,13 +38,13 @@ type fixture struct {
 	Feature            string                  `json:"feature,omitempty"`
 	Options            map[string]any          `json:"options"`
 	Input              any                     `json:"input"`
-	Expected           *string                 `json:"expected,omitempty"`
+	Expected           *string                 `json:"expected,omitzero"`
 	ExpectedOK         *bool                   `json:"expectedOk,omitempty"`
-	ExpectedLocales    []string                `json:"expectedLocales,omitempty"`
-	ExpectedParts      []conformance.Part      `json:"expectedParts,omitempty"`
-	ExpectedRange      *string                 `json:"expectedRange,omitempty"`
-	ExpectedRangeParts []conformance.RangePart `json:"expectedRangeParts,omitempty"`
-	ExpectedResolved   any                     `json:"expectedResolvedOptions,omitempty"`
+	ExpectedLocales    []string                `json:"expectedLocales,omitzero"`
+	ExpectedParts      []conformance.Part      `json:"expectedParts,omitzero"`
+	ExpectedRange      *string                 `json:"expectedRange,omitzero"`
+	ExpectedRangeParts []conformance.RangePart `json:"expectedRangeParts,omitzero"`
+	ExpectedResolved   any                     `json:"expectedResolvedOptions,omitzero"`
 	ErrorCode          string                  `json:"errorCode,omitempty"`
 }
 
@@ -763,7 +763,7 @@ type formatJSConstructorDeclaration struct {
 }
 
 var (
-	numberFormatDeclarationRE     = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?NumberFormat\s*\(\s*(?:['"]([^'"]*)['"]\s*)?(?:,\s*(\{.*?\}))?\s*\)`)
+	numberFormatDeclarationRE     = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?NumberFormat\s*\(\s*(?:['"]([^'"]*)['"]\s*|[^,)]*)?(?:,\s*(\{.*?\}|[^)]*))?\s*\)`)
 	inlineFormatExpectationRE     = regexp.MustCompile(`(?s)expect\s*\(\s*(?:new\s+)?(?:Intl\.)?NumberFormat\s*\(\s*['"]([^'"]*)['"]\s*(?:,\s*(\{.*?\}))?\s*\)\.format\s*\(\s*([^)]+?)\s*\)\s*\)\s*\.to(?:Be|Equal)\s*\(\s*['"]((?:\\.|[^\\'"])*?)['"]\s*\)`)
 	varFormatExpectationRE        = regexp.MustCompile(`(?s)expect\s*\(\s*([A-Za-z_]\w*)\.format\s*\(\s*([^)]+?)\s*\)\s*\)\s*\.to(?:Be|Equal)\s*\(\s*['"]((?:\\.|[^\\'"])*?)['"]\s*\)`)
 	varFormatToPartsExpectationRE = regexp.MustCompile(`(?s)expect\s*\(\s*([A-Za-z_]\w*)\.formatToParts\s*\(\s*([^)]+?)\s*\)\s*\)\s*\.to(?:Equal|StrictEqual)\s*\(\s*(\[[^\]]*\])\s*\)`)
@@ -772,7 +772,6 @@ var (
 	partObjectRE                  = regexp.MustCompile(`\{([^{}]*)\}`)
 	stringOptionRE                = regexp.MustCompile(`([A-Za-z][A-Za-z0-9]*)\s*:\s*['"]((?:\\.|[^\\'"])*?)['"]`)
 	numberOptionRE                = regexp.MustCompile(`([A-Za-z][A-Za-z0-9]*)\s*:\s*(-?\d+(?:_\d+)*(?:\.\d+)?(?:e[+-]?\d+)?)`)
-	boolOptionRE                  = regexp.MustCompile(`([A-Za-z][A-Za-z0-9]*)\s*:\s*(true|false)`)
 )
 
 func extractNumberFormatFixtures(rel, data string) []fixture {
@@ -781,7 +780,10 @@ func extractNumberFormatFixtures(rel, data string) []fixture {
 	nextIndex := 0
 	for _, match := range inlineFormatExpectationRE.FindAllStringSubmatchIndex(data, -1) {
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		input, ok := parseNumberLiteral(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -899,7 +901,7 @@ func newNumberFormatRangePartsFixture(rel string, index int, locale string, opti
 }
 
 var (
-	pluralRulesDeclarationRE     = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?PluralRules\s*\(\s*(?:['"]([^'"]*)['"]\s*)?(?:,\s*(\{.*?\}))?\s*\)`)
+	pluralRulesDeclarationRE     = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?PluralRules\s*\(\s*(?:['"]([^'"]*)['"]\s*|[^,)]*)?(?:,\s*(\{.*?\}|[^)]*))?\s*\)`)
 	inlinePluralSelectRE         = regexp.MustCompile(`(?s)expect\s*\(\s*(?:new\s+)?(?:Intl\.)?PluralRules\s*\(\s*['"]([^'"]*)['"]\s*(?:,\s*(\{.*?\}))?\s*\)\.select\s*\(\s*([^)]+?)\s*\)\s*\)\s*\.to(?:Be|Equal)\s*\(\s*['"]((?:\\.|[^\\'"])*?)['"]\s*\)`)
 	varPluralSelectExpectationRE = regexp.MustCompile(`(?s)expect\s*\(\s*([A-Za-z_]\w*)\.select\s*\(\s*([^)]+?)\s*\)\s*\)\s*\.to(?:Be|Equal)\s*\(\s*['"]((?:\\.|[^\\'"])*?)['"]\s*\)`)
 	inlinePluralRangeRE          = regexp.MustCompile(`(?s)expect\s*\(\s*(?:new\s+)?(?:Intl\.)?PluralRules\s*\(\s*['"]([^'"]*)['"]\s*(?:,\s*(\{.*?\}))?\s*\)\.selectRange\s*\(\s*((?:BigInt\s*\([^)]*\)|[^,])+?)\s*,\s*((?:BigInt\s*\([^)]*\)|[^)])+?)\s*\)\s*\)\s*\.to(?:Be|Equal)\s*\(\s*['"]((?:\\.|[^\\'"])*?)['"]\s*\)`)
@@ -912,7 +914,10 @@ func extractPluralRulesFixtures(rel, data string) []fixture {
 	nextIndex := 0
 	for _, match := range inlinePluralSelectRE.FindAllStringSubmatchIndex(data, -1) {
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		input, ok := parsePluralInputLiteral(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -926,7 +931,10 @@ func extractPluralRulesFixtures(rel, data string) []fixture {
 	}
 	for _, match := range inlinePluralRangeRE.FindAllStringSubmatchIndex(data, -1) {
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		start, ok := parsePluralInputLiteral(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -1051,7 +1059,7 @@ type dateVariable struct {
 }
 
 var (
-	dateTimeDeclarationRE      = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?DateTimeFormat\s*\(\s*(?:['"]([^'"]*)['"]|\[['"]([^'"]*)['"]\]\s*)?(?:,\s*(\{.*?\}))?\s*\)`)
+	dateTimeDeclarationRE      = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*(?:new\s+)?(?:Intl\.)?DateTimeFormat\s*\(\s*(?:['"]([^'"]*)['"]|\[['"]([^'"]*)['"]\]\s*|[^,)]*)?(?:,\s*(\{.*?\}|[^)]*))?\s*\)`)
 	dateVarStringRE            = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*new\s+Date\s*\(\s*['"]([^'"]*)['"]\s*\)`)
 	dateVarNumberRE            = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*new\s+Date\s*\(\s*(-?\d+)\s*\)`)
 	dateVarYMDRE               = regexp.MustCompile(`(?s)(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*new\s+Date\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?\s*\)`)
@@ -1144,7 +1152,10 @@ func extractDateTimeFormatFixtures(rel, data string) []fixture {
 			continue
 		}
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		start, ok := parseDateExpression(data[match[6]:match[7]], dates, match[0])
 		if !ok {
 			continue
@@ -1171,10 +1182,11 @@ func formatJSConstructorDeclarations(data string, re *regexp.Regexp, optionsGrou
 	declarations := map[string][]formatJSConstructorDeclaration{}
 	for _, match := range re.FindAllStringSubmatchIndex(data, -1) {
 		name := data[match[2]:match[3]]
+		options, _ := parseOptionsObject(matchString(data, match, optionsGroup))
 		declarations[name] = append(declarations[name], formatJSConstructorDeclaration{
 			index:   match[0],
 			locale:  firstMatchString(data, match, localeGroups...),
-			options: parseOptionsObject(matchString(data, match, optionsGroup)),
+			options: options,
 		})
 	}
 	return declarations
@@ -1200,7 +1212,7 @@ func latestConstructorDeclarationBefore(declarations []formatJSConstructorDeclar
 
 func latestExplicitLocaleConstructorDeclarationBefore(declarations map[string][]formatJSConstructorDeclaration, name string, index int) (formatJSConstructorDeclaration, bool) {
 	decl, ok := latestConstructorDeclarationBefore(declarations[name], index)
-	if !ok || decl.locale == "" {
+	if !ok || decl.locale == "" || decl.options == nil {
 		return formatJSConstructorDeclaration{}, false
 	}
 	return decl, true
@@ -1489,7 +1501,10 @@ func extractListFormatFixtures(rel, data string) []fixture {
 			continue
 		}
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		input, ok := parseStringArray(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -1542,7 +1557,10 @@ func extractRelativeTimeFormatFixtures(rel, data string) []fixture {
 			continue
 		}
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		value, ok := parseNumberLiteral(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -1606,7 +1624,10 @@ func extractDurationFormatFixtures(rel, data string) []fixture {
 			continue
 		}
 		locale := data[match[2]:match[3]]
-		options := parseOptionsObject(matchString(data, match, 4))
+		options, ok := parseOptionsObject(matchString(data, match, 4))
+		if !ok {
+			continue
+		}
 		input, ok := parseDurationObject(data[match[6]:match[7]])
 		if !ok {
 			continue
@@ -1832,31 +1853,6 @@ func joinRangePartValues(parts []conformance.RangePart) string {
 		b.WriteString(part.Value)
 	}
 	return b.String()
-}
-
-func parseOptionsObject(raw string) map[string]any {
-	options := map[string]any{}
-	for _, match := range stringOptionRE.FindAllStringSubmatch(raw, -1) {
-		value, ok := decodeJSString(match[2])
-		if ok {
-			options[match[1]] = value
-		}
-	}
-	for _, match := range numberOptionRE.FindAllStringSubmatch(raw, -1) {
-		if _, exists := options[match[1]]; exists {
-			continue
-		}
-		if value, ok := parseNumberLiteral(match[2]); ok {
-			options[match[1]] = value
-		}
-	}
-	for _, match := range boolOptionRE.FindAllStringSubmatch(raw, -1) {
-		if _, exists := options[match[1]]; exists {
-			continue
-		}
-		options[match[1]] = match[2] == "true"
-	}
-	return options
 }
 
 func parseStringArray(raw string) ([]string, bool) {

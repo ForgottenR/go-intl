@@ -14,18 +14,18 @@ type Part struct {
 }
 
 type listTemplates struct {
-	pair   ecma402.Pattern
+	pair   contextualListTemplate
 	start  ecma402.Pattern
 	middle ecma402.Pattern
-	end    ecma402.Pattern
+	end    contextualListTemplate
 }
 
-func compileListTemplates(pattern cldrlist.ListPattern) listTemplates {
+func compileListTemplates(pattern cldrlist.ListPattern, dataLocale string) listTemplates {
 	return listTemplates{
-		pair:   compileListTemplate(pattern.Pair),
+		pair:   compileContextualListTemplate(pattern.Pair, dataLocale),
 		start:  compileListTemplate(pattern.Start),
 		middle: compileListTemplate(pattern.Middle),
-		end:    compileListTemplate(pattern.End),
+		end:    compileContextualListTemplate(pattern.End, dataLocale),
 	}
 }
 
@@ -68,11 +68,12 @@ func (f *ListFormat) FormatToParts(list []string) []Part {
 	case 1:
 		return []Part{{Type: PartElement, Value: list[0]}}
 	case 2:
-		return listPatternParts(templates.pair, list[0], []Part{{Type: PartElement, Value: list[1]}})
+		return listPatternParts(templates.pair.forElement(list[1]), list[0], []Part{{Type: PartElement, Value: list[1]}})
 	}
 
 	lastPairIndex := len(list) - 2
-	result := listPatternParts(templates.end, list[lastPairIndex], []Part{{Type: PartElement, Value: list[len(list)-1]}})
+	last := list[len(list)-1]
+	result := listPatternParts(templates.end.forElement(last), list[lastPairIndex], []Part{{Type: PartElement, Value: last}})
 	for i := lastPairIndex - 1; i > 0; i-- {
 		result = listPatternParts(templates.middle, list[i], result)
 	}

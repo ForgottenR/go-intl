@@ -44,6 +44,7 @@ func runCLDRGenerator(t *testing.T, root, out, versionPath, profilePath string) 
 		OutDir:      out,
 		VersionFile: versionPath,
 		ProfileFile: profilePath,
+		TZDataLock:  writeTZDataFixture(t),
 	}
 	if err := Run(context.Background(), cfg, log); err != nil {
 		t.Fatalf("Run: %v", err)
