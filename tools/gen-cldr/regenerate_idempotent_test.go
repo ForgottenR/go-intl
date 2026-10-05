@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,37 @@ func TestRunGeneratesIdempotentOutput(t *testing.T) {
 	runCLDRGenerator(t, root, second, versionPath, profilePath)
 
 	requireGeneratedOutputEqual(t, first, second)
+}
+
+func TestRunRecordsNumberRootSources(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	root := filepath.Join(dir, "node_modules")
+	writeRuntimeCLDRFixtures(t, root)
+	writeListPatternCLDRFixture(t, root)
+	writeRelativeTimeCLDRFixture(t, root)
+	versionPath := filepath.Join(dir, "VERSION")
+	mustWriteGenCLDRFile(t, versionPath, "cldr=48.1.0\nicu=78\ntzdata=2025b\n")
+	out := filepath.Join(dir, "out")
+	runCLDRGenerator(t, root, out, versionPath, writeLocaleProfileFixture(t, dir))
+	manifest, err := os.ReadFile(filepath.Join(out, "locale", "manifest.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"cldr/number-root/root.xml", "cldr/number-root/source.json"} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, fact := range []string{"tools/gen-cldr/" + path, testSHA256(string(data))} {
+			if !strings.Contains(string(manifest), fact) {
+				t.Errorf("generated manifest missing number-root input %q", fact)
+			}
+		}
+	}
+	if strings.Contains(string(manifest), dir) {
+		t.Fatal("generated manifest contains a machine-local source path")
+	}
 }
 
 func runCLDRGenerator(t *testing.T, root, out, versionPath, profilePath string) {

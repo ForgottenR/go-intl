@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json/v2"
 	"fmt"
 	"maps"
@@ -10,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/agentable/go-intl/tools/internal/datapin"
 )
 
 type preflightConfig struct {
@@ -24,11 +24,7 @@ type dataPins struct {
 	tzdata string
 }
 
-type tzDataLock struct {
-	Version string `json:"version"`
-	URL     string `json:"url"`
-	SHA256  string `json:"sha256"`
-}
+type tzDataLock = datapin.TZData
 
 func checkDataPins(config preflightConfig) error {
 	pins, err := readVersionPins(config.versionFile)
@@ -122,24 +118,7 @@ func (v tzDataVersion) less(other tzDataVersion) bool {
 	return v.release < other.release
 }
 
-func readTZDataLock(path string) (tzDataLock, error) {
-	data, err := readPreflightFile(path)
-	if err != nil {
-		return tzDataLock{}, fmt.Errorf("read %s: %w", path, err)
-	}
-	var lock tzDataLock
-	if err := json.Unmarshal(data, &lock); err != nil {
-		return tzDataLock{}, fmt.Errorf("parse %s: %w", path, err)
-	}
-	if lock.Version == "" {
-		return tzDataLock{}, fmt.Errorf("%s: missing tzdata lock version", path)
-	}
-	hash, err := hex.DecodeString(lock.SHA256)
-	if err != nil || len(hash) != sha256.Size {
-		return tzDataLock{}, fmt.Errorf("%s: invalid tzdata sha256 %q", path, lock.SHA256)
-	}
-	return lock, nil
-}
+func readTZDataLock(path string) (tzDataLock, error) { return datapin.ReadTZData(path) }
 
 func checkCLDRPackagePins(path, want string) error {
 	data, err := readPreflightFile(path)
@@ -167,54 +146,11 @@ func checkCLDRPackagePins(path, want string) error {
 }
 
 func readVersionPins(path string) (dataPins, error) {
-	data, err := readPreflightFile(path)
-	if err != nil {
-		return dataPins{}, fmt.Errorf("read %s: %w", path, err)
-	}
-	values := map[string]string{}
-	for lineNumber, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		key, value, ok := strings.Cut(line, "=")
-		if !ok || strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
-			return dataPins{}, fmt.Errorf("%s:%d: malformed version pin %q", path, lineNumber+1, line)
-		}
-		key = strings.TrimSpace(key)
-		if _, exists := values[key]; exists {
-			return dataPins{}, fmt.Errorf("%s:%d: duplicate version pin %q", path, lineNumber+1, key)
-		}
-		values[key] = strings.TrimSpace(value)
-	}
-	if values["cldr"] == "" {
-		return dataPins{}, fmt.Errorf("%s: missing cldr version pin", path)
-	}
-	if !isDottedNumericVersion(values["cldr"], 3) {
-		return dataPins{}, fmt.Errorf("%s: invalid cldr version pin cldr=%s", path, values["cldr"])
-	}
-	return dataPins{cldr: values["cldr"], tzdata: values["tzdata"]}, nil
+	pins, err := datapin.ReadVersions(path)
+	return dataPins{cldr: pins.CLDR, tzdata: pins.TZData}, err
 }
 
 func readPreflightFile(path string) ([]byte, error) {
 	// Paths are fixed by the maintainer-run preflight command or isolated test fixtures.
 	return os.ReadFile(path) // #nosec G304 -- reading the selected preflight input is the tool's purpose.
-}
-
-func isDottedNumericVersion(version string, parts int) bool {
-	components := strings.Split(version, ".")
-	if len(components) != parts {
-		return false
-	}
-	for _, component := range components {
-		if component == "" {
-			return false
-		}
-		for _, r := range component {
-			if r < '0' || r > '9' {
-				return false
-			}
-		}
-	}
-	return true
 }

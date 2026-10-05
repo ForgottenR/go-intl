@@ -1,0 +1,4 @@
+[
+  {"id":"plural-range-opposite-signs","source":"manual:ecma402-range-equality","locale":"en","feature":"selectRange","options":{},"input":{"start":"-1","end":"1"},"expected":"one"},
+  {"id":"plural-range-opposite-signs-visible-zeros","source":"manual:ecma402-range-equality","locale":"en","feature":"selectRange","options":{"minimumFractionDigits":2},"input":{"start":"-1","end":"1"},"expected":"other"}
+]

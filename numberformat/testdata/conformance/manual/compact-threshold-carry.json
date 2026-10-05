@@ -1,0 +1,254 @@
+[
+  {
+    "id": "numberformat-manual-compact-threshold-positive",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "halfExpand"
+    },
+    "input": 999.995,
+    "expected": "1.00K",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "1"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-negative",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "halfExpand"
+    },
+    "input": -999.995,
+    "expected": "-1.00K",
+    "expectedParts": [
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "integer",
+        "value": "1"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-below",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "halfExpand"
+    },
+    "input": 999.994,
+    "expected": "999.99",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "999"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "99"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-negative-ceil",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "ceil"
+    },
+    "input": -999.995,
+    "expected": "-999.99",
+    "expectedParts": [
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "integer",
+        "value": "999"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "99"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-negative-floor",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "floor"
+    },
+    "input": -999.995,
+    "expected": "-1.00K",
+    "expectedParts": [
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "integer",
+        "value": "1"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-trunc",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "trunc"
+    },
+    "input": 999.995,
+    "expected": "999.99",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "999"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "99"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-zero",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "halfExpand"
+    },
+    "input": 0.0001,
+    "expected": "0.00",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "0"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      }
+    ]
+  },
+  {
+    "id": "numberformat-manual-compact-threshold-ten-thousand",
+    "source": "manual:ecma402:ComputeExponent",
+    "locale": "ja",
+    "options": {
+      "notation": "compact",
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": false,
+      "roundingMode": "halfExpand"
+    },
+    "input": 9999.995,
+    "expected": "1.00万",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "1"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      },
+      {
+        "type": "compact",
+        "value": "万"
+      }
+    ]
+  }
+]

@@ -86,7 +86,7 @@ type ResolvedOptions struct {
 type Part struct {
     Type  PartType
     Value string
-    Unit  Unit // empty for literal parts
+    Unit  Unit // present on every embedded NumberFormat part; empty on outer pattern/auto parts
 }
 
 type RelativeTimeFormat struct{ /* immutable resolved options + fields + number/plural formatters */ }
@@ -219,24 +219,28 @@ MUST rules:
 
 ## 5. Formatting and Parts
 
+Construction selects the style fields (short/narrow fallback to long), validates
+them, and compiles each numeric pattern once with
+`internal/ecma402.PartitionPattern`. Formatting reuses those immutable programs.
+
 Formatting pipeline:
 
 1. Reject non-finite numeric input.
 2. Normalize unit to singular.
-3. Select style field, with short/narrow fallback to long.
+3. Select the constructor-resolved unit field.
 4. If `numeric=auto`, return exact literal when present.
 5. Select past or future pattern from sign.
 6. Format absolute value with internal NumberFormat.
 7. Select plural category with internal PluralRules.
-8. Apply the selected pattern using `internal/ecma402.PartitionPattern`.
+8. Project NumberFormat parts into the selected compiled pattern.
 
 MUST rules:
 
 1. `Format*` returns the concatenation of `Format*ToParts` values.
 2. Numeric parts must preserve number part type strings from `numberformat` when possible.
-3. Numeric parts carry the singular unit.
-4. Literal parts carry an empty unit.
-5. Pattern assembly must use `internal/ecma402.PartitionPattern`; do not hand-parse `{0}`.
+3. Every embedded NumberFormat part carries the singular unit, including any literal emitted by that formatter.
+4. Outer pattern literals and `numeric=auto` literals have an empty unit.
+5. Constructors compile patterns with `internal/ecma402.PartitionPattern`; formatting does not parse templates again. `relativetimeformat/partition_test.go` verifies that Format joins the same partition returned by FormatToParts.
 
 ---
 

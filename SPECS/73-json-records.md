@@ -145,8 +145,8 @@ property reports the width of a selected flexible day-period field.
 | Formatter `Part` | `Type` | `type` | Always |
 | Formatter `Part` | `Value` | `value` | Always |
 | Range `Part` | `Source` | `source` | Range parts only |
-| `relativetimeformat.Part` | `Unit` | `unit` | Non-literal numeric parts |
-| `durationformat.Part` | `Unit` | `unit` | Non-literal unit parts |
+| `relativetimeformat.Part` | `Unit` | `unit` | Every embedded NumberFormat part, including literals; omitted on outer pattern/auto literals |
+| `durationformat.Part` | `Unit` | `unit` | Every embedded NumberFormat part, including literals; omitted on list and digital-shell literals |
 | `locale.WeekInfo` | `FirstDay` | `firstDay` | Always |
 | `locale.WeekInfo` | `Weekend` | `weekend` | Always |
 | `locale.TextInfo` | `Direction` | `direction` | When the direction is known |

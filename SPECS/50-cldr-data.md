@@ -35,9 +35,9 @@ Version upgrades must not be mixed with ordinary code changes as an opportunisti
 
 ### 1.1 Selection
 
-CLDR data **MUST** directly consume the npm package set (`cldr-bcp47` / `cldr-core` / `cldr-dates-full` / `cldr-localenames-full` / `cldr-misc-full` / `cldr-numbers-full` / `cldr-units-full`) of [`unicode-org/cldr-json`](https://github.com/unicode-org/cldr-json), the same source Generated reference uses.
+CLDR locale data directly consumes the pinned npm package set (`cldr-bcp47` / `cldr-core` / `cldr-dates-full` / `cldr-localenames-full` / `cldr-misc-full` / `cldr-numbers-full` / `cldr-units-full`) of [`unicode-org/cldr-json`](https://github.com/unicode-org/cldr-json). Number symbols additionally consume the same release's original `common/main/root.xml`, because npm JSON omits its root rows and aliases.
 
-> **Why**: Locking to the same CLDR version as Generated reference keeps conformance failures attributable to code differences, not data differences; the npm release rhythm tracks the CLDR version; and JSON connects directly to the native `encoding/json/v2` package (generation-time only), needing no LDML XML parser.
+> **Why**: The pinned npm release supplies resolved locale payloads through generation-time `encoding/json/v2`. Root symbols need a separate same-release input: replacing digits alone does not produce the correct arab/arabext separators and signs. The generator parses only `numbers/symbols` with stdlib XML; runtime packages retain const blobs and no XML/JSON I/O. Reference algorithms and reference output versions are evaluated separately.
 >
 > **Rejected**:
 > - `golang.org/x/text/cldr` — lost on baseline control: its data version is not the same conformance baseline as the go-intl/Generated reference pin, and its shape is Go structs, not JSON.
@@ -50,10 +50,10 @@ Each semantic domain is a Go package under `internal/cldr/<domain>/` with a gene
 
 | `internal/cldr/<domain>` | CLDR source | Extract fields |
 |---------------------------|-------------|----------------|
-| `number` | `cldr-numbers-full/main/<locale>/numbers.json` | minimumGroupingDigits, symbols (decimal/group/percent/plus/minus/NaN/Infinity/timeSeparator), decimal/percent/currency/scientific/compact formats, plural-sensitive currency-name placement patterns, numbering systems |
+| `number` | `cldr-numbers-full/main/<locale>/numbers.json` + same-release `common/main/root.xml` symbols | minimumGroupingDigits, symbols (decimal/group/percent/plus/minus/NaN/Infinity/timeSeparator and optional currencyDecimal/currencyGroup), decimal/percent/currency/scientific/compact formats, currency-spacing insertion text, plural-sensitive currency-name placement patterns, numbering systems |
 | `date` | `cldr-dates-full/main/<locale>/ca-gregorian.json` | era / month / weekday / day-period names (stand-alone × format, wide / abbreviated / narrow), date/time/dateTime formats, availableFormats, intervalFormats, day-period rules |
 | `timezone` | `cldr-core/supplemental/metaZones.json` + `cldr-dates-full/main/<locale>/timeZoneNames.json` | zone → metazone mapping, metazone display names (long / short × generic / standard / daylight), exemplarCity, GMT/hour/region formatting patterns, metazone period boundaries |
-| `currency` | `cldr-numbers-full/main/<locale>/currencies.json` + `cldr-core/supplemental/currencyData.json` | currency display names (long / short / narrow), plural forms, defaultFractionDigits, cashDigits, rounding |
+| `currency` | `cldr-numbers-full/main/<locale>/currencies.json` + `cldr-core/supplemental/currencyData.json` | currency display names (long / short / narrow), plural forms, default fraction digits; all selected currency name/symbol rows |
 | `unit` | `cldr-units-full/main/<locale>/units.json` | NumberFormat-sanctioned simple and direct compound plural patterns, optional denominator-specific `perUnitPattern`, generic compound unit patterns, DurationFormat duration unit patterns (long / short / narrow), unit-supported locales |
 | `list` | `cldr-misc-full/main/<locale>/listPatterns.json` | `conjunction` / `disjunction` / `unit` × `long` / `short` / `narrow` pair/start/middle/end patterns |
 | `relativetime` | `cldr-dates-full/main/<locale>/dateFields.json` | long/short/narrow relative and relativeTime patterns for year/quarter/month/week/day/hour/minute/second |
@@ -61,7 +61,70 @@ Each semantic domain is a Go package under `internal/cldr/<domain>/` with a gene
 | `plural` | `cldr-core/supplemental/plurals.json` + `ordinals.json` + `pluralRanges.json` | cardinal rules, ordinal rules, pluralRanges (emitted by SPEC 40 codegen; this SPEC only fixes the package location and that it passes the data-shape gate) |
 | `locale` (kernel) | `cldr-core` `availableLocales.json` / `likelySubtags.json` / `scriptMetadata.json` / `timeData.json` / `weekData.json` / `calendarPreferenceData.json` | locale registry (`und` at index 0), likely-subtag maximize data, known script directions, hour-cycle/week/calendar preferences, numbering data, manifest, version |
 
+Currency fractions provide only default precision: each wire row contains a
+currency code reference and one default-digits uvarint. A missing precision
+entry uses two digits. SupportedCurrencies enumerates the selected profile's
+currency name keys independently of these exceptions; name and symbol rows
+are retained in full. Evidence: `tools/gen-cldr/codegen/currency_encode.go`,
+`tools/gen-cldr/codegen/currency_roundtrip_test.go`, and `internal/cldr/currency/currency_test.go`.
+
 Three private identity products are emitted directly to their runtime owners:
+
+Decimal and currency compact rows retain separate raw LDML pattern families
+in the number-domain data. Currency rows come from
+`currencyFormats-numberSystem-*/{short|long}/standard`; they are not derived
+from decimal compact rows. The loader
+validates quote balance with `internal/pattern.ParseCompact`,
+the same parser used by NumberFormat and PluralRules in their constructors.
+Quoted digits and semicolons are literals, doubled apostrophes are escaped,
+and a plural-specific compact pattern may omit its number field. A malformed
+quote is a generation error carrying the locale/file, display and row key;
+validation does not rewrite the stored source pattern.
+Decimal count keys accept plural categories or numeric counts; only currency
+input recognizes the `-alt-alphaNextToNumber` suffix and validates its base
+count. Unknown count syntax is a generation error. Production compact
+accessors apply category-to-`other` fallback within the selected tuple and
+leave a missing tuple empty. NumberFormat owns complete-family fallback and
+construction-time currency-placeholder compilation, as defined by SPEC 20;
+neither the decoder nor the accessor substitutes decimal data for currency.
+Evidence: `tools/gen-cldr/cldr/numbers_test.go`,
+`tools/gen-cldr/codegen/number_roundtrip_test.go`, and
+`numberformat/testdata/conformance/manual/compact-patterns.json`.
+
+
+Number symbols preserve optional `currencyDecimal` / `currencyGroup` source
+text separately from ordinary separators; omitted and explicitly empty values
+remain empty in the wire. NumberFormat chooses nonempty monetary overrides
+only for currency style at construction (SPEC 20 §4.2). Pinned source witnesses
+are `tools/gen-cldr/.cldr-json/node_modules/cldr-numbers-full/main/de-AT/numbers.json`
+(group NBSP, currencyGroup `.`) and `tools/gen-cldr/.cldr-json/node_modules/cldr-numbers-full/main/fr-CH/numbers.json`
+(decimal `,`, currencyDecimal `.`). The latter is source evidence, not an
+expansion of the default profile. Parser and production round-trip tests own
+this projection in `tools/gen-cldr/cldr/numbers_test.go` and
+`tools/gen-cldr/codegen/number_roundtrip_test.go`.
+
+`miscPatterns-numberSystem-*.range`, when supplied, must be
+`{0}<nonempty separator>{1}` with each argument exactly once and no other
+braces. `parseRangeSign` preserves all middle text, including whitespace;
+pinned pt-PT supplies `{0} - {1}`. An omitted range field or misc-pattern row
+uses the loader's en-dash default. Invalid supplied patterns fail generation.
+`tools/gen-cldr/cldr/numbers_test.go`, the production number round trip, and
+SPEC 20 §5 verify extraction and shared-literal consumption independently.
+
+Currency spacing is projected from each numbering-system currency row into
+two insertion strings: `BeforeCurrency` and `AfterCurrency`. Each supplied side
+must have `currencyMatch=[[:^S:]&[:^Z:]]`, `surroundingMatch=[:digit:]`, and
+a string `insertBetween`; unsupported conditions or invalid insertion values
+fail generation with the source locale, numbering system and field.
+The validated classes mean a currency edge outside Unicode Symbol and
+Separator categories, adjacent to a decimal digit. The wire carries only the
+insertion text, not a runtime UnicodeSet expression or configurable rule object.
+A missing side or empty insertion text disables that side. The production
+accessor falls back to the same locale's default numbering-system row only
+when the requested spacing row is absent.
+Source-value, omission and invalid-rule tests in
+`tools/gen-cldr/cldr/numbers_test.go` and the production query/round-trip tests
+in `tools/gen-cldr/codegen/number_roundtrip_test.go` verify this projection.
 
 | Runtime owner | CLDR source | Generated contract |
 |---------------|-------------|--------------------|
@@ -87,7 +150,7 @@ domain-local ASCII/length grammar.
 |--------------|-------|--------|
 | `number.SupportedLocales()` / `number.SupportedNumberingSystems()` | `number` | generated number payload locales + ECMA-402 simple digit set |
 | `date.SupportedLocales()` / `date.SupportedCalendars()` | `date` | gregorian-bearing payload locales; CLDR `"gregorian"` → ECMA-402 `"gregory"`, `+iso8601` when gregory exists |
-| `currency.SupportedCurrencies()` | `currency` | `currencyData.json`-derived candidate set |
+| `currency.SupportedCurrencies()` | `currency` | union of currency name keys in the selected profile |
 | `unit.SupportedLocales()` | `unit` | unit-payload locales |
 | `list` / `relativetime` / `displaynames` `SupportedLocales()` | each domain | each domain's payload locales |
 
@@ -108,7 +171,7 @@ MUST rules:
 1. Profile JSON contains **only** the `locales` key. A new CLDR-backed surface must not introduce a new profile key; it generates payload from the same profile.
 2. `tools/gen-cldr` and `tools/gen-plural-rules` **MUST** read the profile with a strict JSON decoder. Unknown keys, multiple top-level values, and empty profiles are generation errors; `task data:contract` verifies the in-repo profile is still the schema.
 3. A CLDR-backed formatter `SupportedLocalesOf` **MUST** derive through the generated supported-locale accessor, not by reading the `locales` profile or `AvailableLocales()` directly.
-4. Each generated supported-locale accessor must reflect the active payload and be a subset of `Manifest().LocaleProfile`, verified by `task data:contract`; each profile locale must fall to a real payload locale through ECMA-402 lookup.
+4. `Manifest().LocaleProfile` records requested tags; each domain's generated supported-locale accessor records its actual payload keys. Payload keys may be lookup parents of the requests: an `en-US` profile can carry `en` number/list data while its manifest remains `["en-US"]`. Supported keys must be sorted, unique, equal to a request or its subtag prefix, and resolvable to a kernel handle; unrelated payloads are rejected. Plural rule keys such as `de-DE` can resolve to the kernel's `de` handle without a duplicate registry row. Every requested tag must reach a real domain payload through the shared lookup matcher. `task data:contract` checks this coverage, while generator round trips compare the exact domain payload keys.
 5. Changing `locales` = changing the library's conformance surface; each change goes through `task data` regeneration + `task verify`.
 
 > **Why**: Folding the early seven surface-specific keys to one `locales` key trades a measured ~3.2 MB → 9 MB binary delta (acceptable) for removing the contributor burden of subset/default-chain rules and the user-visible surprise of "has `hi` plurals but not `hi` duration". The constructor layer still derives its supported set from real payload / engine capability, so over-claiming stays impossible.
@@ -122,7 +185,7 @@ MUST rules:
 
 | Identifier | Source | Remarks |
 |------------|--------|---------|
-| Currency (ISO 4217 + precision) | CLDR `currencyData.json` | Do **not** add an independent ISO 4217 table or `bojanz/currency` (separate CLDR-derived table, drifts with `internal/cldr/VERSION`) |
+| Currency identifiers and precision | selected-profile `currencies.json` name keys for membership; `currencyData.json` fractions for default digits | Precision exceptions do not define membership. Unknown precision uses two digits; retain all selected name/symbol rows. No independent ISO 4217 table. |
 | Time zone (IANA zone) | pinned official IANA Zone/Link archive + CLDR BCP47 `timezone.json` primary metadata + Go `time.LoadLocation` transitions (embedded fallback) + CLDR display data | `internal/tz` owns legal identifiers/primary/regions and delegates transition lookup to Go; `internal/cldr/timezone` owns localized names/metazones only |
 | Sanctioned unit identifiers | ECMA-402 hardcode in `internal/ecma402/numberformat/constants.go` | Spec list is authoritative; CLDR provides the schema, not the sanctioned list |
 
@@ -208,10 +271,6 @@ Cold-compile memory — the original issue #3 failure — is now bounded structu
 > - per-locale subpackage (`numberformat/locale-data/zh.js` style) — lost on mechanism: Go has no `__addLocaleData`; inter-subpackage imports pollute the dependency graph.
 > - `intl_full` / `intl_minimal` build tags in active scope — lost on need: increases generator complexity for a default that is already correct.
 
-### 3.3 Consumer-driven expansion placeholder
-
-Consumer-driven expansion **may** later introduce build-tag classification, but the default strategy is a curated profile, not a configuration matrix. A new build profile is allowed only when multiple hosts have a clear, repeated need the 104-locale default cannot serve, and the PR must include size, cold-compile, conformance, and supported-locale evidence. This SPEC does not schedule it.
-
 ---
 
 DisplayNames source loading validates supplied localePattern and localeSeparator with the indexed pattern parser: both {0} and {1} must occur, other placeholders and malformed openings fail with source path, locale and field. Repeated arguments remain legal. Missing separator keeps the existing parent/default behavior; ICU LocaleDisplayNamesImpl::initialize supplies {0}, {1} and {0} ({1}) defaults. This check does not change valid generated bytes.
@@ -228,18 +287,32 @@ icu=78
 tzdata=2025b
 ```
 
-> **Why**: Generated reference's main branch locks `cldr-*: 48.1.0` (ICU 78); byte-level Generated reference alignment is a SPEC 00 §1 goal, so pinning an earlier version would institutionalize reverse divergence. CLDR 48 / ICU 78 (2025-10) is stable by public release; tzdata 2025b is the project-pinned time-zone data baseline.
+> **Why**: These pins define the library's reproducible data baseline. FormatJS and native hosts may use different releases; their algorithms and versioned observations do not replace the pinned inputs. Number root symbols must use the same CLDR release as the npm data; tzdata 2025b owns the identity registry, while Go owns transition lookup as described in [SPEC 32](32-datetimeformat-tz.md).
 >
 > **Rejected**:
-> - CLDR 47 / ICU 76 — lost on Generated reference alignment: one version behind, reverse divergence.
+> - Mixing root symbols from another CLDR release — loses coherent source identity and reproducibility.
 > - Follow `golang.org/x/text/cldr` — lost on baseline control: hands the conformance target to an external release rhythm.
+
+Pin syntax is owned by `tools/internal/datapin/version.go` and `tools/internal/datapin/tzdata.go`,
+with valid/invalid inputs in `tools/internal/datapin/pins_test.go`. `tools/data-preflight` owns package
+pin agreement and the bundled Go transition floor; the generator's
+`tools/gen-cldr/cldr/version.go` and `tools/gen-cldr/tzdb/tzdb.go` validate generation inputs and archive
+identity/SHA-256. Preflight does not identify the host's active transition data.
+
+`tools/fetch-tzdata/main.go` owns verified cache reuse, download, SHA-256
+checking, and atomic cache replacement; `tools/fetch-tzdata/main_test.go` verifies those paths.
+`task data:fetch:tzdb` uses that same command. An archive can be maintained directly:
+
+```sh
+go run ./tools/fetch-tzdata -lock tools/gen-cldr/tzdata.json -cache tools/gen-cldr/.tzdata
+```
 
 ### 4.2 Upgrade process
 
 Any CLDR / ICU / tzdata change **requires**:
 
 1. Update the three lines of `internal/cldr/VERSION`.
-2. Update the eight `cldr-*` versions in `tools/gen-cldr/.cldr-json/package.json`, then `npm install --package-lock-only --prefix tools/gen-cldr/.cldr-json` to regenerate the lockfile.
+2. Update the eight `cldr-*` versions in `tools/gen-cldr/.cldr-json/package.json`, then `npm install --package-lock-only --prefix tools/gen-cldr/.cldr-json` to regenerate the lockfile. Update the same-release `cldr/number-root/root.xml` and its `source.json` provenance/hash alongside the npm pin; an IANA upgrade also updates `tools/gen-cldr/tzdata.json`.
 3. Run `task data` to regenerate every domain `data.go` + kernel data. `tools/data-preflight` structurally validates VERSION, all `cldr-*` package pins, the tzdata lock/hash, and the Go transition-data floor before `npm ci`.
 4. Review the field-level diff with `git diff internal/cldr/`.
 5. The `Generated data` CI job runs the same `task data:check` gate on main pushes and pull requests, then requires a clean worktree.
@@ -260,7 +333,7 @@ The pins in `internal/cldr/VERSION` must correspond to the data encoded in every
 - `Generator`: `tools/gen-cldr`.
 - `CLDR` / `ICU` / `TZData`: identical to `internal/cldr/VERSION`.
 - `LocaleProfile`: the normalized `tools/locale-profile.json` locale list.
-- `InputHashes`: SHA-256 of `internal/cldr/VERSION`, `tools/locale-profile.json`, and the eight `cldr-*` package metadata.
+- `InputHashes`: SHA-256 of `internal/cldr/VERSION`, `tools/locale-profile.json`, the eight `cldr-*` package metadata, the verified IANA pin/archive, and `tools/gen-cldr/cldr/number-root/{source.json,root.xml}`. Embedded input hashes name repository paths, never machine paths.
 
 `cldrlocale.Manifest()` **MUST** return a slice clone. `task data:check` byte-equality covers `locale/manifest.go`. `cldrlocale.Version()` derives its CLDR / ICU / tzdata fields from the generated manifest — the `VERSION` text file is the codegen-time source of truth, not embedded a second time at runtime.
 
@@ -306,7 +379,7 @@ The retired literal-rendering layer — `golang_literal.go`, `map_literal.go` (r
 
 ### 5.2 Domain registry drives everything
 
-`codegen/domain.go` holds the `domains` registry: one row per CLDR payload domain with its package directory and its const-only `emit` function. Generation, the round-trip gate, and the data-shape gate all derive domain expectations from this one table. The payload path is derived (`internal/cldr/<pkg>/data.go`), and each domain gets a fresh per-domain `StringTable` so its `_data` holds only its own strings. Auxiliary identity products have explicit CLI output paths because their runtime owners sit outside `internal/cldr`; `task data` and `task data:check` name and byte-compare all three paths.
+`codegen/domain.go` holds the `domains` registry: one row per CLDR payload domain with its package directory and its const-only `emit` function. Generation, the round-trip gate, and the data-shape gate all derive domain expectations from this one table. The payload path is derived (`internal/cldr/<pkg>/data.go`), and each domain gets a fresh per-domain `StringTable` so its `_data` holds only its own strings. Auxiliary identity products have explicit CLI output paths because their runtime owners sit outside `internal/cldr`; `Taskfile.yml` supplies their output paths and invokes the check. `tools/check-generated-data/compare.go` discovers files from recognized generator headers in both trees, requires the same complete relative-path set, and compares corresponding bytes. `tools/check-generated-data/compare_test.go` covers missing, extra, and changed files; no hand-maintained diff list owns completeness.
 
 Time-zone display generation always validates the IANA pin/archive and CLDR
 BCP47 aliases, even when the auxiliary `-timezone-out` path is omitted. The CLI
@@ -434,7 +507,7 @@ MUST rules:
 2. `internal/localematcher` **MUST NOT** import any `internal/cldr` package. Its own generated profile supplies distance facts; formatter constructors inject generated supported-locale slices and the locale-kernel maximizer.
 3. Root `Intl.supportedValuesOf` accessors consume the owning domain's narrow index (§1.2), except time zones, which consume the exact primary projection of `internal/tz` identifier records.
 4. `SupportedCalendars()` derives from date calendar payload keys, maps CLDR `"gregorian"` → ECMA-402 `"gregory"`, and appends `"iso8601"` only when Gregorian data exists. `SupportedNumberingSystems()` includes the full ECMA-402 simple digit set even when the profile generates no matching CLDR symbol payload.
-5. Number-domain decimal, percent, scientific, symbol, and currency-symbol accessors must fall back from a requested numbering-system row to the locale default numbering-system row when the requested row is absent. Currency-name placement additionally falls back from a missing plural category to `other` before applying the same-locale numbering-system fallback. Compact pattern accessors keep missing tuple results empty so NumberFormat can distinguish unavailable compact formats from base pattern defaults.
+5. Number-domain decimal, percent, scientific, and currency-symbol accessors must fall back from a requested numbering-system row to the locale default numbering-system row when the requested row is absent. Currency-name placement additionally falls back from a missing plural category to `other` before applying the same-locale numbering-system fallback. Compact pattern accessors keep missing tuple results empty so NumberFormat can distinguish unavailable compact formats from base pattern defaults. Number symbols instead use an explicit locale row, then a concrete root row; a validated root alias resolves through the same locale’s latn symbols. An empty numbering-system argument still selects the locale default.
 6. Number generation must preserve every recognized `currencyFormats-numberSystem-*/unitPattern-count-{zero,one,two,few,many,other}` row, validate exactly one `{0}` and `{1}` in each present row, reject unknown plural suffixes, and require `other` for the locale's default numbering-system row. Missing categories and non-default rows remain absent so `CurrencyNamePattern` can apply its bounded same-locale fallback.
 7. Unit generation must preserve every CLDR row whose de-namespaced identifier passes `IsWellFormedUnitIdentifier`, including direct compound rows. It validates that every generic compound pattern contains exactly one `{0}` and `{1}`, and that every present `perUnitPattern` contains exactly one `{0}`. A missing direct or `perUnitPattern` row is preserved as absence so NumberFormat can choose the next composition path; plural unit patterns may legitimately omit `{0}` and must not be repaired.
 8. The root `internal/cldr/` directory is not a Go package. It must contain version metadata and domain subdirectories only; no production code may import a retired root CLDR package.
@@ -626,3 +699,65 @@ CLDR full JSON into the number blob and production accessor. An absent field
 uses ICU’s minimum of one; malformed supplied values fail with source context.
 The source/accessor round trip verifies this locale-level value independently
 of numbering-system rows.
+
+Number source loading preserves every explicit `symbols-numberSystem-*` row
+and each supplied decimal, percent, scientific or currency format family.
+Default/latn rows require all four families; non-default families are parsed
+independently, and a symbols-only row does not require formats. Supplied
+families retain their existing compact, currency spacing and currency-name
+fields; absent families remain absent. Malformed supplied families fail with
+locale, system and field context. Malformed supplied symbols fail with the
+file and numbering-system key; their range separator
+comes from the corresponding `miscPatterns` row. The ar/arab and ur/arabext
+overrides remain locale-owned. `TestLoadNumbersPreservesNonDefaultSymbols`,
+`TestLoadNumbersPreservesPinnedSymbolOverrides`, and
+`TestLoadNumbersRejectsMalformedNonDefaultSymbols` in
+`tools/gen-cldr/cldr/numbers_test.go` verify this source boundary.
+
+`TestLoadNumbersPreservesPinnedNonDefaultFormats` independently checks raw
+CLDR 48.1.0 gu/gujr standard and compact rows; individual-family and malformed
+family tests cover absence and invalid supplied input.
+`tools/gen-cldr/source_test.go:TestLoadAllPreservesPinnedNumberFormats`
+verifies source composition. `TestNumberRoundTrip` verifies those loaded rows
+through the production accessor, and the public NumberFormat
+`manual/number-format-families.json` fixture verifies style grouping. Roundtrip
+alone cannot detect input omitted by both source loading and generation.
+
+### Number root symbols source
+
+`tools/gen-cldr/cldr/number-root/source.json` owns the CLDR release, upstream
+tag/commit/URL, SHA-256 and license of the complete original `root.xml` beside
+it. CLDR JSON 48.1.0 names DATA=release-48-1-final1; that annotated tag points
+to commit `225136a3bd3eff573f3d64c8fa25d6f9afa974ad`. The immutable input is
+`https://raw.githubusercontent.com/unicode-org/cldr/225136a3bd3eff573f3d64c8fa25d6f9afa974ad/common/main/root.xml`,
+SHA-256 `c16e0df1d410c8f481fcb9c4dd195709e08ec9f8a6519d2d9905078e32990f17`.
+Both snapshot and source record are generator-only embedded inputs; VERSION
+agreement and actual-byte SHA validation precede loading, with no fetch at
+generation or runtime. A CLDR upgrade must update this input with its npm pin.
+
+The loader preserves explicit locale symbols before filling absent concrete
+root rows. It accepts only the pinned locale-to-latn alias form and proves
+that every constructor-supported simple system has a concrete row or that
+alias. It does not materialize alias rows for every locale. Root arab uses
+NaN and exponent `NaN` / `اس`; ar/arab retains its local `ليس رقمًا` / `أس`.
+Inherited root symbols retain the locale default's range pattern separator;
+root symbols do not own miscPatterns, decimal formats or currency placement.
+Other LDML/XPath semantics are outside this loader. Missing required root
+symbols, unsupported aliases, duplicate systems, missing system coverage,
+version mismatch or damaged snapshot bytes fail with source context.
+
+`tools/gen-cldr/cldr/number_root_test.go`, the LoadAll source tests and
+`TestRunRecordsNumberRootSources` verify damaged inputs, locale overrides,
+range-pattern ownership and reproducible manifest hashes. Production
+roundtrip and formatter conformance verify the generated projection.
+`internal/cldr/number/number_test.go:TestNumberSymbolsLocaleAlias` compares the
+complete pinned ar-EG records: deva follows locale latn, while an empty argument
+selects the default arab row. The positive and negative public fixtures in
+`numberformat/testdata/conformance/manual/symbols-alias.json` verify separators,
+adjacent LRM literals and complete resolved options without changing the
+requested numbering system.
+Algorithm references: `.references/formatjs/packages/intl-numberformat/scripts/number-data/number-data.ts`
+(root aliases restart at the requested locale),
+`.references/node/deps/icu-small/source/i18n/dcfmtsym.cpp` (symbol inheritance
+and latn fallback). FormatJS's `.references/formatjs/MODULE.bazel` pins XML
+48.2; it is an algorithm reference, not this library's data source.

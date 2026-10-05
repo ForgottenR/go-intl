@@ -454,3 +454,35 @@ func TestNewValidatesOnlyExplicitUnicodeOptions(t *testing.T) {
 		})
 	}
 }
+
+func TestUnicodeKeyGrammar(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		tag   string
+		valid bool
+	}{
+		{"en-u-00", false}, {"en-u-a0", false}, {"en-u-A0-foobar", false},
+		{"en-u-0a", true}, {"en-u-aa", true}, {"EN-u-0A", true},
+		{"en-u-attr-0a-foobar-aa-x-private", true},
+	} {
+		t.Run(tc.tag, func(t *testing.T) {
+			t.Parallel()
+			for name, parse := range map[string]func(string) (Locale, error){"Parse": Parse, "New": func(tag string) (Locale, error) { return New(tag, Options{}) }} {
+				_, err := parse(tc.tag)
+				if tc.valid {
+					if err != nil {
+						t.Fatalf("%s(%q): %v", name, tc.tag, err)
+					}
+				} else {
+					if !errors.Is(err, intlerr.ErrInvalidValue) {
+						t.Fatalf("%s(%q) error = %v, want invalid value", name, tc.tag, err)
+					}
+					detail := assertStructuredLocaleError(t, err, intlerr.InvalidValue)
+					if detail.Value != tc.tag {
+						t.Fatalf("error value = %q, want %q", detail.Value, tc.tag)
+					}
+				}
+			}
+		})
+	}
+}

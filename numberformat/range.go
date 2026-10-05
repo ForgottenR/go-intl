@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/agentable/go-intl/internal/cldr/plural"
@@ -40,7 +41,7 @@ func partitionNumberRange(start, end decimal.Decimal, formatState *decimalFormat
 		return out, nil
 	}
 	if rangeUsesPluralCategory(formatState.resolved) {
-		category := plural.ResolveCardinalRange(
+		category := plural.ResolveRange(
 			formatState.dataLocale,
 			stylePluralCategory(startOperand, formatState.cardinalRule),
 			stylePluralCategory(endOperand, formatState.cardinalRule),
@@ -96,7 +97,14 @@ func numberRangeSeparator(startParts []Part, sign string) string {
 	}
 	leadingSign, _ := splitLeadingSign(startParts)
 	if leadingSign.Type != "" || (len(startParts) > 0 && startParts[0].Type == PartPercentSign) {
-		return " " + sign + " "
+		first, _ := utf8.DecodeRuneInString(sign)
+		if !unicode.IsSpace(first) {
+			sign = " " + sign
+		}
+		last, _ := utf8.DecodeLastRuneInString(sign)
+		if !unicode.IsSpace(last) {
+			sign += " "
+		}
 	}
 	return sign
 }

@@ -105,7 +105,9 @@ import "github.com/cockroachdb/apd/v3"
 // - Form == NaN: Quiet NaN
 // - Form == NaNSignaling: signaling NaN retained only as a backend form
 type Decimal struct {
-inner apd.Decimal // Do not export: encapsulate apd implementation details
+    inner    apd.Decimal // finite coefficient, exponent and sign
+    form     Form        // finite / infinity / NaN forms
+    negative bool        // sign, including negative zero
 }
 
 // Form is the type of value. verbatim mirrors apd.Form but as a public API.
@@ -258,13 +260,10 @@ needs it.
 // String returns ECMA-402 StringNumericLiteral compatible output.
 //   - NaN  → "NaN"
 //   - ±Inf → "Infinity" / "-Infinity"
-// - Finite → the shortest reversible representation without trailing 0 (apd.Decimal.Text('G'))
+//   - Nonzero finite → fixed form via apd.Decimal.Text('f'); stored scale is retained.
+//   - Zero → "0"; Negative() preserves the negative-zero sign separately.
 func (d Decimal) String() string
 
-// Text returns the specified format output (the bottom layer uses apd.Decimal.Text).
-// format 'e' / 'E' / 'f' / 'g' / 'G', consistent with strconv.
-// prec is the number of decimal places (format='f') or the number of significant digits (format='g').
-func (d Decimal) Text(format byte, prec int) string
 ```
 
 ---
@@ -419,24 +418,24 @@ func QuantizeToIncrement(x Decimal, increment int, exp int32, mode RoundingMode)
 
 ### 4.6 TrailingZeroDisplay
 
-```go
-// internal/decimal/trailing_zero.go(signature)
+`trailingZeroDisplay` is formatter display policy, owned by
+`internal/ecma402/numberformat.FormatNumericToString` and SPEC 20's resolved
+digit options. The decimal backend does not expose a second display operation.
+With two fraction digits, `auto` retains `3.00`; `stripIfInteger` emits `3`
+for an integral rounded value and retains `3.14` for a nonintegral value.
+Stored input scale does not determine formatter-visible zeros.
 
-type TrailingZeroDisplay int
-const (
-TrailingZeroAuto TrailingZeroDisplay = iota // "auto" (default, reserved)
-TrailingZeroStripIfInteger // "stripIfInteger" (remove trailing zeros when integer)
-)
+For finite inputs, `FormattedNumeric.Formatted` contains the selected padded
+numeric text and may retain a minus sign, including `-0`.
+`FormattedNumeric.Rounded` retains the mathematical sign, including negative
+zero. NumberFormat partitions the sign at its own boundary. Non-finite helper
+inputs return the existing special-value text and value; formatter packages
+still own their public special-value semantics.
 
-// ApplyTrailingZeroDisplay is called after ToRawFixed / ToRawPrecision output.
-// formatted: rounded string (such as "3.00" or "3.14")
-// isInteger: Whether the mathematical value is an integer
-// display: user options
-// Return the processed string (possibly truncated to trailing zero).
-func ApplyTrailingZeroDisplay(formatted string, isInteger bool, display TrailingZeroDisplay) string
-```
-
-> **Why string post-processing rather than numerical level**: trailing zero is a display concept, not a mathematical concept; `Decimal{coeff=3, exp=-2}` and `Decimal{coeff=300, exp=-4}` are mathematically equivalent but trailing-zero behaves differently. It is most natural to process the value after solidifying it into a string in ToRawFixed (Generated reference has the same solution).
+Evidence: `internal/decimal/decimal_test.go`,
+`internal/ecma402/numberformat/digits_test.go`, and
+`internal/ecma402/numberformat/rounded_string_test.go`; normative owner:
+`.references/ecma402/spec/numberformat.html` (`FormatNumericToString`).
 
 ---
 
@@ -741,9 +740,9 @@ type NumericValue struct {
 
 ### TrailingZeroDisplay
 
-- [ ] `ApplyTrailingZeroDisplay("3.00", true, TrailingZeroStripIfInteger) == "3"`.
-- [ ] `ApplyTrailingZeroDisplay("3.14", false, TrailingZeroStripIfInteger) == "3.14"` (non-integer does not strip).
-- [ ] `ApplyTrailingZeroDisplay("3.00", true, TrailingZeroAuto) == "3.00"`(auto reserved).
+- [ ] Shared `FormatNumericToString` retains digit-option zeros under `auto` and strips the fraction only for an integral rounded result under `stripIfInteger`.
+- [ ] Its negative finite text and rounded value preserve the selected sign; a negative value rounded to zero retains negative zero.
+- [ ] Decimal String preserves nonzero stored scale, while zero text is `0` and Negative retains the sign.
 
 ### Log10Floor
 

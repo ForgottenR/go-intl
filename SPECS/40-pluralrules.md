@@ -340,11 +340,11 @@ func renderCategoriesFile(cardinal, ordinal map[string][]Rule) string
 2. The generated artifact remains sparse and exposes whether the requested
    category pair has an explicit CLDR row:
    ```go
-   func CardinalRange(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
+   func Range(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
        // Generated lookup returns ok=false when no explicit row exists.
    }
    ```
-3. The handwritten `ResolveCardinalRange` wrapper **MUST** return the generated
+3. The handwritten `ResolveRange` wrapper **MUST** return the generated
    result for an explicit row and `Other` for a miss. Runtime fallback policy
    must not be emitted into `range_rules.go` or represented as fabricated CLDR
    rows.
@@ -426,8 +426,8 @@ function SelectRange(start, end Value) Category:
     if sResult.formatted == eResult.formatted:
         return sResult.category
 
-// Step 2: Resolve the explicit cardinal row; return Other on a sparse-table miss.
-    return ResolveCardinalRange(localeData, sResult.category, eResult.category)
+// Step 2: Resolve the explicit locale category-pair row; return Other on a sparse-table miss.
+    return ResolveRange(localeData, sResult.category, eResult.category)
 ```
 
 **MUST** Rules:
@@ -436,11 +436,20 @@ function SelectRange(start, end Value) Category:
    endpoints, short-circuit equal formatted strings, then invoke the
    implementation-defined range-category resolver.
 2. "Formatted string equality" determination **MUST** pass `FormatNumericToString(start) == FormatNumericToString(end)` string comparison, **not** pass `decimal.Cmp`. Mathematical equality alone is insufficient because digit options can make distinct values visibly equal (for example, `1.1` and `1.2` with `maximumFractionDigits=0`); conversely, `1`, `1.0`, and `1.00` are the same mathematical input and must not differ solely by parser scale.
-3. A cardinal explicit-row hit **MUST** return its generated category. Missing
+The integer shortcut compares unsigned magnitudes only when resolved digit options
+prove integer operands are unchanged. ResolvePlural formatted strings are unsigned:
+`-1` and `1` therefore have equal formatted strings. All typed bridges share this
+result; Node 26.10.0 currently returns `other` for the signed pair, which conflicts
+with the current ECMA-402 formatted-string rule and is not the witness for this case.
+
+3. A locale explicit-row hit **MUST** return its generated category. Missing
    locale data or a missing `(sCat, eCat)` row **MUST** return `Other` without
    retrying heuristic pairs such as `(sCat, Other)` or `(Other, eCat)`.
-4. Ordinal range selection has no generated range table and **MUST** retain its
-   end-category behavior.
+4. Both cardinal and ordinal use the same CLDR locale category-pair table,
+   matching ICU StandardPluralRanges. CLDR pluralRanges has no rule-family axis.
+   This is an implementation-defined choice, not a normative ECMA-402 requirement;
+   FormatJS currently chooses the ordinal end category instead. Endpoint categories
+   still use the selected family, and formatted equality returns before pair lookup.
 5. A NaN start or end **MUST** return `ErrInvalidValue`. Positive and negative infinity **MUST** resolve to `Other` with their special-value formatted strings and continue through the same equality and range-category steps.
 
 > **Why**: ECMA-402 defines `PluralRuleSelectRange` as implementation-defined
@@ -521,7 +530,7 @@ Benchmark numbers guide profiling and prioritization; they do not override ECMA-
 - **BANNED** `SelectFormatted` / `ResolvePlural` exposed as public API - NumberFormat compact path selection via internal operand builder and generated cardinal rule.
 - **FORBIDDEN** NumberFormat Copy plural DSL or rule table - plural category is only allowed from `internal/cldr/plural` codegen.
 - **Disabled** Mathematical comparison short-circuit `SelectRange` step 1 (string comparison required).
-- **BANNED** `SelectRange` heuristic fallback (`(sCat, Other)` / `(Other, eCat)` etc.) or end-category fallback for a missing cardinal row - must return `Other`.
+- **BANNED** `SelectRange` heuristic fallback (`(sCat, Other)` / `(Other, eCat)` etc.) or end-category fallback for a missing locale category-pair row - must return `Other`.
 - **BANNED** `PluralCategories` hardcodes all 6 class lists - must be looked up from codegen data.
 - **BANNED** `panic` any user path.
 - **disable** codegen from outputting unused operand expressions (should-emit optimization).

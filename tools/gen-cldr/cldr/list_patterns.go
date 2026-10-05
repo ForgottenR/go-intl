@@ -54,7 +54,7 @@ func loadListPatterns(root string, locales []string) (map[string]ListPatterns, e
 				return nil, fmt.Errorf("listPatterns %s missing for %s", key.cldr, locale)
 			}
 			if err := validateListPattern(key.cldr, pattern); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("%s: %w", path, err)
 			}
 			if patterns[key.typ] == nil {
 				patterns[key.typ] = make(map[string]ListPattern)
@@ -78,11 +78,28 @@ func validateListPattern(cldrKey string, pattern ListPattern) error {
 		{name: "middle", value: pattern.Middle},
 		{name: "end", value: pattern.End},
 	} {
-		if strings.Count(field.value, "{0}") != 1 || strings.Count(field.value, "{1}") != 1 {
-			return fmt.Errorf("%s.%s invalid: expected one {0} and one {1}, got %q", cldrKey, field.name, field.value)
-		}
-		if _, err := cldrpattern.Partition(field.value); err != nil {
+		parts, err := cldrpattern.Partition(field.value)
+		if err != nil {
 			return fmt.Errorf("%s.%s invalid pattern: %w", cldrKey, field.name, err)
+		}
+		var counts [2]int
+		for _, part := range parts {
+			switch part.Type {
+			case "0":
+				counts[0]++
+			case "1":
+				counts[1]++
+			case cldrpattern.Literal:
+				if part.Value != "" && !strings.ContainsAny(part.Value, "{}") {
+					continue
+				}
+				fallthrough
+			default:
+				return fmt.Errorf("%s.%s invalid: unexpected placeholder or brace in %q", cldrKey, field.name, field.value)
+			}
+		}
+		if counts != [2]int{1, 1} {
+			return fmt.Errorf("%s.%s invalid: expected one {0} and one {1}, got %q", cldrKey, field.name, field.value)
 		}
 	}
 	return nil

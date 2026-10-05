@@ -119,17 +119,16 @@ func TestLocaleInfoGetters(t *testing.T) {
 	if got := withCalendar.GetCalendars(); !slices.Equal(got, []string{"buddhist"}) {
 		t.Fatalf("GetCalendars() with calendar = %#v", got)
 	}
-	if got := parseLocaleForTest("und").GetCollations(); len(got) != 0 {
-		t.Fatalf("GetCollations(und) = %#v, want no implicit collations", got)
-	}
-	if got := loc.GetCollations(); got != nil {
-		t.Fatalf("GetCollations(en-US) = %#v, want no implicit collations", got)
-	}
-	if got := parseLocaleForTest("tlh").GetCollations(); len(got) != 0 {
-		t.Fatalf("GetCollations(tlh) = %#v, want no implicit collations", got)
-	}
-	if got := parseLocaleForTest("de-DE").GetCollations(); len(got) != 0 {
-		t.Fatalf("GetCollations(de-DE) = %#v, want no implicit collations", got)
+	for _, tag := range []string{"en-US", "und", "tlh", "de-DE"} {
+		loc := parseLocaleForTest(tag)
+		got := loc.GetCollations()
+		if !slices.Equal(got, []string{"emoji", "eor"}) {
+			t.Fatalf("GetCollations(%s) = %#v, want emoji/eor", tag, got)
+		}
+		got[0] = "changed"
+		if !slices.Equal(loc.GetCollations(), []string{"emoji", "eor"}) {
+			t.Fatal("collation result aliases shared state")
+		}
 	}
 	withCollation, err := New("en-US", Options{Collation: stringPtr("phonebk")})
 	if err != nil {
@@ -226,5 +225,35 @@ func TestTextInfoUnknownDirectionIsAbsent(t *testing.T) {
 	}
 	if got := string(raw); got != `{}` {
 		t.Errorf("json.Marshal(GetTextInfo(und-Brai)) = %s, want {}", got)
+	}
+}
+
+func TestHourCycleLanguageRegionPreferences(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		tag  string
+		want []string
+	}{
+		{"fr-CA", []string{"h23", "h12"}}, {"en-CA", []string{"h12", "h23"}},
+		{"ku-SY", []string{"h23"}}, {"en-IL", []string{"h23", "h12"}},
+		{"fr-CA-u-rg-uszzzz", []string{"h12", "h23"}},
+		{"fr-CA-u-rg-zzzzzz", []string{"h23", "h12"}},
+		{"fr-u-sd-caqc", []string{"h23", "h12"}},
+		{"fr-US-u-sd-caqc", []string{"h12", "h23"}},
+		{"fr-CA-u-hc-h11", []string{"h11"}},
+		{"en-XX", []string{"h23"}},
+	} {
+		t.Run(tc.tag, func(t *testing.T) {
+			t.Parallel()
+			loc := parseLocaleForTest(tc.tag)
+			got := loc.GetHourCycles()
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("GetHourCycles() = %v, want %v", got, tc.want)
+			}
+			got[0] = "modified"
+			if !slices.Equal(loc.GetHourCycles(), tc.want) {
+				t.Fatal("GetHourCycles exposed shared state")
+			}
+		})
 	}
 }

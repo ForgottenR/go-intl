@@ -15,7 +15,7 @@ func (f *PluralRules) SelectRange(start, end Value) (Category, error) {
 		switch {
 		case startNumeric.Kind == ecma402.NumericValueInt64 && endNumeric.Kind == ecma402.NumericValueInt64:
 			startCategory := selectInteger(startNumeric.Int64, f.rule)
-			if startNumeric.Int64 == endNumeric.Int64 {
+			if ecma402.Int64Magnitude(startNumeric.Int64) == ecma402.Int64Magnitude(endNumeric.Int64) {
 				return startCategory, nil
 			}
 			return selectRangeCategories(startCategory, selectInteger(endNumeric.Int64, f.rule), f), nil
@@ -54,10 +54,7 @@ func selectRangeResolved(startFormatted string, startCategory Category, endForma
 }
 
 func selectRangeCategories(startCategory Category, endCategory Category, f *PluralRules) Category {
-	if f.resolved.Type != Cardinal {
-		return endCategory
-	}
-	return Category(plural.ResolveCardinalRange(
+	return Category(plural.ResolveRange(
 		f.dataLocale,
 		pluralop.Category(startCategory),
 		pluralop.Category(endCategory),

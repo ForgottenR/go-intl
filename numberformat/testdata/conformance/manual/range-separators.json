@@ -1,0 +1,156 @@
+[
+  {
+    "id": "numberformat-manual-range-separator-currency",
+    "source": "manual:cldr:range-separators",
+    "locale": "pt-PT",
+    "options": {
+      "style": "currency",
+      "currency": "EUR",
+      "maximumFractionDigits": 0
+    },
+    "feature": "formatRange",
+    "input": {
+      "start": 3,
+      "end": 5
+    },
+    "expectedRange": "3 - 5 €",
+    "expectedRangeParts": [
+      {
+        "type": "integer",
+        "value": "3",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " - ",
+        "source": "shared"
+      },
+      {
+        "type": "integer",
+        "value": "5",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "shared"
+      },
+      {
+        "type": "currency",
+        "value": "€",
+        "source": "shared"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "pt-PT",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "EUR",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-range-separator-decimal",
+    "source": "manual:cldr:range-separators",
+    "locale": "pt-PT",
+    "options": {},
+    "feature": "formatRange",
+    "input": {
+      "start": 3,
+      "end": 5
+    },
+    "expectedRange": "3 - 5",
+    "expectedRangeParts": [
+      {
+        "type": "integer",
+        "value": "3",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " - ",
+        "source": "shared"
+      },
+      {
+        "type": "integer",
+        "value": "5",
+        "source": "endRange"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "pt-PT",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-range-separator-signed",
+    "source": "manual:cldr:range-separators",
+    "locale": "pt-PT",
+    "options": {},
+    "feature": "formatRange",
+    "input": {
+      "start": -3,
+      "end": 5
+    },
+    "expectedRange": "-3 - 5",
+    "expectedRangeParts": [
+      {
+        "type": "minusSign",
+        "value": "-",
+        "source": "startRange"
+      },
+      {
+        "type": "integer",
+        "value": "3",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " - ",
+        "source": "shared"
+      },
+      {
+        "type": "integer",
+        "value": "5",
+        "source": "endRange"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "pt-PT",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

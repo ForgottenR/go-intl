@@ -24,7 +24,7 @@ import (
 type Locale = cldrlocale.Locale
 
 // Data holds the fraction-digit metadata for one currency code.
-type Data struct{ DefaultDigits, CashDigits, Rounding int }
+type Data struct{ DefaultDigits int }
 
 // currencyNames holds the per-locale display map keyed by plural category plus
 // the canonical, symbol, and narrow scalars.
@@ -52,8 +52,6 @@ func loadFractions() {
 func decodeCurrencyFractionData(r *codec.Reader) Data {
 	return Data{
 		DefaultDigits: int(r.Uvarint()),
-		CashDigits:    int(r.Uvarint()),
-		Rounding:      int(r.Uvarint()),
 	}
 }
 

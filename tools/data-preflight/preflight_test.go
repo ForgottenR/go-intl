@@ -205,7 +205,7 @@ func newPreflightFixture(t *testing.T) preflightFixture {
 	}
 	fixture.writeVersion("cldr=48.1.0\nicu=78\ntzdata=2025b\n")
 	fixture.writeFile("tools/gen-cldr/.cldr-json/package.json", `{"dependencies":{"cldr-core":"48.1.0","cldr-numbers-full":"48.1.0"}}`)
-	fixture.writeFile("tools/gen-cldr/tzdata.json", `{"version":"2025b","url":"https://example.test/tzdata2025b.tar.gz","sha256":"11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474"}`)
+	fixture.writeFile("tools/gen-cldr/tzdata.json", `{"version":"2025b","url":"https://example.test/tzdata2025b.tar.gz","sha256":"11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474","license":"public-domain"}`)
 	fixture.writeFile("goroot/lib/time/update.bash", "CODE=2025c\nDATA=2025c\n")
 	return fixture
 }
@@ -225,5 +225,36 @@ func (f preflightFixture) writeFile(rel, contents string) {
 	}
 	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 		f.t.Fatal(err)
+	}
+}
+
+func TestVersionPinsRequireCompleteRecord(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{"cldr=48.1.0\ntzdata=2025b\n", "cldr=48.1.0\nicu=78\n"} {
+		t.Run(raw, func(t *testing.T) {
+			t.Parallel()
+			f := newPreflightFixture(t)
+			f.writeVersion(raw)
+			if _, err := readVersionPins(f.config.versionFile); err == nil {
+				t.Fatalf("accepted %q", raw)
+			}
+		})
+	}
+}
+
+func TestTZDataLockRejectsURLAndLicense(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{
+		`{"version":"2025b","url":"not-a-url","license":"public-domain","sha256":"11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474"}`,
+		`{"version":"2025b","url":"https://example.test/archive","license":"unknown","sha256":"11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474"}`,
+	} {
+		t.Run(raw, func(t *testing.T) {
+			t.Parallel()
+			f := newPreflightFixture(t)
+			f.writeFile("tools/gen-cldr/tzdata.json", raw)
+			if _, err := readTZDataLock(f.config.tzLockFile); err == nil {
+				t.Fatal("accepted invalid lock")
+			}
+		})
 	}
 }

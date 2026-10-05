@@ -81,7 +81,7 @@ func TestGeneratedNumberingSystemExtrasHaveRuntimePayload(t *testing.T) {
 			t.Fatal("generated numbering-system extras contain empty identifier")
 		}
 		if !numberingSystemHasRuntimePayload(data, numberingSystem) {
-			t.Fatalf("generated numbering-system extra %q has no runtime symbols and decimal pattern", numberingSystem)
+			t.Fatalf("generated numbering-system extra %q has no runtime symbols and usable decimal pattern", numberingSystem)
 		}
 	}
 }
@@ -108,12 +108,13 @@ func TestRuntimeNumberingSystemPayloadsAreAdvertised(t *testing.T) {
 }
 
 func numberingSystemHasRuntimePayload(data map[Locale]numberData, numberingSystem string) bool {
-	for _, localeData := range data {
+	for loc, localeData := range data {
 		symbols := localeData.symbols[numberingSystem]
 		if symbols.Decimal == "" || symbols.Group == "" || symbols.Plus == "" || symbols.Minus == "" {
 			continue
 		}
-		if localeData.decimal[numberingSystem] == "" {
+		// Symbols rows need not duplicate the locale's default pattern family.
+		if loc.DecimalPattern(numberingSystem) == "" {
 			continue
 		}
 		return true
@@ -159,7 +160,7 @@ func TestSmokeKnownNumberData(t *testing.T) {
 		t.Fatalf("NumberSymbols TimeSeparator = %q, want %q", got, want)
 	}
 	if got := loc.NumberSymbols("missing-symbol-row"); got != symbols {
-		t.Fatalf("NumberSymbols(missing) = %+v, want default %+v", got, symbols)
+		t.Fatalf("NumberSymbols(missing) = %+v, want latn %+v", got, symbols)
 	}
 	if got, want := loc.DecimalPattern("latn"), "#,##0.###"; got != want {
 		t.Fatalf("DecimalPattern = %q, want %q", got, want)
@@ -218,6 +219,41 @@ func TestSmokeGermanNumberSymbols(t *testing.T) {
 	}
 	if !slices.Contains(SupportedLocales(), "de") {
 		t.Fatal(`SupportedLocales() does not include "de"`)
+	}
+}
+
+func TestNumberSymbolsLocaleAlias(t *testing.T) {
+	t.Parallel()
+	loc, ok := ResolveLocale("ar-EG")
+	if !ok {
+		t.Fatal(`ResolveLocale("ar-EG") = false`)
+	}
+	// Pinned CLDR 48.1.0 ar-EG rows; root's deva alias targets locale latn.
+	latn := NumberSymbols{
+		Decimal: ".", Group: ",", Percent: "\u200e%\u200e", Plus: "\u200e+", Minus: "\u200e-",
+		NaN: "ليس\u00a0رقمًا", Infinity: "∞", ApproxSign: "~", RangeSign: "–",
+		PerMille: "‰", Exponential: "E", SuperscriptingExponent: "×", TimeSeparator: ":",
+	}
+	arab := NumberSymbols{
+		Decimal: "٫", Group: "٬", Percent: "٪\u061c", Plus: "\u061c+", Minus: "\u061c-",
+		NaN: "ليس\u00a0رقمًا", Infinity: "∞", ApproxSign: "~", RangeSign: "–",
+		PerMille: "؉", Exponential: "أس", SuperscriptingExponent: "×", TimeSeparator: ":",
+	}
+	for _, tc := range []struct {
+		name, system string
+		want         NumberSymbols
+	}{
+		{name: "locale alias", system: "deva", want: latn},
+		{name: "explicit latn", system: "latn", want: latn},
+		{name: "explicit arab", system: "arab", want: arab},
+		{name: "empty selects default", want: arab},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := loc.NumberSymbols(tc.system); got != tc.want {
+				t.Errorf("NumberSymbols(%q) = %+v, want %+v", tc.system, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -337,4 +373,34 @@ func TestSmokeSupportedLocalesWithinProfile(t *testing.T) {
 	t.Parallel()
 
 	testcontract.AssertStringSliceSubset(t, "SupportedLocales", SupportedLocales(), "kernel locale profile", cldrlocale.AvailableLocales())
+}
+
+func TestCurrencyCompactPattern(t *testing.T) {
+	t.Parallel()
+	loc, ok := ResolveLocale("en")
+	if !ok {
+		t.Fatal(`ResolveLocale("en") = false`)
+	}
+	for _, tc := range []struct {
+		name, ns, display, plural string
+		exponent                  int
+		alpha                     bool
+		want                      string
+	}{
+		{name: "standard one", ns: "latn", display: "short", exponent: 4, plural: "one", want: "¤00K"},
+		{name: "standard other", ns: "latn", display: "short", exponent: 4, plural: "other", want: "¤00K"},
+		{name: "alpha one", ns: "latn", display: "short", exponent: 4, plural: "one", alpha: true, want: "¤\u00a000K"},
+		{name: "alpha plural fallback", ns: "latn", display: "short", exponent: 4, plural: "few", alpha: true, want: "¤\u00a000K"},
+		{name: "default numbering system", display: "short", exponent: 4, plural: "other", want: "¤00K"},
+		{name: "missing long", ns: "latn", display: "long", exponent: 4, plural: "other"},
+		{name: "missing numbering system", ns: "missing", display: "short", exponent: 4, plural: "other"},
+		{name: "missing magnitude", ns: "latn", display: "short", exponent: 99, plural: "other"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := loc.CurrencyCompactPattern(tc.ns, tc.display, tc.exponent, tc.plural, tc.alpha); got != tc.want {
+				t.Errorf("CurrencyCompactPattern() = %q, want %q", got, tc.want)
+			}
+		})
+	}
 }

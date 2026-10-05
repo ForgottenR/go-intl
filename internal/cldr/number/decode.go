@@ -25,6 +25,13 @@ type Locale uint16
 // shared with the generator.
 type NumberSymbols struct {
 	Decimal, Group, Percent, Plus, Minus, NaN, Infinity, ApproxSign, RangeSign, PerMille, Exponential, SuperscriptingExponent, TimeSeparator string
+	CurrencyDecimal, CurrencyGroup                                                                                                           string
+}
+
+// CurrencySpacing carries insertion text for the generation-validated
+// non-symbol/non-separator currency and decimal-digit surrounding classes.
+type CurrencySpacing struct {
+	BeforeCurrency, AfterCurrency string
 }
 
 // numberData holds one locale's number-formatting payload, keyed internally by
@@ -35,8 +42,10 @@ type numberData struct {
 	symbols                      numberSymbolsByNumberingSystem
 	decimal, percent, scientific numberPatternsByNumberingSystem
 	currency                     currencyPatternsByNumberingSystem
+	currencySpacing              map[string]CurrencySpacing
 	currencyName                 currencyNamePatternsByNumberingSystem
 	compact                      compactPatternsByNumberingSystem
+	currencyCompact              compactPatternsByNumberingSystem
 }
 
 type numberSymbolsByNumberingSystem map[string]NumberSymbols
@@ -80,8 +89,10 @@ func decodeNumberLocale(r *codec.Reader) numberData {
 		percent:                decodeNumberPatterns(r),
 		scientific:             decodeNumberPatterns(r),
 		currency:               decodeCurrencyPatterns(r),
+		currencySpacing:        codec.StringRefKeyMap[CurrencySpacing](r, _data, decodeCurrencySpacing),
 		currencyName:           decodeCurrencyNamePatterns(r),
 		compact:                decodeCompactPatterns(r),
+		currencyCompact:        decodeCompactPatterns(r),
 	}
 }
 
@@ -104,6 +115,8 @@ func decodeNumberSymbolRow(r *codec.Reader) NumberSymbols {
 		Exponential:            r.StringRef(_data),
 		SuperscriptingExponent: r.StringRef(_data),
 		TimeSeparator:          r.StringRef(_data),
+		CurrencyDecimal:        r.StringRef(_data),
+		CurrencyGroup:          r.StringRef(_data),
 	}
 }
 
@@ -113,6 +126,10 @@ func decodeNumberPatterns(r *codec.Reader) numberPatternsByNumberingSystem {
 
 func decodeCurrencyPatterns(r *codec.Reader) currencyPatternsByNumberingSystem {
 	return codec.StringRefKeyMap[currencySignPatterns](r, _data, decodeCurrencyPatternSet)
+}
+
+func decodeCurrencySpacing(r *codec.Reader) CurrencySpacing {
+	return CurrencySpacing{BeforeCurrency: r.StringRef(_data), AfterCurrency: r.StringRef(_data)}
 }
 
 func decodeCurrencyPatternSet(r *codec.Reader) currencySignPatterns {

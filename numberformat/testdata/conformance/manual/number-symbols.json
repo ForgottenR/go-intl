@@ -1,0 +1,415 @@
+[
+  {
+    "id": "numberformat-manual-symbols-en-arab",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "numberingSystem": "arab"
+    },
+    "input": 12345.67,
+    "expected": "١٢٬٣٤٥٫٦٧",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١٢"
+      },
+      {
+        "type": "group",
+        "value": "٬"
+      },
+      {
+        "type": "integer",
+        "value": "٣٤٥"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "٦٧"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-en-arabext",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "numberingSystem": "arabext"
+    },
+    "input": 12345.67,
+    "expected": "۱۲٬۳۴۵٫۶۷",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "۱۲"
+      },
+      {
+        "type": "group",
+        "value": "٬"
+      },
+      {
+        "type": "integer",
+        "value": "۳۴۵"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "۶۷"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arabext",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-ar-arab",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "ar",
+    "options": {
+      "numberingSystem": "arab"
+    },
+    "input": 12345.67,
+    "expected": "١٢٬٣٤٥٫٦٧",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١٢"
+      },
+      {
+        "type": "group",
+        "value": "٬"
+      },
+      {
+        "type": "integer",
+        "value": "٣٤٥"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "٦٧"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ar",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-root-nan",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "numberingSystem": "arab"
+    },
+    "input": null,
+    "expected": "NaN",
+    "expectedParts": [
+      {
+        "type": "nan",
+        "value": "NaN"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-local-nan",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "ar",
+    "options": {
+      "numberingSystem": "arab"
+    },
+    "input": null,
+    "expected": "ليس رقمًا",
+    "expectedParts": [
+      {
+        "type": "nan",
+        "value": "ليس رقمًا"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ar",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-root-exponent",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "numberingSystem": "arab",
+      "notation": "scientific"
+    },
+    "input": 12345.67,
+    "expected": "١٫٢٣٥اس٤",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "٢٣٥"
+      },
+      {
+        "type": "exponentSeparator",
+        "value": "اس"
+      },
+      {
+        "type": "exponentInteger",
+        "value": "٤"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "scientific",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-local-exponent",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "ar",
+    "options": {
+      "numberingSystem": "arab",
+      "notation": "scientific"
+    },
+    "input": 12345.67,
+    "expected": "١٫٢٣٥أس٤",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "٢٣٥"
+      },
+      {
+        "type": "exponentSeparator",
+        "value": "أس"
+      },
+      {
+        "type": "exponentInteger",
+        "value": "٤"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ar",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "scientific",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-root-sign-percent",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "numberingSystem": "arab",
+      "style": "percent",
+      "maximumFractionDigits": 2
+    },
+    "input": -0.1234,
+    "expected": "؜-١٢٫٣٤٪؜",
+    "expectedParts": [
+      {
+        "type": "literal",
+        "value": "؜"
+      },
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "integer",
+        "value": "١٢"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "٣٤"
+      },
+      {
+        "type": "percentSign",
+        "value": "٪"
+      },
+      {
+        "type": "literal",
+        "value": "؜"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arab",
+      "style": "percent",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-local-arabext-percent",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "ur",
+    "options": {
+      "numberingSystem": "arabext",
+      "style": "percent",
+      "maximumFractionDigits": 2
+    },
+    "input": -0.1234,
+    "expected": "‎-‎۱۲٫۳۴%",
+    "expectedParts": [
+      {
+        "type": "literal",
+        "value": "‎"
+      },
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "literal",
+        "value": "‎"
+      },
+      {
+        "type": "integer",
+        "value": "۱۲"
+      },
+      {
+        "type": "decimal",
+        "value": "٫"
+      },
+      {
+        "type": "fraction",
+        "value": "۳۴"
+      },
+      {
+        "type": "percentSign",
+        "value": "%"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ur",
+      "numberingSystem": "arabext",
+      "style": "percent",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

@@ -8,7 +8,7 @@ import (
 	"github.com/agentable/go-intl/tools/gen-cldr/extract"
 )
 
-// numberSymbolFieldOrder fixes the wire order of the thirteen NumberSymbols
+// numberSymbolFieldOrder fixes the wire order of the NumberSymbols
 // fields. The encoder writes each field as a StringRef in this order and the
 // decoder reads them back in the same order, so the table is the single source
 // of truth for both sides of the mirror.
@@ -26,6 +26,8 @@ var numberSymbolFieldOrder = [...]func(cldr.NumberSymbols) string{
 	func(s cldr.NumberSymbols) string { return s.Exponential },
 	func(s cldr.NumberSymbols) string { return s.SuperscriptingExponent },
 	func(s cldr.NumberSymbols) string { return s.TimeSeparator },
+	func(s cldr.NumberSymbols) string { return s.CurrencyDecimal },
+	func(s cldr.NumberSymbols) string { return s.CurrencyGroup },
 }
 
 // encodeNumbers renders the const-only payload for the number domain. It emits a
@@ -70,8 +72,8 @@ func encodeNumbers(input RuntimeInput, table *StringTable) ([]byte, error) {
 
 // encodeNumberLocale serializes one locale's numberData in the fixed order the
 // decoder reads it: default numbering system, symbols-by-NS, decimal/percent/
-// scientific pattern maps, currency style map, currency-name placement map,
-// and compact pattern tree.
+// scientific pattern maps, currency style map, currency spacing text,
+// currency-name placement map, and decimal/currency compact pattern trees.
 func encodeNumberLocale(e *blobEncoder, n cldr.Numbers, table *StringTable) {
 	e.appendStringRef(table.Add(n.DefaultNumberingSystem))
 	e.appendUvarint(uint64(n.MinimumGroupingDigits))
@@ -80,12 +82,14 @@ func encodeNumberLocale(e *blobEncoder, n cldr.Numbers, table *StringTable) {
 	e.appendStringRefMap(n.PercentPatterns, table)
 	e.appendStringRefMap(n.ScientificPatterns, table)
 	encodeCurrencyPatterns(e, n.CurrencyPatterns, table)
+	encodeCurrencySpacing(e, n.CurrencySpacing, table)
 	encodeCurrencyNamePatterns(e, n.CurrencyNamePatterns, table)
 	encodeCompactPatterns(e, n.CompactPatterns, table)
+	encodeCompactPatterns(e, n.CurrencyCompactPatterns, table)
 }
 
 // encodeNumberSymbols serializes the per-numbering-system symbols map. Each
-// numbering system key is followed by its thirteen symbol StringRefs in
+// numbering system key is followed by its symbol StringRefs in
 // numberSymbolFieldOrder.
 func encodeNumberSymbols(e *blobEncoder, symbols map[string]cldr.NumberSymbols, table *StringTable) {
 	appendStringRefKeyMap(e, symbols, table, func(s cldr.NumberSymbols) {
@@ -100,6 +104,13 @@ func encodeNumberSymbols(e *blobEncoder, symbols map[string]cldr.NumberSymbols, 
 func encodeCurrencyPatterns(e *blobEncoder, values map[string]map[string]string, table *StringTable) {
 	appendStringRefKeyMap(e, values, table, func(signPatterns map[string]string) {
 		e.appendStringRefMap(signPatterns, table)
+	})
+}
+
+func encodeCurrencySpacing(e *blobEncoder, values map[string]cldr.CurrencySpacing, table *StringTable) {
+	appendStringRefKeyMap(e, values, table, func(spacing cldr.CurrencySpacing) {
+		e.appendStringRef(table.Add(spacing.BeforeCurrency))
+		e.appendStringRef(table.Add(spacing.AfterCurrency))
 	})
 }
 

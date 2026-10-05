@@ -10,9 +10,9 @@ func TestExtractCurrenciesProfilesLocaleNamesAndKeepsFractions(t *testing.T) {
 	t.Parallel()
 
 	fractions := map[string]cldr.CurrencyFraction{
-		"DEFAULT": {Digits: 2, CashDigits: 2},
-		"USD":     {Digits: 2, CashDigits: 2},
-		"XXX":     {Digits: 0, CashDigits: 0},
+		"DEFAULT": {Digits: 2},
+		"USD":     {Digits: 2},
+		"XXX":     {Digits: 0},
 	}
 	currencies := map[string]cldr.Currencies{
 		"en": {

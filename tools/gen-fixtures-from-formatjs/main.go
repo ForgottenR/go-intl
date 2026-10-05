@@ -423,7 +423,7 @@ func formatJSNumberFormatRoute() formatJSSurfaceRoute {
 		formatJSNumberFormatTargetPackage,
 		formatJSNumberFormatPackageDir,
 		extractNumberFormatFixtures,
-		supportsGeneratedNumberFormatFixture,
+		func(fixture) bool { return true },
 	)
 }
 
@@ -676,84 +676,6 @@ func writeFixturesBySourceSlug(targetRoot string, fixtures []fixture, sourcePref
 
 func formatJSFixtureFile(targetRoot, rel string, slug func(string) string) string {
 	return filepath.Join(targetRoot, slug(rel)+".json")
-}
-
-func supportsGeneratedNumberFormatFixture(f fixture) bool {
-	if supportsGeneratedNumberFormatCompactZhTWFixture(f) {
-		return true
-	}
-	if f.Locale != "en" {
-		return false
-	}
-	switch f.Feature {
-	case "", fixtureFeatureFormatToParts, fixtureFeatureFormatRange, fixtureFeatureFormatRangeToParts:
-	default:
-		return false
-	}
-	style := "decimal"
-	currency := ""
-	for key, value := range f.Options {
-		switch key {
-		case "style":
-			styleValue, ok := stringValueOneOf(value, "currency", "percent", "decimal")
-			if !ok {
-				return false
-			}
-			style = styleValue
-		case "currency":
-			currencyValue, ok := stringValueOneOf(value, "USD")
-			if !ok {
-				return false
-			}
-			currency = currencyValue
-		case "minimumFractionDigits", "maximumFractionDigits":
-			if _, ok := value.(int64); !ok {
-				return false
-			}
-		case "useGrouping":
-			switch value := value.(type) {
-			case string:
-				if value != "always" && value != "auto" && value != "min2" {
-					return false
-				}
-			case bool:
-				if value {
-					return false
-				}
-			default:
-				return false
-			}
-		default:
-			return false
-		}
-	}
-	if style == "currency" && currency != "USD" {
-		return false
-	}
-	return true
-}
-
-func supportsGeneratedNumberFormatCompactZhTWFixture(f fixture) bool {
-	if f.Source != formatJSNumberFormatTestSourcePrefix+"notation-compact-zh-TW.test.ts" {
-		return false
-	}
-	if f.Locale != "zh-TW" || f.Feature != "" || f.Expected == nil {
-		return false
-	}
-	switch f.Input.(type) {
-	case int64, uint64, float64:
-	default:
-		return false
-	}
-	if len(f.Options) != 2 {
-		return false
-	}
-	notation, ok := stringValueOneOf(f.Options["notation"], "compact")
-	if !ok || notation != "compact" {
-		return false
-	}
-	_, ok = stringValueOneOf(f.Options["compactDisplay"], "short", "long")
-	return ok
 }
 
 type formatJSConstructorDeclaration struct {

@@ -103,7 +103,8 @@ func applyStylePatternForPlural(parts []Part, plural pluralop.Category, state *d
 		parts = state.percent.append(parts)
 	}
 	if style == CurrencyStyle {
-		return localizeParts(applyCurrencyPatternForPlural(parts, plural, resolved, state.currencyLoc, state.currency), numberingSystem)
+		parts = applyCurrencyPatternForPlural(parts, plural, resolved, state.currencyLoc, state.currency)
+		return state.currency.applySpacing(localizeParts(parts, numberingSystem))
 	}
 	if style == UnitStyle {
 		return localizeParts(applyUnitPatternForPlural(parts, plural, state.unit), numberingSystem)

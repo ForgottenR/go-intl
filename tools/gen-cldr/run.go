@@ -5,8 +5,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/agentable/go-intl/tools/gen-cldr/cldr"
 	"github.com/agentable/go-intl/tools/gen-cldr/codegen"
@@ -85,6 +88,9 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 		{name: "tools/gen-cldr/tzdata.json", path: cfg.TZDataLock},
 		{name: "iana/tzdata" + pin.Version + ".tar.gz", path: cfg.TZDataArchive},
 	}
+	for _, name := range slices.Sorted(maps.Keys(source.NumberRootHashes)) {
+		manifestExtras = append(manifestExtras, manifestInputFile{name: name, sha256: source.NumberRootHashes[name]})
+	}
 	manifest, err := buildManifest(cfg.VersionFile, cfg.ProfileFile, source.Root, want, profile, manifestExtras...)
 	if err != nil {
 		return err
@@ -95,18 +101,18 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("extract likely subtags: %w", err)
 	}
-	numbers := extract.ExtractNumbers(source.Numbers, profile.Locales)
-	currencies := extract.ExtractCurrencies(source.CurrencyFractions, source.Currencies, profile.Locales)
-	dates := extract.ExtractDates(source.Dates, profile.Locales)
-	metazones := extract.ExtractMetazones(source.Metazones, profile.Locales)
+	numbers := extract.ExtractNumbers(source.Numbers, source.Available)
+	currencies := extract.ExtractCurrencies(source.CurrencyFractions, source.Currencies, source.Available)
+	dates := extract.ExtractDates(source.Dates, source.Available)
+	metazones := extract.ExtractMetazones(source.Metazones, source.Available)
 	displayKeys, err := timeZoneDisplayKeys(metazones, registry, aliases.Display)
 	if err != nil {
 		return err
 	}
-	units := extract.ExtractUnits(source.Units, profile.Locales)
-	listPatterns := extract.ExtractListPatterns(source.ListPatterns, profile.Locales)
-	relativeTime := extract.ExtractRelativeTimeFields(source.RelativeTime, profile.Locales)
-	displayNames := extract.ExtractDisplayNames(source.DisplayNames, profile.Locales)
+	units := extract.ExtractUnits(source.Units, source.Available)
+	listPatterns := extract.ExtractListPatterns(source.ListPatterns, source.Available)
+	relativeTime := extract.ExtractRelativeTimeFields(source.RelativeTime, source.Available)
+	displayNames := extract.ExtractDisplayNames(source.DisplayNames, source.Available)
 	input := codegen.RuntimeInput{
 		Manifest:            manifest,
 		Locales:             locales,
@@ -122,6 +128,9 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 		ListPatterns:        listPatterns,
 		RelativeTime:        relativeTime,
 		DisplayNames:        displayNames,
+	}
+	if err := validateProfileRoutes(source.Root, profile.Locales, input); err != nil {
+		return err
 	}
 	if err := codegen.RenderRuntime(cfg.OutDir, input); err != nil {
 		return fmt.Errorf("render runtime data: %w", err)
@@ -144,9 +153,47 @@ func Run(ctx context.Context, cfg Config, log *slog.Logger) error {
 	return nil
 }
 
+func validateProfileRoutes(root string, locales []string, input codegen.RuntimeInput) error {
+	for _, locale := range locales {
+		for _, domain := range []struct {
+			name  string
+			found bool
+		}{
+			{"number", hasLocalePayload(input.Numbers, locale)},
+			{"currency", hasLocalePayload(input.Currencies.Currencies, locale)},
+			{"date", hasLocalePayload(input.Dates, locale)},
+			{"timezone", hasLocalePayload(input.Metazones.Formats, locale)},
+			{"unit", hasLocalePayload(input.Units, locale)},
+			{"list", hasLocalePayload(input.ListPatterns, locale)},
+			{"relativetime", hasLocalePayload(input.RelativeTime, locale)},
+			{"displaynames", hasLocalePayload(input.DisplayNames, locale)},
+		} {
+			if !domain.found {
+				return fmt.Errorf("locale profile %q: %s has no loaded lookup payload in %s", locale, domain.name, root)
+			}
+		}
+	}
+	return nil
+}
+
+func hasLocalePayload[T any](payload map[string]T, locale string) bool {
+	for locale != "" {
+		if _, ok := payload[locale]; ok {
+			return true
+		}
+		index := strings.LastIndexByte(locale, '-')
+		if index < 0 {
+			return false
+		}
+		locale = locale[:index]
+	}
+	return false
+}
+
 type manifestInputFile struct {
-	name string
-	path string
+	name   string
+	path   string
+	sha256 string
 }
 
 func buildManifest(versionFile, profileFile, cldrRoot string, versions cldr.Versions, profile localeprofile.Profile, extras ...manifestInputFile) (codegen.ManifestInput, error) {
@@ -158,9 +205,13 @@ func buildManifest(versionFile, profileFile, cldrRoot string, versions cldr.Vers
 	packages := cldr.RequiredPackages()
 	hashes := make([]codegen.ManifestHash, len(inputFiles)+len(packages))
 	for i, file := range inputFiles {
-		hash, err := fileSHA256(file.path)
-		if err != nil {
-			return codegen.ManifestInput{}, err
+		hash := file.sha256
+		if hash == "" {
+			var err error
+			hash, err = fileSHA256(file.path)
+			if err != nil {
+				return codegen.ManifestInput{}, err
+			}
 		}
 		hashes[i] = codegen.ManifestHash{Name: file.name, SHA256: hash}
 	}

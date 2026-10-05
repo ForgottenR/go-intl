@@ -18,29 +18,51 @@ import (
 func TestUnifiedConformanceFixtures(t *testing.T) {
 	t.Parallel()
 
-	conformance.RunFixtures(t, ".", func(t *testing.T, fixture conformance.Fixture) {
-		rules, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformancePluralOptions(t, fixture))
-		if testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
+	conformance.RunFixtures(t, ".", runPluralConformanceFixture)
+}
+
+func runPluralConformanceFixture(t *testing.T, fixture conformance.Fixture) {
+	t.Helper()
+
+	rules, err := New(locale.List{intltest.Locale(t, fixture.Locale)}, conformancePluralOptions(t, fixture))
+	if fixture.ErrorCode == "invalid_option" {
+		testcontract.AssertErrorCode(t, "New()", err, fixture.ErrorCode, func(code string) error {
 			return conformancePluralError(t, code)
-		}) {
-			return
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		var input any
-		if err := json.Unmarshal(fixture.Input, &input); err != nil {
-			t.Fatal(err)
-		}
-		want := fixture.RequiredExpected(t)
-		got, err := pluralFixtureValue(rules, fixture.Feature, input)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got.String() != want {
-			t.Fatalf("Select(%v) = %q, want %q", input, got.String(), want)
-		}
-	})
+		})
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ExpectedParts != nil || fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil || fixture.ExpectedOK != nil || fixture.ExpectedLocales != nil {
+		t.Fatal("unsupported pluralrules observation")
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, rules.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.ErrorCode == "" && fixture.Expected == nil {
+		return
+	}
+	var input any
+	if err := json.Unmarshal(fixture.Input, &input); err != nil {
+		t.Fatal(err)
+	}
+	if fixture.ErrorCode != "" && fixture.Feature != "selectRange" {
+		t.Fatalf("unsupported pluralrules runtime feature %q", fixture.Feature)
+	}
+	got, err := pluralFixtureValue(rules, fixture.Feature, input)
+	if testcontract.AssertErrorCode(t, "SelectRange()", err, fixture.ErrorCode, func(code string) error {
+		return testcontract.IntlErrorCode(t, "pluralrules runtime", code, "invalid_value")
+	}) {
+		return
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := fixture.RequiredExpected(t)
+	if got.String() != want {
+		t.Fatalf("Select(%v) = %q, want %q", input, got.String(), want)
+	}
 }
 
 func TestConformancePluralOptionsPreserveExplicitEmptyString(t *testing.T) {

@@ -9,25 +9,34 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
+	cldrpattern "github.com/agentable/go-intl/internal/pattern"
 	pluralop "github.com/agentable/go-intl/internal/plural"
 )
 
 type Numbers struct {
-	DefaultNumberingSystem string
-	MinimumGroupingDigits  int
-	Symbols                map[string]NumberSymbols
-	DecimalPatterns        map[string]string
-	PercentPatterns        map[string]string
-	ScientificPatterns     map[string]string
-	CurrencyPatterns       map[string]map[string]string
-	CurrencyNamePatterns   map[string]map[string]string
-	CompactPatterns        map[string]map[string]map[int]map[string]string
+	DefaultNumberingSystem  string
+	MinimumGroupingDigits   int
+	Symbols                 map[string]NumberSymbols
+	DecimalPatterns         map[string]string
+	PercentPatterns         map[string]string
+	ScientificPatterns      map[string]string
+	CurrencyPatterns        map[string]map[string]string
+	CurrencySpacing         map[string]CurrencySpacing
+	CurrencyNamePatterns    map[string]map[string]string
+	CompactPatterns         map[string]map[string]map[int]map[string]string
+	CurrencyCompactPatterns map[string]map[string]map[int]map[string]string
 }
 
 type NumberSymbols struct {
 	Decimal, Group, Percent, Plus, Minus, NaN, Infinity, ApproxSign, RangeSign, PerMille, Exponential, SuperscriptingExponent, TimeSeparator string
+	CurrencyDecimal, CurrencyGroup                                                                                                           string
+}
+
+// CurrencySpacing uses the validated non-symbol/non-separator currency and
+// decimal-digit surrounding classes. Empty insertion text disables that side.
+type CurrencySpacing struct {
+	BeforeCurrency, AfterCurrency string
 }
 
 type Currencies map[string]CurrencyNames
@@ -39,11 +48,7 @@ type CurrencyNames struct {
 	Narrow    string
 }
 
-type CurrencyFraction struct {
-	Digits     int
-	CashDigits int
-	Rounding   int
-}
+type CurrencyFraction struct{ Digits int }
 
 func loadNumbers(root string, locales []string) (map[string]Numbers, error) {
 	out := make(map[string]Numbers)
@@ -83,13 +88,15 @@ func loadNumbers(root string, locales []string) (map[string]Numbers, error) {
 			return nil, fmt.Errorf("numbers data missing for %s", locale)
 		}
 		num := Numbers{
-			Symbols:              make(map[string]NumberSymbols),
-			DecimalPatterns:      make(map[string]string),
-			PercentPatterns:      make(map[string]string),
-			ScientificPatterns:   make(map[string]string),
-			CurrencyPatterns:     make(map[string]map[string]string),
-			CurrencyNamePatterns: make(map[string]map[string]string),
-			CompactPatterns:      make(map[string]map[string]map[int]map[string]string),
+			Symbols:                 make(map[string]NumberSymbols),
+			DecimalPatterns:         make(map[string]string),
+			PercentPatterns:         make(map[string]string),
+			ScientificPatterns:      make(map[string]string),
+			CurrencyPatterns:        make(map[string]map[string]string),
+			CurrencySpacing:         make(map[string]CurrencySpacing),
+			CurrencyNamePatterns:    make(map[string]map[string]string),
+			CompactPatterns:         make(map[string]map[string]map[int]map[string]string),
+			CurrencyCompactPatterns: make(map[string]map[string]map[int]map[string]string),
 		}
 		rawDefault, ok := fields["defaultNumberingSystem"]
 		if !ok {
@@ -115,8 +122,26 @@ func loadNumbers(root string, locales []string) (map[string]Numbers, error) {
 			num.MinimumGroupingDigits = minimum
 		}
 		for _, ns := range numberSystemLoadOrder(num.DefaultNumberingSystem) {
-			if err := loadNumberSystemFields(path, locale, fields, ns, &num); err != nil {
-				return nil, err
+			for _, family := range []string{"symbols", "decimalFormats", "percentFormats", "scientificFormats", "currencyFormats"} {
+				if _, err := requiredNumberSystemField(fields, locale, ns, family); err != nil {
+					return nil, err
+				}
+			}
+		}
+		for _, field := range slices.Sorted(maps.Keys(fields)) {
+			family, ns, ok := strings.Cut(field, "-numberSystem-")
+			if !ok {
+				continue
+			}
+			switch family {
+			case "symbols":
+				if err := loadNumberSymbols(path, locale, fields, ns, &num); err != nil {
+					return nil, err
+				}
+			case "decimalFormats", "percentFormats", "scientificFormats", "currencyFormats":
+				if err := loadNumberFormats(path, locale, fields, ns, family, &num); err != nil {
+					return nil, err
+				}
 			}
 		}
 		out[locale] = num
@@ -131,7 +156,7 @@ func numberSystemLoadOrder(defaultNumberingSystem string) []string {
 	return []string{defaultNumberingSystem, "latn"}
 }
 
-func loadNumberSystemFields(path, locale string, fields map[string]jsontext.Value, ns string, num *Numbers) error {
+func loadNumberSymbols(path, locale string, fields map[string]jsontext.Value, ns string, num *Numbers) error {
 	raw, err := requiredNumberSystemField(fields, locale, ns, "symbols")
 	if err != nil {
 		return err
@@ -141,7 +166,7 @@ func loadNumberSystemFields(path, locale string, fields map[string]jsontext.Valu
 		return fmt.Errorf("parse %s symbols-numberSystem-%s: %w", path, ns, err)
 	}
 	if symbols.Decimal == "" {
-		return fmt.Errorf("symbols-numberSystem-%s decimal missing for %s", ns, locale)
+		return fmt.Errorf("parse %s symbols-numberSystem-%s: decimal missing for %s", path, ns, locale)
 	}
 	if raw, ok := fields["miscPatterns-numberSystem-"+ns]; ok {
 		rangeSign, err := parseRangeSign(raw)
@@ -154,34 +179,37 @@ func loadNumberSystemFields(path, locale string, fields map[string]jsontext.Valu
 		symbols.RangeSign = "–"
 	}
 	num.Symbols[ns] = symbols
+	return nil
+}
 
-	decimal, err := requiredStandardNumberPattern(path, locale, fields, ns, "decimalFormats")
+func loadNumberFormats(path, locale string, fields map[string]jsontext.Value, ns, family string, num *Numbers) error {
+	if family == "currencyFormats" {
+		return loadCurrencyFormats(path, locale, fields, ns, num)
+	}
+	pattern, err := requiredStandardNumberPattern(path, locale, fields, ns, family)
 	if err != nil {
 		return err
 	}
-	num.DecimalPatterns[ns] = decimal
-	raw = fields["decimalFormats-numberSystem-"+ns]
-	patterns, err := parseCompactPatterns(raw)
-	if err != nil {
-		return fmt.Errorf("parse %s decimalFormats-numberSystem-%s compact: %w", path, ns, err)
+	switch family {
+	case "decimalFormats":
+		num.DecimalPatterns[ns] = pattern
+		patterns, err := parseCompactPatterns(fields["decimalFormats-numberSystem-"+ns])
+		if err != nil {
+			return fmt.Errorf("parse %s decimalFormats-numberSystem-%s compact: %w", path, ns, err)
+		}
+		if len(patterns) > 0 {
+			num.CompactPatterns[ns] = patterns
+		}
+	case "percentFormats":
+		num.PercentPatterns[ns] = pattern
+	case "scientificFormats":
+		num.ScientificPatterns[ns] = pattern
 	}
-	if len(patterns) > 0 {
-		num.CompactPatterns[ns] = patterns
-	}
+	return nil
+}
 
-	percent, err := requiredStandardNumberPattern(path, locale, fields, ns, "percentFormats")
-	if err != nil {
-		return err
-	}
-	num.PercentPatterns[ns] = percent
-
-	scientific, err := requiredStandardNumberPattern(path, locale, fields, ns, "scientificFormats")
-	if err != nil {
-		return err
-	}
-	num.ScientificPatterns[ns] = scientific
-
-	raw, err = requiredNumberSystemField(fields, locale, ns, "currencyFormats")
+func loadCurrencyFormats(path, locale string, fields map[string]jsontext.Value, ns string, num *Numbers) error {
+	raw, err := requiredNumberSystemField(fields, locale, ns, "currencyFormats")
 	if err != nil {
 		return err
 	}
@@ -206,6 +234,10 @@ func loadNumberSystemFields(path, locale string, fields map[string]jsontext.Valu
 		num.CurrencyNamePatterns[ns] = currency.name
 	}
 	num.CurrencyPatterns[ns] = currency.sign
+	num.CurrencySpacing[ns] = currency.spacing
+	if len(currency.compact) > 0 {
+		num.CurrencyCompactPatterns[ns] = currency.compact
+	}
 	return nil
 }
 
@@ -247,6 +279,8 @@ func parseNumberSymbols(raw jsontext.Value) (NumberSymbols, error) {
 		Exponential            string `json:"exponential"`
 		SuperscriptingExponent string `json:"superscriptingExponent"`
 		TimeSeparator          string `json:"timeSeparator"`
+		CurrencyDecimal        string `json:"currencyDecimal"`
+		CurrencyGroup          string `json:"currencyGroup"`
 	}
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return NumberSymbols{}, err
@@ -264,26 +298,31 @@ func parseNumberSymbols(raw jsontext.Value) (NumberSymbols, error) {
 		Exponential:            doc.Exponential,
 		SuperscriptingExponent: doc.SuperscriptingExponent,
 		TimeSeparator:          doc.TimeSeparator,
+		CurrencyDecimal:        doc.CurrencyDecimal,
+		CurrencyGroup:          doc.CurrencyGroup,
 	}, nil
 }
 
 func parseRangeSign(raw jsontext.Value) (string, error) {
 	var doc struct {
-		Range string `json:"range"`
+		Range jsontext.Value `json:"range"`
 	}
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return "", err
 	}
-	rest := strings.NewReplacer("{0}", "", "{1}", "").Replace(doc.Range)
-	rest = strings.TrimSpace(rest)
-	if rest == "" {
+	if doc.Range == nil {
 		return "", nil
 	}
-	r, _ := utf8.DecodeRuneInString(rest)
-	if r == utf8.RuneError {
-		return "", nil
+	var pattern string
+	if err := json.Unmarshal(doc.Range, &pattern); err != nil {
+		return "", err
 	}
-	return string(r), nil
+	separator, hasStart := strings.CutPrefix(pattern, "{0}")
+	separator, hasEnd := strings.CutSuffix(separator, "{1}")
+	if !hasStart || !hasEnd || separator == "" || strings.ContainsAny(separator, "{}") {
+		return "", fmt.Errorf("range pattern %q: expected {0}<nonempty separator>{1} with each argument exactly once", pattern)
+	}
+	return separator, nil
 }
 
 func parseStandard(raw jsontext.Value) (string, error) {
@@ -297,8 +336,10 @@ func parseStandard(raw jsontext.Value) (string, error) {
 }
 
 type parsedCurrencyPatterns struct {
-	sign map[string]string
-	name map[string]string
+	sign    map[string]string
+	name    map[string]string
+	compact map[string]map[int]map[string]string
+	spacing CurrencySpacing
 }
 
 func parseCurrencyPatterns(raw jsontext.Value) (parsedCurrencyPatterns, error) {
@@ -307,12 +348,33 @@ func parseCurrencyPatterns(raw jsontext.Value) (parsedCurrencyPatterns, error) {
 		return parsedCurrencyPatterns{}, err
 	}
 	out := parsedCurrencyPatterns{
-		sign: make(map[string]string),
-		name: make(map[string]string),
+		sign:    make(map[string]string),
+		name:    make(map[string]string),
+		compact: make(map[string]map[int]map[string]string),
 	}
 	for _, key := range slices.Sorted(maps.Keys(fields)) {
 		var value string
 		switch key {
+		case "currencySpacing":
+			spacing, err := parseCurrencySpacing(fields[key])
+			if err != nil {
+				return parsedCurrencyPatterns{}, err
+			}
+			out.spacing = spacing
+		case "short", "long":
+			var doc struct {
+				Standard map[string]string `json:"standard"`
+			}
+			if err := json.Unmarshal(fields[key], &doc); err != nil {
+				return parsedCurrencyPatterns{}, fmt.Errorf("parse %s: %w", key, err)
+			}
+			patterns, err := parseCompactDisplayPatterns(doc.Standard, true)
+			if err != nil {
+				return parsedCurrencyPatterns{}, fmt.Errorf("parse %s standard: %w", key, err)
+			}
+			if len(patterns) > 0 {
+				out.compact[key] = patterns
+			}
 		case "standard", "accounting":
 			if err := json.Unmarshal(fields[key], &value); err != nil {
 				return parsedCurrencyPatterns{}, fmt.Errorf("parse %s: %w", key, err)
@@ -337,6 +399,45 @@ func parseCurrencyPatterns(raw jsontext.Value) (parsedCurrencyPatterns, error) {
 	return out, nil
 }
 
+func parseCurrencySpacing(raw jsontext.Value) (CurrencySpacing, error) {
+	var sides map[string]jsontext.Value
+	if err := json.Unmarshal(raw, &sides); err != nil {
+		return CurrencySpacing{}, fmt.Errorf("parse currencySpacing: %w", err)
+	}
+	var out CurrencySpacing
+	for _, side := range []struct {
+		name   string
+		insert *string
+	}{
+		{"beforeCurrency", &out.BeforeCurrency},
+		{"afterCurrency", &out.AfterCurrency},
+	} {
+		rawRule, ok := sides[side.name]
+		if !ok {
+			continue
+		}
+		var rule struct {
+			CurrencyMatch    string  `json:"currencyMatch"`
+			SurroundingMatch string  `json:"surroundingMatch"`
+			InsertBetween    *string `json:"insertBetween"`
+		}
+		if err := json.Unmarshal(rawRule, &rule); err != nil {
+			return CurrencySpacing{}, fmt.Errorf("parse currencySpacing %s: %w", side.name, err)
+		}
+		if rule.CurrencyMatch != "[[:^S:]&[:^Z:]]" {
+			return CurrencySpacing{}, fmt.Errorf("currencySpacing %s currencyMatch: unsupported rule %q", side.name, rule.CurrencyMatch)
+		}
+		if rule.SurroundingMatch != "[:digit:]" {
+			return CurrencySpacing{}, fmt.Errorf("currencySpacing %s surroundingMatch: unsupported rule %q", side.name, rule.SurroundingMatch)
+		}
+		if rule.InsertBetween == nil {
+			return CurrencySpacing{}, fmt.Errorf("currencySpacing %s insertBetween: missing string", side.name)
+		}
+		*side.insert = *rule.InsertBetween
+	}
+	return out, nil
+}
+
 func parseCompactPatterns(raw jsontext.Value) (map[string]map[int]map[string]string, error) {
 	var doc struct {
 		Short compactFormat `json:"short"`
@@ -346,14 +447,14 @@ func parseCompactPatterns(raw jsontext.Value) (map[string]map[int]map[string]str
 		return nil, err
 	}
 	out := make(map[string]map[int]map[string]string)
-	patterns, err := parseCompactDisplayPatterns(doc.Short.DecimalFormat)
+	patterns, err := parseCompactDisplayPatterns(doc.Short.DecimalFormat, false)
 	if err != nil {
 		return nil, fmt.Errorf("short decimalFormat: %w", err)
 	}
 	if len(patterns) > 0 {
 		out["short"] = patterns
 	}
-	patterns, err = parseCompactDisplayPatterns(doc.Long.DecimalFormat)
+	patterns, err = parseCompactDisplayPatterns(doc.Long.DecimalFormat, false)
 	if err != nil {
 		return nil, fmt.Errorf("long decimalFormat: %w", err)
 	}
@@ -367,16 +468,26 @@ type compactFormat struct {
 	DecimalFormat map[string]string `json:"decimalFormat"`
 }
 
-func parseCompactDisplayPatterns(raw map[string]string) (map[int]map[string]string, error) {
+func parseCompactDisplayPatterns(raw map[string]string, currency bool) (map[int]map[string]string, error) {
 	out := make(map[int]map[string]string)
 	for _, key := range slices.Sorted(maps.Keys(raw)) {
-		exp, count, err := compactPatternKey(key)
+		baseKey := key
+		if currency {
+			baseKey = strings.TrimSuffix(key, "-alt-alphaNextToNumber")
+		}
+		exp, count, err := compactPatternKey(baseKey)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", key, err)
+		}
+		if baseKey != key {
+			count += "-alt-alphaNextToNumber"
 		}
 		pattern := raw[key]
 		if pattern == "" {
 			continue
+		}
+		if _, err := cldrpattern.ParseCompact(exp, pattern); err != nil {
+			return nil, fmt.Errorf("%s: %w", key, err)
 		}
 		if out[exp] == nil {
 			out[exp] = make(map[string]string)
@@ -516,9 +627,7 @@ func loadCurrencyFractions(root string) (map[string]CurrencyFraction, error) {
 		Supplemental struct {
 			CurrencyData struct {
 				Fractions map[string]struct {
-					Digits     int `json:"_digits,string"`
-					CashDigits int `json:"_cashDigits,string"`
-					Rounding   int `json:"_rounding,string"`
+					Digits int `json:"_digits,string"`
 				} `json:"fractions"`
 			} `json:"currencyData"`
 		} `json:"supplemental"`
@@ -535,11 +644,7 @@ func loadCurrencyFractions(root string) (map[string]CurrencyFraction, error) {
 	out := make(map[string]CurrencyFraction, len(doc.Supplemental.CurrencyData.Fractions))
 	for _, code := range slices.Sorted(maps.Keys(doc.Supplemental.CurrencyData.Fractions)) {
 		f := doc.Supplemental.CurrencyData.Fractions[code]
-		cash := f.CashDigits
-		if cash == 0 {
-			cash = f.Digits
-		}
-		out[code] = CurrencyFraction{Digits: f.Digits, CashDigits: cash, Rounding: f.Rounding}
+		out[code] = CurrencyFraction{Digits: f.Digits}
 	}
 	return out, nil
 }

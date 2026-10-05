@@ -49,13 +49,13 @@ type fixture struct {
 	Feature            string                  `json:"feature,omitempty"`
 	Options            map[string]any          `json:"options"`
 	Input              any                     `json:"input"`
-	Expected           *string                 `json:"expected,omitempty"`
-	ExpectedOK         *bool                   `json:"expectedOk,omitempty"`
-	ExpectedLocales    []string                `json:"expectedLocales,omitempty"`
-	ExpectedParts      []conformance.Part      `json:"expectedParts,omitempty"`
-	ExpectedRange      *string                 `json:"expectedRange,omitempty"`
-	ExpectedRangeParts []conformance.RangePart `json:"expectedRangeParts,omitempty"`
-	ExpectedResolved   any                     `json:"expectedResolvedOptions,omitempty"`
+	Expected           *string                 `json:"expected,omitzero"`
+	ExpectedOK         *bool                   `json:"expectedOk,omitzero"`
+	ExpectedLocales    []string                `json:"expectedLocales,omitzero"`
+	ExpectedParts      []conformance.Part      `json:"expectedParts,omitzero"`
+	ExpectedRange      *string                 `json:"expectedRange,omitzero"`
+	ExpectedRangeParts []conformance.RangePart `json:"expectedRangeParts,omitzero"`
+	ExpectedResolved   any                     `json:"expectedResolvedOptions,omitzero"`
 	ErrorCode          string                  `json:"errorCode,omitempty"`
 }
 

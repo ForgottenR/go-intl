@@ -94,7 +94,7 @@ MUST rules:
 
 Pipeline:
 
-1. Validate at most one options object.
+1. Accept exactly one typed options value; `Options{}` represents omitted or empty JavaScript options.
 2. Read `localeMatcher`, default `best fit`, allowed `lookup | best fit`; `nil` means omitted and `gointl.String("")` is invalid.
 3. Resolve locale against `internal/cldr/list.SupportedLocales()` with no relevant Unicode extension keys.
 4. Read `type`, default `conjunction`, allowed `conjunction | disjunction | unit`; `nil` means omitted and `gointl.String("")` is invalid.
@@ -106,7 +106,7 @@ MUST rules:
 1. Invalid `localeMatcher`, `type`, or `style` returns an error wrapping `ErrInvalidOption`.
 2. Constructor errors must include the option name, user value, and locale when useful.
 3. `ShortStyle` and `NarrowStyle` are valid for every type. Do not preserve old MDN/Generated reference prose that says short/narrow only pair with unit; ECMA-402 current spec permits all `type` and `style` combinations when data exists.
-4. Locale resolution must use `localematcher.ResolveLocale` / `FilterLocalesWithMaximizer` patterns already used by existing constructor packages.
+4. Locale resolution uses `internal/ecma402.ResolveConstructorLocale`; formatter-owned data selection remains in the constructor.
 
 ---
 
@@ -144,7 +144,7 @@ Mapping:
 MUST rules:
 
 1. Generated list supported locales must be derived from actual list pattern payload maps.
-2. Each generated template string must be a syntactically valid placeholder pattern and contain `{0}` and `{1}` exactly once.
+2. Each generated template string must contain only literal text and exactly one each of `{0}` and `{1}`. Unknown/empty/duplicate placeholders and unmatched braces fail at the source loader with file, locale, CLDR key and field context. The shared parser remains general; this closed grammar belongs to the list generator.
 3. Runtime formatting must never read CLDR JSON files.
 4. Accessors must go through `internal/cldr/list`; public `listformat` code must not read generated package variables directly.
 5. If a CLDR locale lacks a short or narrow variant, generation may fall back to the corresponding long variant only if this fallback is documented in a divergence or generator test.
@@ -200,7 +200,7 @@ func SupportedLocalesOf(locales locale.List, opts Options) (locale.List, error)
 MUST rules:
 
 1. Use `internal/cldr/list.SupportedLocales()` as the supported set.
-2. Call `localematcher.FilterLocalesWithMaximizer`.
+2. Call `internal/ecma402.SupportedLocalesOf` with the generated accessor.
 3. Accept one `Options` value; `Options{}` represents omitted static-method options.
 4. Read only `LocaleMatcher`; ignore formatting options for this static method. `nil` means omitted and an explicit empty string is invalid.
 5. Invalid locale matcher returns `ErrInvalidOption`.

@@ -20,6 +20,20 @@ func TestDurationConformanceObservations(t *testing.T) {
 		failure string
 	}{
 		{"resolved only", conformance.Fixture{Input: jsontext.Value(`"not a duration"`), ExpectedResolved: resolved}, ""},
+		{"format fraction", conformance.Fixture{Feature: "format", Input: jsontext.Value(`{"seconds":1.5}`), ErrorCode: "invalid_value"}, ""},
+		{"parts fraction", conformance.Fixture{Feature: "formatToParts", Input: jsontext.Value(`{"seconds":1.5}`), ErrorCode: "invalid_value"}, ""},
+		{"format mixed sign", conformance.Fixture{Feature: "format", Input: jsontext.Value(`{"seconds":1,"minutes":-1}`), ErrorCode: "invalid_value"}, ""},
+		{"parts mixed sign", conformance.Fixture{Feature: "formatToParts", Input: jsontext.Value(`{"seconds":1,"minutes":-1}`), ErrorCode: "invalid_value"}, ""},
+		{"format normalized limit", conformance.Fixture{Feature: "format", Input: jsontext.Value(`{"seconds":9007199254740992}`), ErrorCode: "invalid_value"}, ""},
+		{"parts normalized limit", conformance.Fixture{Feature: "formatToParts", Input: jsontext.Value(`{"seconds":9007199254740992}`), ErrorCode: "invalid_value"}, ""},
+		{"constructor option", conformance.Fixture{Options: jsontext.Value(`{"style":"invalid"}`), ErrorCode: "invalid_option"}, ""},
+		{"unsupported error method", conformance.Fixture{Feature: "select", Input: jsontext.Value(`{"seconds":1.5}`), ErrorCode: "invalid_value"}, "unsupported durationformat feature"},
+		{"unsupported range", conformance.Fixture{ExpectedRange: new("wrong")}, "unsupported durationformat observation"},
+		{"supported locales", conformance.Fixture{Feature: "supportedLocalesOf", Input: jsontext.Value(`["en"]`), ExpectedLocales: []string{"en"}}, ""},
+		{"supported empty", conformance.Fixture{Feature: "supportedLocalesOf", Input: jsontext.Value(`[]`), ExpectedLocales: []string{}}, ""},
+		{"supported wrong", conformance.Fixture{Feature: "supportedLocalesOf", Input: jsontext.Value(`["en"]`), ExpectedLocales: []string{"fr"}}, "SupportedLocalesOf"},
+		{"supported ignores style", conformance.Fixture{Feature: "supportedLocalesOf", Options: jsontext.Value(`{"style":"invalid"}`), Input: jsontext.Value(`["en"]`), ExpectedLocales: []string{"en"}}, ""},
+		{"supported matcher error", conformance.Fixture{Feature: "supportedLocalesOf", Options: jsontext.Value(`{"localeMatcher":"invalid"}`), Input: jsontext.Value(`["en"]`), ErrorCode: "invalid_option"}, ""},
 		{"parts only", conformance.Fixture{ExpectedParts: parts}, ""},
 		{"empty parts only", conformance.Fixture{Input: jsontext.Value(`{"seconds":0}`), ExpectedParts: []conformance.Part{}}, ""},
 		{"observations", conformance.Fixture{Expected: new("1 second"), ExpectedParts: parts, ExpectedResolved: resolved}, ""},
@@ -74,7 +88,9 @@ func durationObservationFixture(f conformance.Fixture) conformance.Fixture {
 	f.ID = "observation"
 	f.Source = "manual:adapter"
 	f.Locale = "en"
-	f.Options = jsontext.Value(`{"style":"long"}`)
+	if f.Options == nil {
+		f.Options = jsontext.Value(`{"style":"long"}`)
+	}
 	if f.Input == nil {
 		f.Input = jsontext.Value(`{"seconds":1}`)
 	}

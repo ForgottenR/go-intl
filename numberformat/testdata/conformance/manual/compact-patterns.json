@@ -1,0 +1,574 @@
+[
+  {
+    "id": "numberformat-manual-compact-quoted-period",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "uk",
+    "options": {
+      "compactDisplay": "short",
+      "currency": "GBP",
+      "currencyDisplay": "name",
+      "currencySign": "standard",
+      "notation": "compact",
+      "signDisplay": "exceptZero",
+      "style": "currency"
+    },
+    "input": 10000,
+    "expected": "+10 тис. англійських фунтів",
+    "expectedParts": [
+      {
+        "type": "plusSign",
+        "value": "+"
+      },
+      {
+        "type": "integer",
+        "value": "10"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "compact",
+        "value": "тис."
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "currency",
+        "value": "англійських фунтів"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "uk",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "GBP",
+      "currencyDisplay": "name",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "exceptZero",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-without-number",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "it",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "long"
+    },
+    "input": 1000,
+    "expected": "mille",
+    "expectedParts": [
+      {
+        "type": "compact",
+        "value": "mille"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "it",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-without-number-positive-always",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "it",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "always"
+    },
+    "input": 1000,
+    "expected": "+mille",
+    "expectedParts": [
+      {
+        "type": "plusSign",
+        "value": "+"
+      },
+      {
+        "type": "compact",
+        "value": "mille"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "it",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "always",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-without-number-negative-auto",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "it",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto"
+    },
+    "input": -1000,
+    "expected": "-mille",
+    "expectedParts": [
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "compact",
+        "value": "mille"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "it",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-without-number-negative-never",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "it",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "never"
+    },
+    "input": -1000,
+    "expected": "mille",
+    "expectedParts": [
+      {
+        "type": "compact",
+        "value": "mille"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "it",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "never",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-currency-long",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD",
+      "notation": "compact",
+      "compactDisplay": "long"
+    },
+    "input": 10000,
+    "expected": "$10K",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "$"
+      },
+      {
+        "type": "integer",
+        "value": "10"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-currency-accounting",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD",
+      "notation": "compact",
+      "currencySign": "accounting"
+    },
+    "input": -10000,
+    "expected": "-$10K",
+    "expectedParts": [
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "currency",
+        "value": "$"
+      },
+      {
+        "type": "integer",
+        "value": "10"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "accounting",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-currency-accounting-base",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD",
+      "notation": "compact",
+      "currencySign": "accounting"
+    },
+    "input": -12,
+    "expected": "($12)",
+    "expectedParts": [
+      {
+        "type": "literal",
+        "value": "("
+      },
+      {
+        "type": "currency",
+        "value": "$"
+      },
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "literal",
+        "value": ")"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "accounting",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-currency-numbering-fallback",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD",
+      "notation": "compact",
+      "numberingSystem": "arab"
+    },
+    "input": 10000,
+    "expected": "$١٠K",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "$"
+      },
+      {
+        "type": "integer",
+        "value": "١٠"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "arab",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-decimal-numbering-fallback",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "notation": "compact",
+      "numberingSystem": "arab"
+    },
+    "input": 10000,
+    "expected": "١٠K",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١٠"
+      },
+      {
+        "type": "compact",
+        "value": "K"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-decimal-long-numbering-fallback",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "notation": "compact",
+      "numberingSystem": "arab",
+      "compactDisplay": "long"
+    },
+    "input": 10000,
+    "expected": "١٠ thousand",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "١٠"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "compact",
+        "value": "thousand"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "arab",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-compact-currency-long-range",
+    "source": "manual:ldml:compact-patterns",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD",
+      "notation": "compact",
+      "compactDisplay": "long"
+    },
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "long",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto"
+    },
+    "feature": "formatRange",
+    "input": {
+      "start": 10000,
+      "end": 2000000
+    },
+    "expectedRange": "$10K–$2M",
+    "expectedRangeParts": [
+      {
+        "type": "currency",
+        "value": "$",
+        "source": "startRange"
+      },
+      {
+        "type": "integer",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "compact",
+        "value": "K",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": "–",
+        "source": "shared"
+      },
+      {
+        "type": "currency",
+        "value": "$",
+        "source": "endRange"
+      },
+      {
+        "type": "integer",
+        "value": "2",
+        "source": "endRange"
+      },
+      {
+        "type": "compact",
+        "value": "M",
+        "source": "endRange"
+      }
+    ]
+  }
+]

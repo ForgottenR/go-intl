@@ -90,6 +90,52 @@ type ZoneInfo struct {
 
 `Default` is the single internal owner for the DateTimeFormat default time-zone provider. It canonicalizes IANA links and offset names the same way as explicit `Options.TimeZone`; tests may replace the provider with `OverrideDefaultForTest`, which returns ordinary resolution errors for unsupported names instead of panicking. No public diagnostic or configuration API is exposed.
 
+#### Default source boundary <a id="default-source-boundary"></a>
+
+Go's `time.Local` may load a TZ file whose name is an absolute path. File
+existence and successful transition decoding do not establish an Intl
+identifier. The current default provider sends a nonempty, non-`Local` name
+through `Resolve`; an unregistered path can therefore make omitted
+`Options.TimeZone` fail with `gointl.ErrUnsupportedOption` at `New`.
+
+Identity belongs to the pinned IANA/CLDR registry in `internal/tz`.
+Go owns transitions; an explicit named option loads or reuses the successful
+canonical-name cache through `time.LoadLocation`, rather than adopting the
+path TZ's `time.Local` data. Localized names and metazones belong to
+`internal/cldr/timezone` and do not identify arbitrary files. Explicit named
+resolution does not promise equivalence to an arbitrary TZ file.
+
+Independent processes on Go 1.27.0 / Darwin arm64 verified this boundary with
+the existing `/usr/share/zoneinfo/America/New_York` file. Use locale `en-GB`,
+hour `numeric`, minute `2-digit`, and January/July 1, 2026 at 12:00 UTC:
+
+| TZ set before process start | TimeZone option | Result |
+|---|---|---|
+| `America/New_York` | omitted | resolved `America/New_York`; `07:00` / `08:00` |
+| `/usr/share/zoneinfo/America/New_York` | omitted | Local name is the path; construction returns `ErrUnsupportedOption` |
+| `/usr/share/zoneinfo/America/New_York` | `America/New_York` | resolved `America/New_York`; `07:00` / `08:00` |
+
+Manual verification must start a new process for each TZ value; changing TZ
+inside a process does not reinitialize Go's local-zone snapshot. A host without
+that file cannot verify the path observation. These observations do not
+describe every other default-source or platform case.
+
+Node v26.10.0 / ICU 78.3 / CLDR 48.0 / tzdata 2026c observed `7:00` / `8:00`
+for named TZ, but `7:00` / `7:00` for path TZ with no `timeZone` in resolved
+JSON. Successful native construction does not prove identity or correct DST;
+its fixed-offset fallback is not a path-support contract. This is a documented
+default-source limitation, not a claim of native parity or arbitrary-path
+support. Do not infer identity from a filename suffix or two sampled offsets.
+
+Evidence: `internal/tz/default.go`, `internal/tz/resolve.go`,
+`datetimeformat/datetimeformat.go:resolveTimeZone`, Go's
+`src/time/zoneinfo_unix.go:initLocal` under `go env GOROOT`,
+`.references/ecma402/spec/datetimeformat.html:SystemTimeZoneIdentifier`,
+`.references/node/deps/icu-small/source/i18n/timezone.cpp:detectHostTimeZone`,
+and `.references/node/deps/icu-small/source/common/putil.cpp:uprv_tzname`.
+FormatJS's `.references/formatjs/packages/intl-datetimeformat/core.ts` has its
+own explicit default-zone provider and does not prove Go file-path identity.
+
 `LookupAt` **MUST** derive `ZoneInfo.IsDST` from the IANA transition selected by the target-local `time.Time` (`local.IsDST()`). Inferring DST by comparing January and July offsets is forbidden: Ramadan suspensions, permanent or negative DST, wartime rules, and southern-hemisphere transitions do not fit that model.
 
 `ZoneInfo` owns transition facts only. It must not carry a metazone field:
@@ -186,7 +232,7 @@ End int64 //, MaxInt64 means +∞
 **MUST** Rules:
 
 1. The tzdata version number **MUST** be written into the `internal/cldr/VERSION` single file, as a `tzdata=2025b` line (the same file as `cldr=` / `icu=`).
-2. CI **MUST** verify that the embedded IANA version of `time/tzdata` is consistent with the `VERSION` file; inconsistency is a block.
+2. `tools/data-preflight` **MUST** reject a Go bundled transition-data version older than the IANA identity pin in `VERSION`; a newer bundled version is valid. It checks the toolchain DATA version, not the actual host zoneinfo version. Go may load `ZONEINFO`, host paths, or GOROOT data before the embedded fallback, as described in §1.1.
 3. IANA identity, CLDR display, and Go transition data have separate owners and release cycles; bump each when its data changes.
 4. Inconsistencies between tzdata and metaZones **MUST** be authoritative (behavioral correctness > display name consistency); disagreements are logged to `divergences.md`.
 
@@ -346,7 +392,7 @@ From, To time.Duration // Time offset from 00:00 on the current day
 ## 5. Forbidden
 
 - **FORBIDDEN** Copying tzif files to the repository - must be injected via `_ "time/tzdata"`.
-- **BANNED** Depends on system `/usr/share/zoneinfo` (`time.LoadLocation` default behavior, Alpine container has no files).
+- **Allowed** Go transition lookup may prefer host zoneinfo; the embedded `time/tzdata` fallback keeps named zones usable when host files are absent. Identifier legality and primary selection remain owned by the generated IANA/CLDR registry.
 - **NO** Porting the generated-reference `tz_data.tar.gz` pipeline - Go already has `time/tzdata`.
 - **Disabled** Runtime JSON parsing `metaZones.json` - Must codegen output Go literal.
 - **BANNED** `//go:embed metaZones.json` + `encoding/json/v2` paths - Conflicts with SPEC 50 "no runtime file I/O".

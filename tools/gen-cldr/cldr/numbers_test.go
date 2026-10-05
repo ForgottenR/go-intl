@@ -177,6 +177,239 @@ func TestLoadNumbersRejectsInvalidNestedJSON(t *testing.T) {
 	}
 }
 
+func TestLoadNumbersPreservesNonDefaultSymbols(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+	mustWriteFile(t, path, numbersDocument(`{
+		"defaultNumberingSystem": "latn",
+		"symbols-numberSystem-latn": `+minimalNumberSymbolsJSON+`,
+		"symbols-numberSystem-arab": {"decimal":"٫","group":"٬","nan":"local NaN","exponential":"local exponent","timeSeparator":"٫"},
+		"miscPatterns-numberSystem-arab": {"range":"{0} ~ {1}"},
+		"decimalFormats-numberSystem-latn": {"standard":"#,##0.###"},
+		"percentFormats-numberSystem-latn": {"standard":"#,##0%"},
+		"scientificFormats-numberSystem-latn": {"standard":"#E0"},
+		"currencyFormats-numberSystem-latn": {"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}"}
+	}`))
+
+	data, err := loadNumbers(root, []string{"en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	numbers := data["en"]
+	want := NumberSymbols{Decimal: "٫", Group: "٬", NaN: "local NaN", Exponential: "local exponent", TimeSeparator: "٫", RangeSign: " ~ "}
+	if got := numbers.Symbols["arab"]; got != want {
+		t.Fatalf("non-default symbols = %+v, want %+v", got, want)
+	}
+	if got := numbers.Symbols["latn"].Decimal; got != "." {
+		t.Errorf("latn decimal = %q, want .", got)
+	}
+	if got := numbers.DecimalPatterns["latn"]; got != "#,##0.###" {
+		t.Errorf("latn decimal pattern = %q, want #,##0.###", got)
+	}
+	if _, ok := numbers.DecimalPatterns["arab"]; ok {
+		t.Fatal("symbols-only row acquired a decimal pattern")
+	}
+}
+
+func TestLoadNumbersPreservesPinnedNonDefaultFormats(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join("..", ".cldr-json", "node_modules")
+	path := filepath.Join(root, "cldr-numbers-full", "main", "gu", "numbers.json")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	data, err := loadNumbers(root, []string{"gu"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	numbers := data["gu"]
+	for _, tc := range []struct {
+		system, decimal, percent, scientific, currency string
+	}{
+		{"latn", "#,##,##0.###", "#,##,##0%", "[#E0]", "¤#,##,##0.00"},
+		{"gujr", "#,##,##0.###", "#,##0%", "#E0", "¤#,##0.00"},
+	} {
+		for _, field := range []struct{ name, got, want string }{
+			{"decimal", numbers.DecimalPatterns[tc.system], tc.decimal},
+			{"percent", numbers.PercentPatterns[tc.system], tc.percent},
+			{"scientific", numbers.ScientificPatterns[tc.system], tc.scientific},
+			{"currency", numbers.CurrencyPatterns[tc.system]["standard"], tc.currency},
+		} {
+			if field.got != field.want {
+				t.Errorf("gu/%s %s = %q, want pinned %q", tc.system, field.name, field.got, field.want)
+			}
+		}
+	}
+	for _, field := range []struct{ name, got, want string }{
+		{"decimal compact", numbers.CompactPatterns["gujr"]["short"][4]["other"], "00\u00a0હજાર"},
+		{"currency compact", numbers.CurrencyCompactPatterns["gujr"]["short"][4]["other"], "¤00\u00a0હજાર"},
+		{"currency name", numbers.CurrencyNamePatterns["gujr"]["other"], "{0} {1}"},
+	} {
+		if field.got != field.want {
+			t.Errorf("gu/gujr %s = %q, want pinned %q", field.name, field.got, field.want)
+		}
+	}
+	if got, want := numbers.CurrencySpacing["gujr"], (CurrencySpacing{BeforeCurrency: "\u00a0", AfterCurrency: "\u00a0"}); got != want {
+		t.Errorf("gu/gujr currency spacing = %+v, want pinned %+v", got, want)
+	}
+}
+
+func TestLoadNumbersPreservesIndividualNonDefaultFormats(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ family, raw, pattern string }{
+		{"decimalFormats", `{"standard":"#0.###","short":{"decimalFormat":{"10000-count-other":"00K"}}}`, "#0.###"},
+		{"percentFormats", `{"standard":"#0%"}`, "#0%"},
+		{"scientificFormats", `{"standard":"0E0"}`, "0E0"},
+		{"currencyFormats", `{"standard":"¤#0.00","unitPattern-count-other":"{0} {1}","short":{"standard":{"10000-count-other":"¤00K"}},"currencySpacing":{"beforeCurrency":{"currencyMatch":"[[:^S:]&[:^Z:]]","surroundingMatch":"[:digit:]","insertBetween":" "}}}`, "¤#0.00"},
+	} {
+		t.Run(tc.family, func(t *testing.T) {
+			t.Parallel()
+			root := writeNonDefaultNumberFormat(t, tc.family, tc.raw)
+			data, err := loadNumbers(root, []string{"en"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			numbers := data["en"]
+			for family, patterns := range map[string]map[string]string{
+				"decimalFormats":    numbers.DecimalPatterns,
+				"percentFormats":    numbers.PercentPatterns,
+				"scientificFormats": numbers.ScientificPatterns,
+				"currencyFormats":   {"latn": numbers.CurrencyPatterns["latn"]["standard"]},
+			} {
+				if family == "currencyFormats" && numbers.CurrencyPatterns["arab"] != nil {
+					patterns["arab"] = numbers.CurrencyPatterns["arab"]["standard"]
+				}
+				got, present := patterns["arab"]
+				if family == tc.family {
+					if !present || got != tc.pattern {
+						t.Errorf("%s arab = %q, present %t, want %q", family, got, present, tc.pattern)
+					}
+				} else if present {
+					t.Errorf("absent %s acquired arab row %q", family, got)
+				}
+			}
+			if tc.family == "decimalFormats" && numbers.CompactPatterns["arab"]["short"][4]["other"] != "00K" {
+				t.Errorf("decimal compact = %v, want explicit 00K", numbers.CompactPatterns["arab"])
+			}
+			if tc.family == "currencyFormats" {
+				if got := numbers.CurrencyCompactPatterns["arab"]["short"][4]["other"]; got != "¤00K" {
+					t.Errorf("currency compact = %q, want explicit ¤00K", got)
+				}
+				if got := numbers.CurrencyNamePatterns["arab"]["other"]; got != "{0} {1}" {
+					t.Errorf("currency name = %q, want explicit {0} {1}", got)
+				}
+				if got := numbers.CurrencySpacing["arab"].BeforeCurrency; got != " " {
+					t.Errorf("currency spacing = %q, want explicit space", got)
+				}
+			}
+		})
+	}
+}
+
+func TestLoadNumbersRejectsMalformedNonDefaultFormats(t *testing.T) {
+	t.Parallel()
+	for _, family := range []string{"decimalFormats", "percentFormats", "scientificFormats", "currencyFormats"} {
+		for _, raw := range []string{`null`, `12`, `"bad"`, `{}`, `{"standard":null}`, `{"standard":12}`} {
+			t.Run(family+"/"+raw, func(t *testing.T) {
+				t.Parallel()
+				root := writeNonDefaultNumberFormat(t, family, raw)
+				_, err := loadNumbers(root, []string{"en"})
+				if err == nil {
+					t.Fatal("loadNumbers accepted a malformed present family")
+				}
+				for _, context := range []string{"en", "arab", family} {
+					if !strings.Contains(err.Error(), context) {
+						t.Errorf("error %q missing %q", err, context)
+					}
+				}
+			})
+		}
+	}
+	for _, tc := range []struct{ family, raw, field string }{
+		{"decimalFormats", `{"standard":"#0.###","short":{"decimalFormat":{"10000-count-other":"00K'"}}}`, "short"},
+		{"currencyFormats", `{"standard":"¤#0.00","short":{"standard":{"10000-count-other":"¤00K'"}}}`, "short"},
+		{"currencyFormats", `{"standard":"¤#0.00","unitPattern-count-other":"{0}"}`, "unitPattern-count-other"},
+		{"currencyFormats", `{"standard":"¤#0.00","currencySpacing":{"beforeCurrency":{"currencyMatch":"[:letter:]"}}}`, "currencyMatch"},
+	} {
+		t.Run(tc.family+"/"+tc.field, func(t *testing.T) {
+			t.Parallel()
+			root := writeNonDefaultNumberFormat(t, tc.family, tc.raw)
+			_, err := loadNumbers(root, []string{"en"})
+			if err == nil {
+				t.Fatal("loadNumbers accepted malformed supported subfields")
+			}
+			for _, context := range []string{"en", "arab", tc.family, tc.field} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing %q", err, context)
+				}
+			}
+		})
+	}
+}
+
+func writeNonDefaultNumberFormat(t *testing.T, family, raw string) string {
+	t.Helper()
+	root := t.TempDir()
+	fields := `{"defaultNumberingSystem":"latn","symbols-numberSystem-latn":` + minimalNumberSymbolsJSON + `,
+		"decimalFormats-numberSystem-latn":{"standard":"#,##0.###"},
+		"percentFormats-numberSystem-latn":{"standard":"#,##0%"},
+		"scientificFormats-numberSystem-latn":{"standard":"#E0"},
+		"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}"},` +
+		strconv.Quote(family+"-numberSystem-arab") + `:` + raw + `}`
+	mustWriteFile(t, filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json"), numbersDocument(fields))
+	return root
+}
+
+func TestLoadNumbersPreservesPinnedSymbolOverrides(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join("..", ".cldr-json", "node_modules")
+	if _, err := os.Stat(filepath.Join(root, "cldr-numbers-full", "main", "ar", "numbers.json")); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	data, err := loadNumbers(root, []string{"ar", "ur"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// CLDR 48.1.0 explicit rows, independent of the runtime projection.
+	if got := data["ar"].Symbols["arab"]; got.NaN != "ليس\u00a0رقمًا" || got.Exponential != "أس" {
+		t.Errorf("ar/arab override = %+v, want local NaN and exponent", got)
+	}
+	if got := data["ur"].Symbols["arabext"]; got.Decimal != "٫" || got.Group != "٬" || got.TimeSeparator != "٫" {
+		t.Errorf("ur/arabext override = %+v, want U+066B/U+066C and U+066B time separator", got)
+	}
+}
+
+func TestLoadNumbersRejectsMalformedNonDefaultSymbols(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{`null`, `12`, `{"decimal":12}`, `{"group":","}`} {
+		t.Run(raw, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+			mustWriteFile(t, path, numbersDocument(`{
+				"defaultNumberingSystem":"latn",
+				"symbols-numberSystem-latn":`+minimalNumberSymbolsJSON+`,
+				"symbols-numberSystem-arab":`+raw+`,
+				"decimalFormats-numberSystem-latn":{"standard":"#,##0.###"},
+				"percentFormats-numberSystem-latn":{"standard":"#,##0%"},
+				"scientificFormats-numberSystem-latn":{"standard":"#E0"},
+				"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}"}
+			}`))
+			_, err := loadNumbers(root, []string{"en"})
+			if err == nil {
+				t.Fatal("loadNumbers ignored a malformed non-default symbols row")
+			}
+			for _, context := range []string{path, "symbols-numberSystem-arab"} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing %q", err, context)
+				}
+			}
+		})
+	}
+}
+
 func TestLoadNumbersRejectsInvalidShape(t *testing.T) {
 	t.Parallel()
 
@@ -460,9 +693,9 @@ func TestLoadCurrencyFractions(t *testing.T) {
 		t.Fatalf("loadCurrencyFractions() error = %v", err)
 	}
 	want := map[string]CurrencyFraction{
-		"DEFAULT": {Digits: 2, CashDigits: 2, Rounding: 0},
-		"JPY":     {Digits: 0, CashDigits: 0, Rounding: 0},
-		"CHF":     {Digits: 2, CashDigits: 2, Rounding: 5},
+		"DEFAULT": {Digits: 2},
+		"JPY":     {Digits: 0},
+		"CHF":     {Digits: 2},
 	}
 	if !maps.Equal(got, want) {
 		t.Fatalf("loadCurrencyFractions() = %#v, want %#v", got, want)
@@ -572,7 +805,11 @@ func TestParseRangeSign(t *testing.T) {
 		{name: "en dash", raw: `{"range":"{0}–{1}"}`, want: "–"},
 		{name: "hyphen", raw: `{"range":"{0}-{1}"}`, want: "-"},
 		{name: "wave dash", raw: `{"range":"{0}～{1}"}`, want: "～"},
-		{name: "spaces are pattern glue", raw: `{"range":"{0} – {1}"}`, want: "–"},
+		{name: "spaces", raw: `{"range":"{0} – {1}"}`, want: " – "},
+		{name: "leading space", raw: `{"range":"{0} –{1}"}`, want: " –"},
+		{name: "trailing space", raw: `{"range":"{0}– {1}"}`, want: "– "},
+		{name: "multiple characters", raw: `{"range":"{0} ⇔ to {1}"}`, want: " ⇔ to "},
+		{name: "missing field", raw: `{}`, want: ""},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -584,6 +821,47 @@ func TestParseRangeSign(t *testing.T) {
 			}
 			if got != tc.want {
 				t.Fatalf("parseRangeSign(%s) = %q, want %q", tc.raw, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestParseRangeSignRejectsInvalidPattern(t *testing.T) {
+	t.Parallel()
+
+	for _, pattern := range []string{"", "{0}{1}", "{0}–", "–{1}", "{1}–{0}", "{0}{0}–{1}", "{0}–{1}{1}", "{0}–{2}{1}", "prefix{0}–{1}", "{0}–{1}suffix"} {
+		t.Run(pattern, func(t *testing.T) {
+			t.Parallel()
+			_, err := parseRangeSign(jsontext.Value(`{"range":` + strconv.Quote(pattern) + `}`))
+			if err == nil {
+				t.Fatalf("parseRangeSign(%q) succeeded, want invalid pattern error", pattern)
+			}
+		})
+	}
+}
+
+func TestParseNumberSymbolsMonetaryOverrides(t *testing.T) {
+	t.Parallel()
+
+	// Source values: pinned CLDR 48.1 de-AT/fr-CH symbols-numberSystem-latn.
+	for _, tc := range []struct {
+		name string
+		raw  string
+		want NumberSymbols
+	}{
+		{"de-AT", `{"decimal":",","group":"\u00a0","currencyGroup":"."}`, NumberSymbols{Decimal: ",", Group: "\u00a0", CurrencyGroup: "."}},
+		{"fr-CH", `{"decimal":",","group":"\u202f","currencyDecimal":"."}`, NumberSymbols{Decimal: ",", Group: "\u202f", CurrencyDecimal: "."}},
+		{"omitted", `{"decimal":".","group":","}`, NumberSymbols{Decimal: ".", Group: ","}},
+		{"explicit empty", `{"currencyDecimal":"","currencyGroup":""}`, NumberSymbols{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := parseNumberSymbols(jsontext.Value(tc.raw))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tc.want {
+				t.Errorf("parseNumberSymbols() = %#v, want %#v", got, tc.want)
 			}
 		})
 	}
@@ -882,6 +1160,162 @@ func TestLoadMinimumGroupingDigits(t *testing.T) {
 			}
 			if got["en"].MinimumGroupingDigits != tc.want {
 				t.Errorf("minimum = %d, want %d", got["en"].MinimumGroupingDigits, tc.want)
+			}
+		})
+	}
+}
+
+func TestLoadNumbersRejectsUnclosedCompactQuote(t *testing.T) {
+	t.Parallel()
+	for _, pattern := range []string{"00K'", "'0;00K", "00K;'-00K"} {
+		t.Run(pattern, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+			mustWriteFile(t, path, numbersDocument(`{"defaultNumberingSystem":"latn","symbols-numberSystem-latn":`+minimalNumberSymbolsJSON+`,"decimalFormats-numberSystem-latn":{"standard":"#,##0.###","short":{"decimalFormat":{"10000-count-other":`+strconv.Quote(pattern)+`}}},"percentFormats-numberSystem-latn":{"standard":"#,##0%"},"scientificFormats-numberSystem-latn":{"standard":"#E0"},"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}"}}`))
+			_, err := loadNumbers(root, []string{"en"})
+			if err == nil {
+				t.Fatal("loadNumbers accepted an unclosed compact quote")
+			}
+			for _, context := range []string{path, "short", "10000-count-other", "unclosed quote"} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing %q", err, context)
+				}
+			}
+		})
+	}
+}
+
+func TestLoadNumbersCurrencyCompactPatterns(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join("..", ".cldr-json", "node_modules")
+	path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	data, err := loadNumbers(root, []string{"en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	numbers := data["en"]
+	for _, tc := range []struct{ count, want string }{
+		{"one", "¤00K"},
+		{"other", "¤00K"},
+		{"one-alt-alphaNextToNumber", "¤\u00a000K"},
+		{"other-alt-alphaNextToNumber", "¤\u00a000K"},
+	} {
+		if got := numbers.CurrencyCompactPatterns["latn"]["short"][4][tc.count]; got != tc.want {
+			t.Errorf("currency short 10000-count-%s = %q, want %q", tc.count, got, tc.want)
+		}
+	}
+	if got := numbers.CurrencyCompactPatterns["latn"]["long"]; len(got) != 0 {
+		t.Errorf("currency long = %v, want absent", got)
+	}
+	if got := numbers.CompactPatterns["latn"]["short"][4]["other"]; got != "00K" {
+		t.Errorf("decimal short = %q, want 00K", got)
+	}
+	if got := numbers.CurrencyNamePatterns["latn"]["other"]; got != "{0} {1}" {
+		t.Errorf("currency name placement = %q, want {0} {1}", got)
+	}
+}
+
+func TestLoadNumbersRejectsUnsupportedCurrencySpacing(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join("..", ".cldr-json", "node_modules", "cldr-numbers-full", "main", "en", "numbers.json")
+	raw, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, old, replacement, field string }{
+		{"currency class", `"[[:^S:]&[:^Z:]]"`, `"[:letter:]"`, "currencyMatch"},
+		{"number class", `"[:digit:]"`, `"[:letter:]"`, "surroundingMatch"},
+		{"insertion type", `"insertBetween": " "`, `"insertBetween": 12`, "insertBetween"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			doc := strings.ReplaceAll(string(raw), tc.old, tc.replacement)
+			if doc == string(raw) {
+				t.Fatalf("source does not contain %s", tc.old)
+			}
+			root := t.TempDir()
+			mustWriteFile(t, filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json"), doc)
+			_, err := loadNumbers(root, []string{"en"})
+			if err == nil {
+				t.Fatal("loadNumbers accepted unsupported currencySpacing")
+			}
+			for _, context := range []string{"en", "latn", "currencySpacing", tc.field} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing context %q", err, context)
+				}
+			}
+		})
+	}
+}
+
+func TestLoadNumbersCurrencySpacing(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join("..", ".cldr-json", "node_modules")
+	path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	data, err := loadNumbers(root, []string{"en"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := CurrencySpacing{BeforeCurrency: "\u00a0", AfterCurrency: "\u00a0"}
+	if got := data["en"].CurrencySpacing["latn"]; got != want {
+		t.Fatalf("pinned en spacing = %+v, want %+v", got, want)
+	}
+}
+
+func TestCurrencySpacingOmission(t *testing.T) {
+	t.Parallel()
+	rule := `{"currencyMatch":"[[:^S:]&[:^Z:]]","surroundingMatch":"[:digit:]","insertBetween":" "}`
+	for _, tc := range []struct {
+		name, raw string
+		want      CurrencySpacing
+	}{
+		{"absent", `{}`, CurrencySpacing{}},
+		{"before only", `{"currencySpacing":{"beforeCurrency":` + rule + `}}`, CurrencySpacing{BeforeCurrency: " "}},
+		{"after only", `{"currencySpacing":{"afterCurrency":` + rule + `}}`, CurrencySpacing{AfterCurrency: " "}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := parseCurrencyPatterns(jsontext.Value(tc.raw))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.spacing != tc.want {
+				t.Errorf("spacing = %+v, want %+v", got.spacing, tc.want)
+			}
+		})
+	}
+}
+
+func TestLoadNumbersRejectsInvalidCurrencyCompactPattern(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ key, pattern string }{
+		{"10000-count-other", "¤00K'"},
+		{"10000-count-other-alt-alphaNextToNumber", "¤\u00a000K'"},
+		{"10000-count-other-alt-unknown", "¤00K"},
+	} {
+		t.Run(tc.key, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			path := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+			mustWriteFile(t, path, numbersDocument(`{"defaultNumberingSystem":"latn","symbols-numberSystem-latn":`+minimalNumberSymbolsJSON+`,"decimalFormats-numberSystem-latn":{"standard":"#,##0.###"},"percentFormats-numberSystem-latn":{"standard":"#,##0%"},"scientificFormats-numberSystem-latn":{"standard":"#E0"},"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","unitPattern-count-other":"{0} {1}","short":{"standard":{`+strconv.Quote(tc.key)+`:`+strconv.Quote(tc.pattern)+`}}}}`))
+			_, err := loadNumbers(root, []string{"en"})
+			if err == nil {
+				t.Fatal("loadNumbers accepted an invalid currency compact pattern")
+			}
+			for _, context := range []string{path, "currencyFormats-numberSystem-latn", "short", tc.key} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing %q", err, context)
+				}
 			}
 		})
 	}

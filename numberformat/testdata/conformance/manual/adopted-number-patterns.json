@@ -1,0 +1,321 @@
+[
+  {
+    "id": "numberformat-manual-adopted-compact-percent",
+    "source": "manual:cldr:adopted-number-patterns",
+    "locale": "en-BS",
+    "options": {
+      "notation": "compact",
+      "style": "percent"
+    },
+    "input": 10000,
+    "expected": "1m%",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "1"
+      },
+      {
+        "type": "compact",
+        "value": "m"
+      },
+      {
+        "type": "percentSign",
+        "value": "%"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "numberingSystem": "latn",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "morePrecision",
+      "trailingZeroDisplay": "auto",
+      "locale": "en-GB",
+      "style": "percent",
+      "minimumSignificantDigits": 1,
+      "maximumSignificantDigits": 2
+    }
+  },
+  {
+    "id": "numberformat-manual-adopted-compact-grouping-10000",
+    "source": "manual:cldr:adopted-number-patterns",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "short",
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2
+    },
+    "input": 10000000000000000,
+    "expected": "10,000T",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "10"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "000"
+      },
+      {
+        "type": "compact",
+        "value": "T"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "numberingSystem": "latn",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto",
+      "locale": "en",
+      "style": "decimal"
+    }
+  },
+  {
+    "id": "numberformat-manual-adopted-compact-grouping-55000",
+    "source": "manual:cldr:adopted-number-patterns",
+    "locale": "en",
+    "options": {
+      "notation": "compact",
+      "compactDisplay": "short",
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2
+    },
+    "input": 55000000000000000,
+    "expected": "55,000T",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "55"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "000"
+      },
+      {
+        "type": "compact",
+        "value": "T"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "numberingSystem": "latn",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 2,
+      "useGrouping": "min2",
+      "notation": "compact",
+      "compactDisplay": "short",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto",
+      "locale": "en",
+      "style": "decimal"
+    }
+  },
+  {
+    "id": "numberformat-manual-adopted-signed-range-positive",
+    "source": "manual:cldr:adopted-number-patterns",
+    "locale": "pt-PT",
+    "options": {
+      "style": "currency",
+      "currency": "EUR",
+      "signDisplay": "always"
+    },
+    "feature": "formatRange",
+    "input": {
+      "start": 2.9,
+      "end": 3.1
+    },
+    "expectedRange": "+2,90 - +3,10 €",
+    "expectedRangeParts": [
+      {
+        "type": "plusSign",
+        "value": "+",
+        "source": "startRange"
+      },
+      {
+        "type": "integer",
+        "value": "2",
+        "source": "startRange"
+      },
+      {
+        "type": "decimal",
+        "value": ",",
+        "source": "startRange"
+      },
+      {
+        "type": "fraction",
+        "value": "90",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " - ",
+        "source": "shared"
+      },
+      {
+        "type": "plusSign",
+        "value": "+",
+        "source": "endRange"
+      },
+      {
+        "type": "integer",
+        "value": "3",
+        "source": "endRange"
+      },
+      {
+        "type": "decimal",
+        "value": ",",
+        "source": "endRange"
+      },
+      {
+        "type": "fraction",
+        "value": "10",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "shared"
+      },
+      {
+        "type": "currency",
+        "value": "€",
+        "source": "shared"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "pt-PT",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "EUR",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "always",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-adopted-signed-range-negative",
+    "source": "manual:cldr:adopted-number-patterns",
+    "locale": "pt-PT",
+    "options": {
+      "style": "currency",
+      "currency": "EUR",
+      "signDisplay": "always"
+    },
+    "feature": "formatRange",
+    "input": {
+      "start": -3.1,
+      "end": -2.9
+    },
+    "expectedRange": "-3,10 - -2,90 €",
+    "expectedRangeParts": [
+      {
+        "type": "minusSign",
+        "value": "-",
+        "source": "startRange"
+      },
+      {
+        "type": "integer",
+        "value": "3",
+        "source": "startRange"
+      },
+      {
+        "type": "decimal",
+        "value": ",",
+        "source": "startRange"
+      },
+      {
+        "type": "fraction",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " - ",
+        "source": "shared"
+      },
+      {
+        "type": "minusSign",
+        "value": "-",
+        "source": "endRange"
+      },
+      {
+        "type": "integer",
+        "value": "2",
+        "source": "endRange"
+      },
+      {
+        "type": "decimal",
+        "value": ",",
+        "source": "endRange"
+      },
+      {
+        "type": "fraction",
+        "value": "90",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "shared"
+      },
+      {
+        "type": "currency",
+        "value": "€",
+        "source": "shared"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "pt-PT",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "EUR",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "always",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

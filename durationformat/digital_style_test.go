@@ -9,14 +9,6 @@ import (
 	"github.com/agentable/go-intl/locale"
 )
 
-// ECMA-402 §18.2.3 InitializeDurationFormat / GetDurationUnitOptions:
-// when style="digital" and the user supplies no per-unit overrides, the
-// resolved unit options must follow:
-//
-//   - years / months / weeks / days  → unit style "short",  display "auto"
-//   - hours / minutes / seconds      → unit style "numeric", display "always"
-//   - milliseconds / microseconds / nanoseconds — numeric, also "always",
-//     with fractional rollup engaging when the prior time unit is numeric.
 func TestDurationFormatResolvedDigitalDefaults(t *testing.T) {
 	t.Parallel()
 	df, err := durationformat.New(locale.List{intltest.Locale(t, "en")}, durationformat.Options{Style: gointl.String(durationformat.DigitalStyle)})

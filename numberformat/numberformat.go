@@ -73,12 +73,24 @@ func New(locales locale.List, opts Options) (*NumberFormat, error) {
 		resolved.CompactDisplay = ecma402.ResolvedScalar(CompactDisplay(cfg.compactDisplay))
 	}
 	symbols := cldrLoc.NumberSymbols(numberingSystem)
+	if resolved.Style == CurrencyStyle {
+		if symbols.CurrencyDecimal != "" {
+			symbols.Decimal = symbols.CurrencyDecimal
+		}
+		if symbols.CurrencyGroup != "" {
+			symbols.Group = symbols.CurrencyGroup
+		}
+	}
 	grouping := groupingForNumberFormat(cldrLoc, resolved)
 	cardinalRule, err := plural.Rule(dataLocale, "cardinal")
 	if err != nil {
 		return nil, err
 	}
 	unitPatterns, err := unitPatternsForNumberFormat(unitLoc, resolved, cardinalRule, resolvedLocale.String())
+	if err != nil {
+		return nil, err
+	}
+	compact, err := compactPatternsForNumberFormat(cldrLoc, unitLoc, resolved)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +105,7 @@ func New(locales locale.List, opts Options) (*NumberFormat, error) {
 			currencyLoc:  unitLoc,
 			currency:     currencyPatternsForNumberFormat(cldrLoc, unitLoc, resolved),
 			unit:         unitPatterns,
-			compact:      compactPatternsForNumberFormat(cldrLoc, resolved),
+			compact:      compact,
 			percent:      percentPatternsForNumberFormat(cldrLoc, resolved, symbols),
 		},
 	}, nil

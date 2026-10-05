@@ -13,8 +13,8 @@ import (
 // prefixed by its record count:
 //
 //   - _currencyFractionBlob:  the locale-independent fraction table, sorted by
-//     ISO code. Each record is a code StringRef followed by three uvarints
-//     (default digits, cash digits, rounding). Used by CurrencyDigits.
+//     ISO code. Each record is a code StringRef followed by one default-digits
+//     uvarint. Used by CurrencyDigits.
 //   - _currencyNamesBlob:     per-locale display/canonical/symbol/narrow data.
 //     Locale indices are written as a sorted delta stream; each locale carries a
 //     sorted code map whose values are a display string-map plus the three
@@ -54,12 +54,10 @@ func encodeCurrencies(input RuntimeInput, table *StringTable) ([]byte, error) {
 	)
 }
 
-// appendCurrencyFraction owns the digits/cashDigits/rounding wire order for one
+// appendCurrencyFraction owns the default fraction-digit wire encoding for one
 // currency fraction row.
 func appendCurrencyFraction(e *blobEncoder, f cldr.CurrencyFraction) {
 	e.appendUvarint(uint64(f.Digits))
-	e.appendUvarint(uint64(f.CashDigits))
-	e.appendUvarint(uint64(f.Rounding))
 }
 
 // supportedCurrencyValues lists codes with a name in the selected CLDR profile.

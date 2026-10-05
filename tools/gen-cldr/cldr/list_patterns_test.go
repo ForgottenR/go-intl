@@ -5,6 +5,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -307,4 +308,28 @@ func listPatternsEqual(got, want ListPatterns) bool {
 	return maps.EqualFunc(got, want, func(gotStyles, wantStyles map[string]ListPattern) bool {
 		return maps.Equal(gotStyles, wantStyles)
 	})
+}
+
+func TestLoadListPatternsClosedPlaceholderGrammar(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"{0} {1} {2}", "{0} {1} {literal}", "{0} {1} {}", "{0} {0} {1}", "{0} {1} {1}", "{0} {1} {", "{0} {1} }", "{{0}} {1}"} {
+		t.Run(text, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			rows := completeListPatternRows()
+			row := rows["listPattern-type-standard"]
+			row.Pair = text
+			rows["listPattern-type-standard"] = row
+			mustWriteFile(t, filepath.Join(root, "cldr-misc-full", "main", "en", "listPatterns.json"), completeListPatternsDocument(t, rows))
+			_, err := loadListPatterns(root, []string{"en"})
+			if err == nil {
+				t.Fatalf("loadListPatterns accepted %q", text)
+			}
+			for _, context := range []string{"en", "listPattern-type-standard", ".2"} {
+				if !strings.Contains(err.Error(), context) {
+					t.Errorf("error %q missing %q", err, context)
+				}
+			}
+		})
+	}
 }

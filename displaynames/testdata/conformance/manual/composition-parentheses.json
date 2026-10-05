@@ -1,0 +1,251 @@
+[
+  {
+    "id": "composition-parens-en-standard-en",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en",
+    "expected": "English",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-en-standard-en-CC",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-CC",
+    "expected": "English (Cocos [Keeling] Islands)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-en-standard-en-Latn-CC",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-Latn-CC",
+    "expected": "English (Latin, Cocos [Keeling] Islands)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-en-dialect-en",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en",
+    "expected": "English",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-en-dialect-en-CC",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-CC",
+    "expected": "English (Cocos [Keeling] Islands)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-en-dialect-en-Latn-CC",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-Latn-CC",
+    "expected": "English (Latin, Cocos [Keeling] Islands)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-standard-en",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en",
+    "expected": "英语",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-standard-en-CC",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-CC",
+    "expected": "英语（科科斯［基林］群岛）",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-standard-en-Latn-CC",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-Latn-CC",
+    "expected": "英语（拉丁文，科科斯［基林］群岛）",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-dialect-en",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en",
+    "expected": "英语",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-dialect-en-CC",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-CC",
+    "expected": "英语（科科斯［基林］群岛）",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-zh-dialect-en-Latn-CC",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-Latn-CC",
+    "expected": "英语（拉丁文，科科斯［基林］群岛）",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-standard-en",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en",
+    "expected": "anglais",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-standard-en-CC",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-CC",
+    "expected": "anglais (Îles Cocos)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-standard-en-Latn-CC",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "standard"
+    },
+    "input": "en-Latn-CC",
+    "expected": "anglais (latin, Îles Cocos)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-dialect-en",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en",
+    "expected": "anglais",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-dialect-en-CC",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-CC",
+    "expected": "anglais (Îles Cocos)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-fr-dialect-en-Latn-CC",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "language",
+      "languageDisplay": "dialect"
+    },
+    "input": "en-Latn-CC",
+    "expected": "anglais (latin, Îles Cocos)",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-region-en",
+    "source": "manual",
+    "locale": "en",
+    "options": {
+      "type": "region"
+    },
+    "input": "CC",
+    "expected": "Cocos (Keeling) Islands",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-region-zh",
+    "source": "manual",
+    "locale": "zh",
+    "options": {
+      "type": "region"
+    },
+    "input": "CC",
+    "expected": "科科斯（基林）群岛",
+    "expectedOk": true
+  },
+  {
+    "id": "composition-parens-region-fr",
+    "source": "manual",
+    "locale": "fr",
+    "options": {
+      "type": "region"
+    },
+    "input": "CC",
+    "expected": "Îles Cocos",
+    "expectedOk": true
+  }
+]

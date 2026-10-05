@@ -645,26 +645,12 @@ func TestNumberFormatFormatCurrencyCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := format.Format(Float(12)); got != "USD12.00" {
-		t.Fatalf("Format(12) = %q, want USD12.00", got)
+	if got := format.Format(Float(12)); got != "USD\u00a012.00" {
+		t.Fatalf("Format(12) = %q, want USD\u00a012.00", got)
 	}
-	want := []Part{{Type: PartCurrency, Value: "USD"}, {Type: PartInteger, Value: "12"}, {Type: PartDecimal, Value: "."}, {Type: PartFraction, Value: "00"}}
+	want := []Part{{Type: PartCurrency, Value: "USD"}, {Type: PartLiteral, Value: "\u00a0"}, {Type: PartInteger, Value: "12"}, {Type: PartDecimal, Value: "."}, {Type: PartFraction, Value: "00"}}
 	if got := format.FormatToParts(Float(12)); !reflect.DeepEqual(got, want) {
 		t.Fatalf("FormatToParts(12) = %#v, want %#v", got, want)
-	}
-}
-
-func TestNumberFormatCurrencyPatternPlacement(t *testing.T) {
-	t.Parallel()
-
-	format, err := New(locale.List{intltest.Locale(t, "en-US")}, Options{Style: stringPtr(CurrencyStyle), Currency: stringPtr("USD"), CurrencyDisplay: stringPtr(CurrencyDisplayCode)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	numberLocale := mustNumberLocale(t, "en-US")
-	pattern := numberLocale.CurrencyPattern(format.ResolvedOptions().NumberingSystem, "standard")
-	if got := joinNumberParts(format.FormatToParts(Float(12))); got != strings.Replace(pattern, "¤#,##0.00", "USD12.00", 1) {
-		t.Fatalf("FormatToParts(12) joined = %q, want CLDR currency pattern %q", got, pattern)
 	}
 }
 

@@ -400,13 +400,13 @@ func renderRangeFile(ranges map[string]map[RangeKey]Category) string {
 	b.WriteString("\tpluralop \"github.com/agentable/go-intl/internal/plural\"\n")
 	b.WriteString(")\n\n")
 	b.WriteString("type rangeRecord struct {\n\tloc    string\n\tstart  pluralop.Category\n\tend    pluralop.Category\n\tresult pluralop.Category\n}\n\n")
-	b.WriteString(`func CardinalRange(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
+	b.WriteString(`func Range(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
 	target := rangeRecord{loc: loc, start: start, end: end}
-	idx, ok := slices.BinarySearchFunc(cardinalRanges[:], target, compareRangeRecordKey)
+	idx, ok := slices.BinarySearchFunc(rangeRecords[:], target, compareRangeRecordKey)
 	if !ok {
 		return 0, false
 	}
-	return cardinalRanges[idx].result, true
+	return rangeRecords[idx].result, true
 }
 
 func compareRangeRecordKey(a, b rangeRecord) int {
@@ -420,7 +420,7 @@ func compareRangeRecordKey(a, b rangeRecord) int {
 }
 
 `)
-	b.WriteString("var cardinalRanges = [...]rangeRecord{\n")
+	b.WriteString("var rangeRecords = [...]rangeRecord{\n")
 	for _, loc := range slices.Sorted(maps.Keys(ranges)) {
 		for _, key := range sortedRangeKeys(ranges[loc]) {
 			fmt.Fprintf(&b, "\t{loc: %q, start: %s, end: %s, result: %s},\n", loc, categoryConst(key.Start), categoryConst(key.End), categoryConst(ranges[loc][key]))

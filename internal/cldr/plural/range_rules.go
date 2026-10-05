@@ -17,13 +17,13 @@ type rangeRecord struct {
 	result pluralop.Category
 }
 
-func CardinalRange(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
+func Range(loc string, start, end pluralop.Category) (pluralop.Category, bool) {
 	target := rangeRecord{loc: loc, start: start, end: end}
-	idx, ok := slices.BinarySearchFunc(cardinalRanges[:], target, compareRangeRecordKey)
+	idx, ok := slices.BinarySearchFunc(rangeRecords[:], target, compareRangeRecordKey)
 	if !ok {
 		return 0, false
 	}
-	return cardinalRanges[idx].result, true
+	return rangeRecords[idx].result, true
 }
 
 func compareRangeRecordKey(a, b rangeRecord) int {
@@ -36,7 +36,7 @@ func compareRangeRecordKey(a, b rangeRecord) int {
 	return cmp.Compare(a.end, b.end)
 }
 
-var cardinalRanges = [...]rangeRecord{
+var rangeRecords = [...]rangeRecord{
 	{loc: "af", start: pluralop.One, end: pluralop.Other, result: pluralop.Other},
 	{loc: "af", start: pluralop.Other, end: pluralop.One, result: pluralop.Other},
 	{loc: "af", start: pluralop.Other, end: pluralop.Other, result: pluralop.Other},

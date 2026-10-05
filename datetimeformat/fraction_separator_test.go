@@ -42,9 +42,7 @@ func assertFractionMethods(t *testing.T, f *DateTimeFormat, loc, nu string, digi
 	}
 	wantDigits := "987"[:digits]
 	if nu == "arab" {
-		if loc == "ar-EG" {
-			separator = "٫"
-		}
+		separator = "٫"
 		wantDigits = string([]rune("٩٨٧")[:digits])
 	}
 	instant := time.Date(2024, 1, 1, 0, 0, 7, 987_999_999, time.UTC)

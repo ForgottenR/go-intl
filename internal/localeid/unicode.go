@@ -159,6 +159,12 @@ func LowercaseUnicodeLocaleID(tag string) string {
 	return asciiLower(tag)
 }
 
+// IsUnicodeKey reports whether value is an ASCII alphanumeric followed by a
+// letter, as required by Unicode locale extension key syntax.
+func IsUnicodeKey(value string) bool {
+	return len(value) == 2 && asciiAlnum(value[:1]) && asciiAlpha(value[1:])
+}
+
 // IsUnicodeType reports whether value has BCP 47 Unicode locale extension type
 // syntax: one or more 3-8 byte ASCII alphanumeric subtags.
 func IsUnicodeType(value string) bool {
@@ -294,7 +300,7 @@ func parseUnicodeExtensionParts(parts []string) (UnicodeExtension, error) {
 	var keywords []UnicodeKeyword
 	for i < len(parts) {
 		key := parts[i]
-		if len(key) != 2 || !asciiAlnum(key) {
+		if !IsUnicodeKey(key) {
 			return UnicodeExtension{}, ErrInvalidUnicodeExtension
 		}
 		i++

@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/agentable/go-intl/internal/localeid"
 )
 
 // UnicodeTypeAlias is one canonical Unicode locale extension type mapping.
@@ -64,7 +66,7 @@ func loadUnicodeTypeAliases(root string) ([]UnicodeTypeAlias, error) {
 			if strings.HasPrefix(key, "_") {
 				continue
 			}
-			if !isUnicodeKey(key) {
+			if !localeid.IsUnicodeKey(key) {
 				return nil, fmt.Errorf("%s keyword.u: invalid key %q", path, key)
 			}
 			var types map[string]jsontext.Value
@@ -191,10 +193,6 @@ func addUnicodeTypeAlias(aliases map[string]string, key, alias, canonical string
 	}
 	aliases[alias] = canonical
 	return nil
-}
-
-func isUnicodeKey(value string) bool {
-	return len(value) == 2 && asciiAlnumString(value)
 }
 
 func isUnicodeType(value string) bool {

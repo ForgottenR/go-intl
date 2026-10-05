@@ -21,6 +21,20 @@ func writeRuntimeCLDRFixtures(t *testing.T, root string) {
 	writeDateCLDRFixture(t, root)
 	writeTimeZoneCLDRFixture(t, root)
 	writeUnitCLDRFixture(t, root)
+	writeListPatternCLDRFixture(t, root)
+	writeRelativeTimeCLDRFixture(t, root)
+	writeDisplayNamesCLDRFixture(t, root)
+	entries, err := os.ReadDir(filepath.Join(root, "cldr-localenames-full", "main", "en"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		data, err := os.ReadFile(filepath.Join(root, "cldr-localenames-full", "main", "en", entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		mustWriteGenCLDRFile(t, filepath.Join(root, "cldr-localenames-full", "main", "zh", entry.Name()), strings.ReplaceAll(string(data), `"en"`, `"zh"`))
+	}
 }
 
 func TestRunGeneratesLocalesAndLikelySubtags(t *testing.T) {

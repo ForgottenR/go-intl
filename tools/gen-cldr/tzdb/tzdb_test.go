@@ -2,7 +2,9 @@ package tzdb
 
 import (
 	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -91,5 +93,17 @@ func TestBuildRegistryRejectsBrokenIdentityGraph(t *testing.T) {
 				t.Fatal("buildRegistry() succeeded, want error")
 			}
 		})
+	}
+}
+
+func TestReadPinRejectsNonHexHash(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "tzdata.json")
+	raw := `{"version":"2025b","url":"https://example.test/archive.tar.gz","license":"public-domain","sha256":"` + strings.Repeat("z", 64) + `"}`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadPin(path); err == nil {
+		t.Fatal("accepted non-hex hash")
 	}
 }

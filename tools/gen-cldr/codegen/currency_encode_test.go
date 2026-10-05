@@ -11,12 +11,10 @@ func TestAppendCurrencyFraction(t *testing.T) {
 
 	var e blobEncoder
 	appendCurrencyFraction(&e, cldr.CurrencyFraction{
-		Digits:     2,
-		CashDigits: 3,
-		Rounding:   4,
+		Digits: 2,
 	})
 
-	assertBytesEqual(t, "appendCurrencyFraction() bytes", e.bytes(), []byte{2, 3, 4})
+	assertBytesEqual(t, "appendCurrencyFraction() bytes", e.bytes(), []byte{2})
 }
 
 func TestAppendCurrencyNames(t *testing.T) {

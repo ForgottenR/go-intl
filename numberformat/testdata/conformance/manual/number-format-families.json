@@ -1,0 +1,298 @@
+[
+  {
+    "id": "numberformat-manual-format-families-gujr-decimal",
+    "source": "manual:cldr-48.1.0:explicit-number-format-families",
+    "locale": "gu",
+    "options": {
+      "numberingSystem": "gujr",
+      "style": "decimal"
+    },
+    "input": 1234567.89,
+    "expected": "૧૨,૩૪,૫૬૭.૮૯",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "૧૨"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૩૪"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૫૬૭"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "૮૯"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "gu",
+      "numberingSystem": "gujr",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-format-families-gujr-percent",
+    "source": "manual:cldr-48.1.0:explicit-number-format-families",
+    "locale": "gu",
+    "options": {
+      "numberingSystem": "gujr",
+      "style": "percent"
+    },
+    "input": 1234567.89,
+    "expected": "૧૨૩,૪૫૬,૭૮૯%",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "૧૨૩"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૪૫૬"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૭૮૯"
+      },
+      {
+        "type": "percentSign",
+        "value": "%"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "gu",
+      "numberingSystem": "gujr",
+      "style": "percent",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-format-families-gujr-currency",
+    "source": "manual:cldr-48.1.0:explicit-number-format-families",
+    "locale": "gu",
+    "options": {
+      "numberingSystem": "gujr",
+      "style": "currency",
+      "currency": "USD"
+    },
+    "input": 1234567.89,
+    "expected": "US$૧,૨૩૪,૫૬૭.૮૯",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "US$"
+      },
+      {
+        "type": "integer",
+        "value": "૧"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૨૩૪"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "૫૬૭"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "૮૯"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "gu",
+      "numberingSystem": "gujr",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-format-families-latn-percent",
+    "source": "manual:cldr-48.1.0:explicit-number-format-families",
+    "locale": "gu",
+    "options": {
+      "numberingSystem": "latn",
+      "style": "percent"
+    },
+    "input": 1234567.89,
+    "expected": "12,34,56,789%",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "34"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "56"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "789"
+      },
+      {
+        "type": "percentSign",
+        "value": "%"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "gu",
+      "numberingSystem": "latn",
+      "style": "percent",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 0,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-format-families-latn-currency",
+    "source": "manual:cldr-48.1.0:explicit-number-format-families",
+    "locale": "gu",
+    "options": {
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD"
+    },
+    "input": 1234567.89,
+    "expected": "US$12,34,567.89",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "US$"
+      },
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "34"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "567"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "89"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "gu",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

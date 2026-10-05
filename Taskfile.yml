@@ -238,27 +238,7 @@ tasks:
     deps:
       - data:preflight
     cmds:
-      - |
-        set -eu
-        LOCK=tools/gen-cldr/tzdata.json
-        VERSION=$(sed -n -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$LOCK")
-        URL=$(sed -n -E 's/.*"url"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$LOCK")
-        WANT=$(sed -n -E 's/.*"sha256"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' "$LOCK")
-        CACHE=tools/gen-cldr/.tzdata/tzdata${VERSION}.tar.gz
-        mkdir -p "$(dirname "$CACHE")"
-        if [ -f "$CACHE" ] && [ "$(shasum -a 256 "$CACHE" | awk '{print $1}')" = "$WANT" ]; then
-          exit 0
-        fi
-        TMP=${CACHE}.tmp
-        rm -f "$TMP"
-        curl -fsSL "$URL" -o "$TMP"
-        GOT=$(shasum -a 256 "$TMP" | awk '{print $1}')
-        if [ "$GOT" != "$WANT" ]; then
-          rm -f "$TMP"
-          printf 'ERROR: tzdb archive sha256 %s, want %s\n' "$GOT" "$WANT" >&2
-          exit 1
-        fi
-        mv "$TMP" "$CACHE"
+      - go run ./tools/fetch-tzdata -lock tools/gen-cldr/tzdata.json -cache tools/gen-cldr/.tzdata
 
   data:fetch:
     desc: Fetch all pinned CLDR and IANA generation inputs
@@ -451,7 +431,7 @@ tasks:
         echo "  task conformance:verify"
 
   verify:
-    desc: Run all verification steps (deps, format, vet, lint, test, conformance, data contract, vuln)
+    desc: Run all verification steps (deps, format, vet, lint, race/module tests, conformance, data contract, vuln)
     cmds:
       - task: deps
       - task: fmt

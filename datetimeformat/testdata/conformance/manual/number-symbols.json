@@ -1,0 +1,60 @@
+[
+  {
+    "id": "datetimeformat-manual-symbols-root-fractional-separator",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en-GB",
+    "options": {
+      "timeZone": "UTC",
+      "hour": "2-digit",
+      "minute": "2-digit",
+      "second": "2-digit",
+      "hourCycle": "h23",
+      "fractionalSecondDigits": 3,
+      "numberingSystem": "arab"
+    },
+    "input": "2026-01-01T12:00:03.456Z",
+    "expected": "١٢:٠٠:٠٣٫٤٥٦",
+    "expectedParts": [
+      {
+        "type": "hour",
+        "value": "١٢"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "minute",
+        "value": "٠٠"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "second",
+        "value": "٠٣"
+      },
+      {
+        "type": "literal",
+        "value": "٫"
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "٤٥٦"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-GB",
+      "calendar": "gregory",
+      "numberingSystem": "arab",
+      "timeZone": "UTC",
+      "hourCycle": "h23",
+      "hour12": false,
+      "hour": "2-digit",
+      "minute": "2-digit",
+      "second": "2-digit",
+      "fractionalSecondDigits": 3
+    }
+  }
+]

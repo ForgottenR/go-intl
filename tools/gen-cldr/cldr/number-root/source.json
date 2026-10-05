@@ -1,0 +1,8 @@
+{
+  "cldr": "48.1.0",
+  "tag": "release-48-1-final1",
+  "commit": "225136a3bd3eff573f3d64c8fa25d6f9afa974ad",
+  "url": "https://raw.githubusercontent.com/unicode-org/cldr/225136a3bd3eff573f3d64c8fa25d6f9afa974ad/common/main/root.xml",
+  "sha256": "c16e0df1d410c8f481fcb9c4dd195709e08ec9f8a6519d2d9905078e32990f17",
+  "license": "Unicode-3.0"
+}

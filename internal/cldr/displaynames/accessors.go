@@ -203,6 +203,11 @@ func applyLocalePattern(text, language, region string) string {
 	if text == "" {
 		text = defaultLocalePattern
 	}
+	if strings.ContainsRune(text, '（') {
+		region = strings.ReplaceAll(strings.ReplaceAll(region, "（", "［"), "）", "］")
+	} else {
+		region = strings.ReplaceAll(strings.ReplaceAll(region, "(", "["), ")", "]")
+	}
 	return pattern.FormatIndexed(text, language, region)
 }
 

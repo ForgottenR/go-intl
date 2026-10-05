@@ -65,7 +65,7 @@ func (l Locale) GetCollations() []string {
 	if value, present := l.ext.keywords["co"]; present {
 		return []string{value}
 	}
-	return nil
+	return []string{"emoji", "eor"}
 }
 
 func (l Locale) GetHourCycles() []string {
@@ -73,7 +73,7 @@ func (l Locale) GetHourCycles() []string {
 		return []string{value}
 	}
 	preference := l.regionPreference()
-	return slices.Clone(cldrlocale.HourCyclePreference(preference.lookupRegion(cldrlocale.HasHourCyclePreference)))
+	return cldrlocale.HourCyclePreference(l.Language(), preference.regionOverride, preference.region)
 }
 
 func (l Locale) GetNumberingSystems() []string {

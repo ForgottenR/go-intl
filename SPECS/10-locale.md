@@ -327,8 +327,8 @@ m := loc.Maximize()
 func (l Locale) GetCalendars() []string
 
 // GetCollations returns Locale.Collation() as a singleton when it is present.
-// It returns nil when the locale has no explicit collation and does not infer
-// implementation-defined candidates from CLDR.
+// Without an explicit collation it returns the ECMA-402 no-match fallback
+// ["emoji", "eor"]; no locale-specific Collator support is inferred.
 func (l Locale) GetCollations() []string
 
 // GetHourCycles returns hour cycle preferences (by priority).
@@ -588,6 +588,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 - [ ] If parsing fails, an error with `errors.Is(err, gointl.ErrInvalidValue)` being true is returned.
 - [ ] Canonicalizes Unicode types by key from pinned CLDR BCP47 data: `ca=islamicc` → `islamic-civil`, `ms=imperial` → `uksystem`; `co=islamic-civil` remains unchanged and malformed `ca=gregorian` is rejected before lookup.
 - [ ] `Parse("en-US-u-fw-0")` rejects malformed tag syntax, while `Options{FirstDayOfWeek: gointl.String("0")}` normalizes to `-u-fw-sun`; tag parsing never applies constructor-option coercion.
+- [ ] Unicode extension keys have exactly two ASCII characters: alphanumeric followed by a letter. `00` and `a0` are invalid; `0a` and `aa` are valid, including uppercase input. Runtime and generator share `internal/localeid.IsUnicodeKey`.
 - [ ] Tag types are grammar-checked; the §2.3 option rules apply only to explicit options.
 - [ ] Explicit empty string option values (`Calendar`, `Collation`, `HourCycle`, `CaseFirst`, `NumberingSystem`, `FirstDayOfWeek`, and language identifier overrides) return invalid-option errors instead of being treated as omitted.
 
@@ -610,7 +611,7 @@ return Locale{}, intlerr.New(intlerr.InvalidOption, "locale", "hourCycle", hc, "
 ### Getter
 
 - [ ] Simple fields (7 extended fields) are pre-parsed during construction in `Parse` / `New` (§5.1 table).
-- [ ] Candidate list methods do not cache results into the struct. `GetCollations` projects the explicit locale collation as a singleton or returns nil; the other candidate-list methods read their owning generated data on each call. `GetTimeZones` uses explicit-region `internal/tz` records, including the full Canadian projection and `IN` → `Asia/Kolkata`.
+- [ ] Candidate list methods do not cache results into the struct. `GetCollations` projects the explicit locale collation as a singleton or returns the no-match fallback ["emoji", "eor"]; the other candidate-list methods read their owning generated data on each call. `GetTimeZones` uses explicit-region `internal/tz` records, including the full Canadian projection and `IN` → `Asia/Kolkata`.
 - [ ] When the calendar keyword is present, `GetCalendars()` returns a single-element list, including an empty type.
 - [ ] `WeekInfo` / `TextInfo` type signature is consistent with §5.2.
 
@@ -679,3 +680,9 @@ Language identifier parsing and language/script/region replacement share
 `ak` while preserving the `no`/`nb` distinction and explicit scripts such as
 `en-Latn`; grammar validation and Unicode keyword handling remain Locale-owned.
 Variants, transformed extensions and private use survive subtag replacement.
+
+Hour-cycle info checks language-region time data before region time data for each
+RegionPreference candidate (rg override, then base/sd/likely region). Explicit hc
+remains a singleton. If no candidate has time data, the result is `["h23"]`, as
+HourCyclesOfLocale requires; it does not borrow the world allowed list. Kernel
+`HourCyclePreference(language, regions...)` owns this lookup and returns a copy.

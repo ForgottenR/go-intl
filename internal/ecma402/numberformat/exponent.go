@@ -26,21 +26,21 @@ func computeExponent(d decimal.Decimal, digitOptions ResolvedDigitOptions, toExp
 	magnitude = int(mag)
 	exponent, ok = toExponent(magnitude)
 	if !ok {
-		return 0, 0, false
+		exponent = 0
 	}
 	scaled := decimal.Scale10(d, -int32(exponent)) // #nosec G115 -- notation exponents come from Log10Floor int32 / small generated keys.
 	rounded := decimal.Abs(FormatNumericToString(scaled, digitOptions).Rounded)
 	if rounded.IsZero() {
-		return exponent, magnitude, true
+		return exponent, magnitude, ok
 	}
 	roundedMagnitude, err := decimal.Log10Floor(rounded)
 	if err != nil || int(roundedMagnitude) == magnitude-exponent {
-		return exponent, magnitude, true
+		return exponent, magnitude, ok
 	}
 	if nextExponent, nextOK := toExponent(magnitude + 1); nextOK {
 		return nextExponent, magnitude + 1, true
 	}
-	return exponent, magnitude, true
+	return exponent, magnitude, ok
 }
 
 // ScientificExponent returns the decimal exponent used by scientific and

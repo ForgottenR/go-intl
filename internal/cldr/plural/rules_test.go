@@ -158,12 +158,12 @@ func TestRangeRules(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, ok := CardinalRange(tc.loc, tc.start, tc.end)
+			got, ok := Range(tc.loc, tc.start, tc.end)
 			if ok != tc.ok {
-				t.Fatalf("CardinalRange(%q, %s, %s) ok = %v, want %v", tc.loc, tc.start, tc.end, ok, tc.ok)
+				t.Fatalf("Range(%q, %s, %s) ok = %v, want %v", tc.loc, tc.start, tc.end, ok, tc.ok)
 			}
 			if got != tc.want {
-				t.Fatalf("CardinalRange(%q, %s, %s) = %s, want %s", tc.loc, tc.start, tc.end, got, tc.want)
+				t.Fatalf("Range(%q, %s, %s) = %s, want %s", tc.loc, tc.start, tc.end, got, tc.want)
 			}
 		})
 	}

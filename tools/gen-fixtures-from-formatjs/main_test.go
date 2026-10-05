@@ -592,9 +592,9 @@ func TestImportFormatJSNumberFormatRecordsSkips(t *testing.T) {
 		mixedSource: `import {describe, expect, it} from 'vitest'
 
 describe('NumberFormat import gate', () => {
-  it('keeps only generated fixture support', () => {
+  it('keeps recoverable static assertions', () => {
     expect(new Intl.NumberFormat('en', {style: 'currency', currency: 'USD'}).format(42)).toBe('$42.00')
-    expect(new Intl.NumberFormat('fr', {style: 'currency', currency: 'EUR'}).format(42)).toBe('42,00 €')
+    expect(new Intl.NumberFormat('fr', {style: styleVariable, currency: 'EUR'}).format(42)).toBe('42,00 €')
   })
 })
 `,

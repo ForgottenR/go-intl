@@ -40,7 +40,11 @@
     },
     "expectedRange": "2026",
     "expectedRangeParts": [
-      {"type": "year", "value": "2026", "source": "shared"}
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "shared"
+      }
     ]
   },
   {
@@ -58,9 +62,21 @@
     },
     "expectedRange": "9 AM",
     "expectedRangeParts": [
-      {"type": "hour", "value": "9", "source": "shared"},
-      {"type": "literal", "value": " ", "source": "shared"},
-      {"type": "dayPeriod", "value": "AM", "source": "shared"}
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "shared"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "shared"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "shared"
+      }
     ]
   },
   {
@@ -79,13 +95,41 @@
     },
     "expectedRange": "2 du matin – 8 du matin",
     "expectedRangeParts": [
-      {"type": "hour", "value": "2", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "dayPeriod", "value": "du matin", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "hour", "value": "8", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "dayPeriod", "value": "du matin", "source": "endRange"}
+      {
+        "type": "hour",
+        "value": "2",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "du matin",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "hour",
+        "value": "8",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "du matin",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -103,25 +147,101 @@
     },
     "expectedRange": "5/8/2026, 9 AM – 5/10/2026, 9 AM",
     "expectedRangeParts": [
-      {"type": "month", "value": "5", "source": "startRange"},
-      {"type": "literal", "value": "/", "source": "startRange"},
-      {"type": "day", "value": "8", "source": "startRange"},
-      {"type": "literal", "value": "/", "source": "startRange"},
-      {"type": "year", "value": "2026", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "hour", "value": "9", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "month", "value": "5", "source": "endRange"},
-      {"type": "literal", "value": "/", "source": "endRange"},
-      {"type": "day", "value": "10", "source": "endRange"},
-      {"type": "literal", "value": "/", "source": "endRange"},
-      {"type": "year", "value": "2026", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "hour", "value": "9", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "endRange"}
+      {
+        "type": "month",
+        "value": "5",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "8",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "5",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": "/",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -140,21 +260,81 @@
     },
     "expectedRange": "May 8, 9 AM – May 10, 9 AM",
     "expectedRangeParts": [
-      {"type": "month", "value": "May", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "day", "value": "8", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "hour", "value": "9", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "month", "value": "May", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "day", "value": "10", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "hour", "value": "9", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "endRange"}
+      {
+        "type": "month",
+        "value": "May",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "8",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "May",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -173,25 +353,101 @@
     },
     "expectedRange": "May 8, 2026, 9 AM – May 10, 2027, 9 AM",
     "expectedRangeParts": [
-      {"type": "month", "value": "May", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "day", "value": "8", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "year", "value": "2026", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "hour", "value": "9", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "month", "value": "May", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "day", "value": "10", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "year", "value": "2027", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "hour", "value": "9", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "endRange"}
+      {
+        "type": "month",
+        "value": "May",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "8",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "May",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2027",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -227,13 +483,34 @@
     "input": "2026-05-08T09:07:06.123Z",
     "expected": "09:07:06.1",
     "expectedParts": [
-      {"type": "hour", "value": "09"},
-      {"type": "literal", "value": ":"},
-      {"type": "minute", "value": "07"},
-      {"type": "literal", "value": ":"},
-      {"type": "second", "value": "06"},
-      {"type": "literal", "value": "."},
-      {"type": "fractionalSecond", "value": "1"}
+      {
+        "type": "hour",
+        "value": "09"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "minute",
+        "value": "07"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "second",
+        "value": "06"
+      },
+      {
+        "type": "literal",
+        "value": "."
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "1"
+      }
     ]
   },
   {
@@ -251,13 +528,34 @@
     "input": "2026-05-08T09:07:06.123Z",
     "expected": "09:07:06.12",
     "expectedParts": [
-      {"type": "hour", "value": "09"},
-      {"type": "literal", "value": ":"},
-      {"type": "minute", "value": "07"},
-      {"type": "literal", "value": ":"},
-      {"type": "second", "value": "06"},
-      {"type": "literal", "value": "."},
-      {"type": "fractionalSecond", "value": "12"}
+      {
+        "type": "hour",
+        "value": "09"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "minute",
+        "value": "07"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "second",
+        "value": "06"
+      },
+      {
+        "type": "literal",
+        "value": "."
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "12"
+      }
     ]
   },
   {
@@ -275,13 +573,34 @@
     "input": "2026-05-08T09:07:06.123Z",
     "expected": "09:07:06.123",
     "expectedParts": [
-      {"type": "hour", "value": "09"},
-      {"type": "literal", "value": ":"},
-      {"type": "minute", "value": "07"},
-      {"type": "literal", "value": ":"},
-      {"type": "second", "value": "06"},
-      {"type": "literal", "value": "."},
-      {"type": "fractionalSecond", "value": "123"}
+      {
+        "type": "hour",
+        "value": "09"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "minute",
+        "value": "07"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "second",
+        "value": "06"
+      },
+      {
+        "type": "literal",
+        "value": "."
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "123"
+      }
     ]
   },
   {
@@ -298,15 +617,36 @@
       "timeZone": "UTC"
     },
     "input": "2026-05-08T09:07:06.123Z",
-    "expected": "٠٩:٠٧:٠٦.١٢٣",
+    "expected": "٠٩:٠٧:٠٦٫١٢٣",
     "expectedParts": [
-      {"type": "hour", "value": "٠٩"},
-      {"type": "literal", "value": ":"},
-      {"type": "minute", "value": "٠٧"},
-      {"type": "literal", "value": ":"},
-      {"type": "second", "value": "٠٦"},
-      {"type": "literal", "value": "."},
-      {"type": "fractionalSecond", "value": "١٢٣"}
+      {
+        "type": "hour",
+        "value": "٠٩"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "minute",
+        "value": "٠٧"
+      },
+      {
+        "type": "literal",
+        "value": ":"
+      },
+      {
+        "type": "second",
+        "value": "٠٦"
+      },
+      {
+        "type": "literal",
+        "value": "٫"
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "١٢٣"
+      }
     ]
   },
   {
@@ -327,21 +667,81 @@
     },
     "expectedRange": "09:07:06.123 – 09:07:06.456",
     "expectedRangeParts": [
-      {"type": "hour", "value": "09", "source": "startRange"},
-      {"type": "literal", "value": ":", "source": "startRange"},
-      {"type": "minute", "value": "07", "source": "startRange"},
-      {"type": "literal", "value": ":", "source": "startRange"},
-      {"type": "second", "value": "06", "source": "startRange"},
-      {"type": "literal", "value": ".", "source": "startRange"},
-      {"type": "fractionalSecond", "value": "123", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "hour", "value": "09", "source": "endRange"},
-      {"type": "literal", "value": ":", "source": "endRange"},
-      {"type": "minute", "value": "07", "source": "endRange"},
-      {"type": "literal", "value": ":", "source": "endRange"},
-      {"type": "second", "value": "06", "source": "endRange"},
-      {"type": "literal", "value": ".", "source": "endRange"},
-      {"type": "fractionalSecond", "value": "456", "source": "endRange"}
+      {
+        "type": "hour",
+        "value": "09",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "second",
+        "value": "06",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ".",
+        "source": "startRange"
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "123",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "hour",
+        "value": "09",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "second",
+        "value": "06",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ".",
+        "source": "endRange"
+      },
+      {
+        "type": "fractionalSecond",
+        "value": "456",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -360,17 +760,61 @@
     },
     "expectedRange": "Jun 10, 2027 – May 8, 2026",
     "expectedRangeParts": [
-      {"type": "month", "value": "Jun", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "day", "value": "10", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "year", "value": "2027", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "month", "value": "May", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "day", "value": "8", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "year", "value": "2026", "source": "endRange"}
+      {
+        "type": "month",
+        "value": "Jun",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2027",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "month",
+        "value": "May",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "8",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -389,15 +833,51 @@
     },
     "expectedRange": "10:07 – 9:07 AM",
     "expectedRangeParts": [
-      {"type": "hour", "value": "10", "source": "startRange"},
-      {"type": "literal", "value": ":", "source": "startRange"},
-      {"type": "minute", "value": "07", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "hour", "value": "9", "source": "endRange"},
-      {"type": "literal", "value": ":", "source": "endRange"},
-      {"type": "minute", "value": "07", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "shared"},
-      {"type": "dayPeriod", "value": "AM", "source": "shared"}
+      {
+        "type": "hour",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "shared"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "shared"
+      }
     ]
   },
   {
@@ -416,33 +896,141 @@
     },
     "expectedRange": "Wednesday, June 10, 2026 at 10:07 AM – Friday, May 8, 2026 at 9:07 AM",
     "expectedRangeParts": [
-      {"type": "weekday", "value": "Wednesday", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "month", "value": "June", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "day", "value": "10", "source": "startRange"},
-      {"type": "literal", "value": ", ", "source": "startRange"},
-      {"type": "year", "value": "2026", "source": "startRange"},
-      {"type": "literal", "value": " at ", "source": "startRange"},
-      {"type": "hour", "value": "10", "source": "startRange"},
-      {"type": "literal", "value": ":", "source": "startRange"},
-      {"type": "minute", "value": "07", "source": "startRange"},
-      {"type": "literal", "value": " ", "source": "startRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "startRange"},
-      {"type": "literal", "value": " – ", "source": "shared"},
-      {"type": "weekday", "value": "Friday", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "month", "value": "May", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "day", "value": "8", "source": "endRange"},
-      {"type": "literal", "value": ", ", "source": "endRange"},
-      {"type": "year", "value": "2026", "source": "endRange"},
-      {"type": "literal", "value": " at ", "source": "endRange"},
-      {"type": "hour", "value": "9", "source": "endRange"},
-      {"type": "literal", "value": ":", "source": "endRange"},
-      {"type": "minute", "value": "07", "source": "endRange"},
-      {"type": "literal", "value": " ", "source": "endRange"},
-      {"type": "dayPeriod", "value": "AM", "source": "endRange"}
+      {
+        "type": "weekday",
+        "value": "Wednesday",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "month",
+        "value": "June",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "day",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "startRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " at ",
+        "source": "startRange"
+      },
+      {
+        "type": "hour",
+        "value": "10",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "startRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "startRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "startRange"
+      },
+      {
+        "type": "literal",
+        "value": " – ",
+        "source": "shared"
+      },
+      {
+        "type": "weekday",
+        "value": "Friday",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "month",
+        "value": "May",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "day",
+        "value": "8",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ", ",
+        "source": "endRange"
+      },
+      {
+        "type": "year",
+        "value": "2026",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " at ",
+        "source": "endRange"
+      },
+      {
+        "type": "hour",
+        "value": "9",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": ":",
+        "source": "endRange"
+      },
+      {
+        "type": "minute",
+        "value": "07",
+        "source": "endRange"
+      },
+      {
+        "type": "literal",
+        "value": " ",
+        "source": "endRange"
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM",
+        "source": "endRange"
+      }
     ]
   },
   {
@@ -457,11 +1045,26 @@
     "input": "2025-01-01T00:00:00Z",
     "expected": "10 AM Dumont d’Urville Station Time",
     "expectedParts": [
-      {"type": "hour", "value": "10"},
-      {"type": "literal", "value": " "},
-      {"type": "dayPeriod", "value": "AM"},
-      {"type": "literal", "value": " "},
-      {"type": "timeZoneName", "value": "Dumont d’Urville Station Time"}
+      {
+        "type": "hour",
+        "value": "10"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "dayPeriod",
+        "value": "AM"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "timeZoneName",
+        "value": "Dumont d’Urville Station Time"
+      }
     ]
   },
   {
@@ -476,9 +1079,18 @@
     "input": "2025-01-01T00:00:00Z",
     "expected": "10 h heure : Dumont-d’Urville",
     "expectedParts": [
-      {"type": "hour", "value": "10"},
-      {"type": "literal", "value": " h "},
-      {"type": "timeZoneName", "value": "heure : Dumont-d’Urville"}
+      {
+        "type": "hour",
+        "value": "10"
+      },
+      {
+        "type": "literal",
+        "value": " h "
+      },
+      {
+        "type": "timeZoneName",
+        "value": "heure : Dumont-d’Urville"
+      }
     ]
   },
   {
@@ -493,9 +1105,18 @@
     "input": "2025-01-01T00:00:00Z",
     "expected": "迪蒙·迪维尔时间10时",
     "expectedParts": [
-      {"type": "timeZoneName", "value": "迪蒙·迪维尔时间"},
-      {"type": "hour", "value": "10"},
-      {"type": "literal", "value": "时"}
+      {
+        "type": "timeZoneName",
+        "value": "迪蒙·迪维尔时间"
+      },
+      {
+        "type": "hour",
+        "value": "10"
+      },
+      {
+        "type": "literal",
+        "value": "时"
+      }
     ]
   },
   {
@@ -510,9 +1131,18 @@
     "input": "1941-01-15T12:00:00Z",
     "expected": "13 British Summer Time",
     "expectedParts": [
-      {"type": "hour", "value": "13"},
-      {"type": "literal", "value": " "},
-      {"type": "timeZoneName", "value": "British Summer Time"}
+      {
+        "type": "hour",
+        "value": "13"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "timeZoneName",
+        "value": "British Summer Time"
+      }
     ]
   }
 ]

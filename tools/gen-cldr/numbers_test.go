@@ -98,7 +98,7 @@ func numbersJSON(locale string) string {
 			"decimalFormats-numberSystem-latn":{"standard":"#,##0.###","long":{"decimalFormat":{"1000-count-one":"0 thousand","1000-count-other":"0 thousand"}},"short":{"decimalFormat":{"1000-count-one":"0K","1000-count-other":"0K"}}},
 			"percentFormats-numberSystem-latn":{"standard":"#,##0%"},
 			"scientificFormats-numberSystem-latn":{"standard":"#E0"},
-			"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","accounting":"¤#,##0.00;(¤#,##0.00)","unitPattern-count-other":"{0} {1}","currencySpacing":{"beforeCurrency":{"insertBetween":" "},"afterCurrency":{"insertBetween":" "}},"short":{"standard":{"1000-count-one":"¤0K","1000-count-other":"¤0K"}}}
+				"currencyFormats-numberSystem-latn":{"standard":"¤#,##0.00","accounting":"¤#,##0.00;(¤#,##0.00)","unitPattern-count-other":"{0} {1}","currencySpacing":{"beforeCurrency":{"currencyMatch":"[[:^S:]&[:^Z:]]","surroundingMatch":"[:digit:]","insertBetween":" "},"afterCurrency":{"currencyMatch":"[[:^S:]&[:^Z:]]","surroundingMatch":"[:digit:]","insertBetween":" "}},"short":{"standard":{"1000-count-one":"¤0K","1000-count-other":"¤0K"}}}
 		}}}
 	}`, "LOCALE", locale)
 }

@@ -88,7 +88,7 @@ func TestPreferenceAccessorsReturnCopies(t *testing.T) {
 	t.Parallel()
 
 	testcontract.AssertStringSliceReturnsCopy(t, "HourCyclePreference(US)", func() []string {
-		return HourCyclePreference("US")
+		return HourCyclePreference("", "US")
 	})
 	testcontract.AssertStringSliceReturnsCopy(t, "CalendarPreference(TH)", func() []string {
 		return CalendarPreference("TH")
@@ -151,7 +151,7 @@ func TestSmokeSubtagsAndPreferences(t *testing.T) {
 		t.Errorf("fa DefaultNumberingSystem = %q, want arabext", got)
 	}
 
-	if got := HourCyclePreference("US"); len(got) == 0 {
+	if got := HourCyclePreference("", "US"); len(got) == 0 {
 		t.Error("HourCyclePreference(US) returned no values")
 	}
 	if !HasWeekPreference("US") {

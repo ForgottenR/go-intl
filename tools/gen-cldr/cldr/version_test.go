@@ -87,3 +87,18 @@ func TestCrossCheckRequiresEveryPackageIdentity(t *testing.T) {
 		})
 	}
 }
+
+func TestReadVersionFileRejectsMalformedPins(t *testing.T) {
+	t.Parallel()
+	const valid = "cldr=48.1.0\nicu=78\ntzdata=2025b\n"
+	for _, raw := range []string{valid + "cldr=48.1.0\n", valid + "bad line\n", valid + "=empty\n", "cldr=48.1.0\nicu=78\n", "cldr=bad\nicu=78\ntzdata=2025b\n"} {
+		t.Run(raw, func(t *testing.T) {
+			t.Parallel()
+			path := filepath.Join(t.TempDir(), "VERSION")
+			mustWriteFile(t, path, raw)
+			if _, err := ReadVersionFile(path); err == nil {
+				t.Fatalf("accepted %q", raw)
+			}
+		})
+	}
+}

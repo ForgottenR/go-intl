@@ -269,7 +269,7 @@ validated data and do not grow a second defensive grammar.
 
 **MUST** Rules:
 
-1. `parseDateTimeSkeleton` **MUST** be compatible with ICU skeleton string syntax (users can explicitly pass in skeleton strings such as `"yMMMd"` `"hms"`).
+1. The private `parseDateTimeSkeleton` **MUST** consume ICU skeleton syntax such as `"yMMMd"` and `"hms"` for generated candidates and internal matching. Public `Options` accepts ECMA-402 components and styles, not skeleton strings.
 2. Compatibility range: LDML TR35 §2.6.1 Date Field Symbol Table all characters.
 3. `parseDateTimeSkeleton` **must not** change the field character order; the output `Formats.Skeleton` field retains the original value of the input string.
 

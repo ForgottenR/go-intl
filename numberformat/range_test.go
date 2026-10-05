@@ -141,6 +141,29 @@ func TestNumberFormatRangeUsesLocaleRangeSign(t *testing.T) {
 	}
 }
 
+func TestNumberRangeSeparatorPreservesExistingSpacing(t *testing.T) {
+	t.Parallel()
+	start := []Part{{Type: PartMinusSign, Value: "-"}, {Type: PartInteger, Value: "3"}}
+	for _, tc := range []struct {
+		name      string
+		separator string
+		want      string
+	}{
+		{name: "both sides", separator: " - ", want: " - "},
+		{name: "left side", separator: " -", want: " - "},
+		{name: "right side", separator: "- ", want: " - "},
+		{name: "unicode space", separator: "\u00a0⇔", want: "\u00a0⇔ "},
+		{name: "multiple characters", separator: "⇔ to", want: " ⇔ to "},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := numberRangeSeparator(start, tc.separator); got != tc.want {
+				t.Fatalf("numberRangeSeparator(%q) = %q, want %q", tc.separator, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNumberFormatFormatRangeToParts(t *testing.T) {
 	t.Parallel()
 
@@ -392,11 +415,12 @@ func TestNumberFormatFormatRangeToPartsCollapsesCurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := mustFormatRange(t, format, Float(1), Float(2)); got != "USD1.00–2.00" {
-		t.Fatalf("FormatRange(1, 2) = %q, want USD1.00–2.00", got)
+	if got := mustFormatRange(t, format, Float(1), Float(2)); got != "USD\u00a01.00–2.00" {
+		t.Fatalf("FormatRange(1, 2) = %q, want USD\u00a01.00–2.00", got)
 	}
 	want := []RangePart{
 		{Type: PartCurrency, Value: "USD", Source: SourceShared},
+		{Type: PartLiteral, Value: "\u00a0", Source: SourceShared},
 		{Type: PartInteger, Value: "1", Source: SourceStartRange},
 		{Type: PartDecimal, Value: ".", Source: SourceStartRange},
 		{Type: PartFraction, Value: "00", Source: SourceStartRange},

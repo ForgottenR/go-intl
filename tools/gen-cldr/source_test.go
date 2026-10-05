@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json/v2"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,6 +20,23 @@ func TestLoadAllBuildsTypedSource(t *testing.T) {
 	writeListPatternCLDRFixture(t, root)
 	writeRelativeTimeCLDRFixture(t, root)
 	writeDisplayNamesCLDRFixture(t, root)
+	numberPath := filepath.Join(root, "cldr-numbers-full", "main", "en", "numbers.json")
+	raw, err := os.ReadFile(numberPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var numberDoc map[string]map[string]map[string]map[string]any
+	if err := json.Unmarshal(raw, &numberDoc); err != nil {
+		t.Fatal(err)
+	}
+	numberDoc["main"]["en"]["numbers"]["miscPatterns-numberSystem-latn"] = map[string]string{"range": "{0} ~ {1}"}
+	raw, err = json.Marshal(numberDoc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(numberPath, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	versions := cldr.Versions{CLDR: "48.1.0", ICU: "78", TZData: "2025b"}
 	profile := []string{"en", "en-US"}
@@ -39,7 +57,21 @@ func TestLoadAllBuildsTypedSource(t *testing.T) {
 	if rtl, ok := source.ScriptDirections["Latn"]; !ok || rtl {
 		t.Fatalf("LoadAll().ScriptDirections[Latn] = %t, %t; want false, true", rtl, ok)
 	}
-	requireSourceEntry(t, "Numbers", source.Numbers, "en")
+	numbers := requireSourceEntry(t, "Numbers", source.Numbers, "en")
+	for _, tc := range []struct {
+		system, exponent, separator, plus string
+	}{
+		{"arab", "اس", ":", "\u061c+"},
+		{"arabext", "×۱۰^", "٫", "\u200e+\u200e"},
+	} {
+		symbols := numbers.Symbols[tc.system]
+		if symbols.Decimal != "٫" || symbols.Group != "٬" || symbols.NaN != "NaN" || symbols.Exponential != tc.exponent || symbols.TimeSeparator != tc.separator || symbols.Plus != tc.plus {
+			t.Errorf("root en/%s symbols = %+v, want pinned root separators, NaN, exponent, clock separator and bidi sign", tc.system, symbols)
+		}
+		if symbols.RangeSign != numbers.Symbols["latn"].RangeSign {
+			t.Errorf("root %s range separator = %q, want locale separator %q", tc.system, symbols.RangeSign, numbers.Symbols["latn"].RangeSign)
+		}
+	}
 	currencies := requireSourceEntry(t, "Currencies", source.Currencies, "en")
 	if currencies["USD"].Canonical != "US dollar" {
 		t.Fatalf("LoadAll().Currencies[en][USD].Canonical = %q, want US dollar", currencies["USD"].Canonical)
@@ -61,6 +93,43 @@ func TestLoadAllBuildsTypedSource(t *testing.T) {
 	displayNames := requireSourceEntry(t, "DisplayNames", source.DisplayNames, "en")
 	if displayNames.LocalePattern != "{0} ({1})" {
 		t.Fatalf("LoadAll().DisplayNames[en].LocalePattern = %q, want {0} ({1})", displayNames.LocalePattern)
+	}
+}
+
+func TestLoadAllPreservesPinnedSymbolOverrides(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join(".cldr-json", "node_modules")
+	if _, err := os.Stat(filepath.Join(root, "cldr-core", "package.json")); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	source, err := cldr.LoadAll(context.Background(), root, cldr.Versions{CLDR: "48.1.0", ICU: "78", TZData: "2025b"}, []string{"ar", "ur"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := source.Numbers["ar"].Symbols["arab"]; got.NaN != "ليس\u00a0رقمًا" || got.Exponential != "أس" {
+		t.Errorf("ar/arab symbols lost locale override: %+v", got)
+	}
+	if got := source.Numbers["ur"].Symbols["arabext"]; got.Decimal != "٫" || got.TimeSeparator != "٫" {
+		t.Errorf("ur/arabext symbols lost locale override: %+v", got)
+	}
+}
+
+func TestLoadAllPreservesPinnedNumberFormats(t *testing.T) {
+	t.Parallel()
+	root := filepath.Join(".cldr-json", "node_modules")
+	if _, err := os.Stat(filepath.Join(root, "cldr-core", "package.json")); os.IsNotExist(err) {
+		t.Skip("pinned CLDR checkout missing; run task data:fetch:cldr")
+	}
+	source, err := cldr.LoadAll(context.Background(), root, cldr.Versions{CLDR: "48.1.0", ICU: "78", TZData: "2025b"}, []string{"gu"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	numbers := source.Numbers["gu"]
+	if got := numbers.PercentPatterns["gujr"]; got != "#,##0%" {
+		t.Errorf("gu/gujr percent lost explicit pattern: %q", got)
+	}
+	if got := numbers.CurrencyPatterns["gujr"]["standard"]; got != "¤#,##0.00" {
+		t.Errorf("gu/gujr currency lost explicit pattern: %q", got)
 	}
 }
 

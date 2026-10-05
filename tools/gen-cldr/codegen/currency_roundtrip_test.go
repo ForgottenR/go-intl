@@ -31,7 +31,7 @@ func TestCurrencyRoundTrip(t *testing.T) {
 	// back to, must read back exactly. Digits maps a missing code onto DEFAULT,
 	// so a present code must always equal its own record.
 	for code, f := range data.Fractions {
-		want := currency.Data{DefaultDigits: f.Digits, CashDigits: f.CashDigits, Rounding: f.Rounding}
+		want := currency.Data{DefaultDigits: f.Digits}
 		if got := currency.Digits(code); got != want {
 			t.Errorf("Digits(%q) = %+v, want %+v", code, got, want)
 		}

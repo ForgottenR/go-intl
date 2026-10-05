@@ -50,14 +50,14 @@ func TestSupportedCodesSortedAndUnique(t *testing.T) {
 func TestSmokeKnownFractions(t *testing.T) {
 	t.Parallel()
 
-	if got, want := Digits("USD"), (Data{DefaultDigits: 2, CashDigits: 2, Rounding: 0}); got != want {
+	if got, want := Digits("USD"), (Data{DefaultDigits: 2}); got != want {
 		t.Errorf("Digits(USD) = %+v, want %+v", got, want)
 	}
-	if got, want := Digits("JPY"), (Data{DefaultDigits: 0, CashDigits: 0, Rounding: 0}); got != want {
+	if got, want := Digits("JPY"), (Data{DefaultDigits: 0}); got != want {
 		t.Errorf("Digits(JPY) = %+v, want %+v", got, want)
 	}
 	unknown := Digits("XXX")
-	if unknown.DefaultDigits != 2 || unknown.CashDigits != 2 {
+	if unknown.DefaultDigits != 2 {
 		t.Errorf("Digits(XXX) = %+v, want DEFAULT 2 digits", unknown)
 	}
 }

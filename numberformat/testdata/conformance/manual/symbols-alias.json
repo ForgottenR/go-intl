@@ -1,0 +1,104 @@
+[
+  {
+    "id": "numberformat-manual-symbols-alias-positive",
+    "source": "manual:cldr-48.1.0:symbols-locale-latn-alias",
+    "locale": "ar-EG",
+    "options": {
+      "numberingSystem": "deva"
+    },
+    "input": 12345.67,
+    "expected": "१२,३४५.६७",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "१२"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "३४५"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "६७"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ar-EG",
+      "numberingSystem": "deva",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-symbols-alias-negative",
+    "source": "manual:cldr-48.1.0:symbols-locale-latn-alias",
+    "locale": "ar-EG",
+    "options": {
+      "numberingSystem": "deva"
+    },
+    "input": -12345.67,
+    "expected": "‎-१२,३४५.६७",
+    "expectedParts": [
+      {
+        "type": "literal",
+        "value": "‎"
+      },
+      {
+        "type": "minusSign",
+        "value": "-"
+      },
+      {
+        "type": "integer",
+        "value": "१२"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "३४५"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "६७"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "ar-EG",
+      "numberingSystem": "deva",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

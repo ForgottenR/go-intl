@@ -25,6 +25,15 @@ func TestRelativeConformanceObservations(t *testing.T) {
 		fixture conformance.Fixture
 		failure string
 	}{
+		{"resolved only", conformance.Fixture{Input: jsontext.Value(`null`), ExpectedResolved: jsontext.Value(`{"locale":"en","style":"long","numeric":"always","numberingSystem":"latn"}`)}, ""},
+		{"wrong resolved", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"wrong","style":"long","numeric":"always","numberingSystem":"latn"}`)}, "ResolvedOptions"},
+		{"missing resolved field", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"en","style":"long","numeric":"always"}`)}, "ResolvedOptions"},
+		{"extra resolved field", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"en","style":"long","numeric":"always","numberingSystem":"latn","extra":true}`)}, "ResolvedOptions"},
+		{"text and wrong resolved", conformance.Fixture{Expected: new("in 1 day"), ExpectedResolved: jsontext.Value(`{"locale":"wrong"}`)}, "ResolvedOptions"},
+		{"format invalid unit", conformance.Fixture{Feature: "format", Input: jsontext.Value(`{"value":1,"unit":"invalid"}`), ErrorCode: "invalid_value"}, ""},
+		{"parts invalid unit", conformance.Fixture{Feature: "formatToParts", Input: jsontext.Value(`{"value":1,"unit":"invalid"}`), ErrorCode: "invalid_value"}, ""},
+		{"unsupported error method", conformance.Fixture{Feature: "select", Input: jsontext.Value(`{"value":1,"unit":"invalid"}`), ErrorCode: "invalid_value"}, "unsupported relativetimeformat feature"},
+		{"unsupported range", conformance.Fixture{ExpectedRange: new("wrong")}, "unsupported relativetimeformat observation"},
 		{"numeric parts only", conformance.Fixture{ExpectedParts: parts}, ""},
 		{"literal parts only", conformance.Fixture{Options: jsontext.Value(`{"numeric":"auto"}`), ExpectedParts: literal}, ""},
 		{"numeric observations", conformance.Fixture{Expected: new("in 1 day"), ExpectedParts: parts}, ""},

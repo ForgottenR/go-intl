@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/agentable/go-intl/internal/cldr/number"
@@ -37,6 +38,11 @@ func TestNumberRoundTrip(t *testing.T) {
 		for ns, want := range numbers.Symbols {
 			if got := loc.NumberSymbols(ns); got != number.NumberSymbols(want) {
 				t.Errorf("NumberSymbols(%q, %q) = %+v, want %+v", localeTag, ns, got, want)
+			}
+		}
+		for ns, want := range numbers.CurrencySpacing {
+			if got := loc.CurrencySpacing(ns); got != number.CurrencySpacing(want) {
+				t.Errorf("CurrencySpacing(%q, %q) = %+v, want %+v", localeTag, ns, got, want)
 			}
 		}
 		for ns, want := range numbers.DecimalPatterns {
@@ -86,6 +92,18 @@ func TestNumberRoundTrip(t *testing.T) {
 				}
 			}
 		}
+		for ns, displays := range numbers.CurrencyCompactPatterns {
+			for display, exps := range displays {
+				for exp, plurals := range exps {
+					for count, want := range plurals {
+						plural, alpha := strings.CutSuffix(count, "-alt-alphaNextToNumber")
+						if got := loc.CurrencyCompactPattern(ns, display, exp, plural, alpha); got != want {
+							t.Errorf("CurrencyCompactPattern(%q, %q, %q, %d, %q, %v) = %q, want %q", localeTag, ns, display, exp, plural, alpha, got, want)
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Supported locales narrow index: the encoder wrote exactly the locales with
@@ -93,6 +111,17 @@ func TestNumberRoundTrip(t *testing.T) {
 	wantTags := sortedLocaleKeys(data)
 	gotTags := number.SupportedLocales()
 	assertStringSliceEqual(t, "SupportedLocales", gotTags, wantTags)
+}
+
+func TestCurrencySpacingProduction(t *testing.T) {
+	t.Parallel()
+	loc := resolveNumberLocale(t, "en")
+	want := number.CurrencySpacing{BeforeCurrency: "\u00a0", AfterCurrency: "\u00a0"}
+	for _, ns := range []string{"latn", "missing-numbering-system"} {
+		if got := loc.CurrencySpacing(ns); got != want {
+			t.Errorf("CurrencySpacing(%q) = %+v, want %+v", ns, got, want)
+		}
+	}
 }
 
 // resolveNumberLocale resolves a tag to the number-domain handle the accessors

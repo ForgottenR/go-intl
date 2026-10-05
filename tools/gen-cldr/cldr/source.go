@@ -17,6 +17,7 @@ type Source struct {
 	UnicodeTypeAliases []UnicodeTypeAlias
 	LanguageMatching   LanguageMatching
 	Numbers            map[string]Numbers
+	NumberRootHashes   map[string]string
 	Currencies         map[string]Currencies
 	CurrencyFractions  map[string]CurrencyFraction
 	Dates              map[string]Dates
@@ -39,6 +40,10 @@ func LoadAll(ctx context.Context, root string, versions Versions, localeAllowlis
 		return nil, fmt.Errorf("resolve cldr-json dir: %w", err)
 	}
 	if err := CrossCheck(resolved, versions); err != nil {
+		return nil, err
+	}
+	numberRoot, err := loadNumberRoot(versions.CLDR)
+	if err != nil {
 		return nil, err
 	}
 	available, err := loadAvailableLocales(resolved)
@@ -66,6 +71,7 @@ func LoadAll(ctx context.Context, root string, versions Versions, localeAllowlis
 	if err != nil {
 		return nil, err
 	}
+	numberRoot.fill(numbers)
 	currencies, err := loadCurrencies(resolved, available)
 	if err != nil {
 		return nil, err
@@ -110,6 +116,7 @@ func LoadAll(ctx context.Context, root string, versions Versions, localeAllowlis
 		UnicodeTypeAliases: unicodeTypeAliases,
 		LanguageMatching:   languageMatching,
 		Numbers:            numbers,
+		NumberRootHashes:   numberRoot.hashes,
 		Currencies:         currencies,
 		CurrencyFractions:  fractions,
 		Dates:              dates,
@@ -152,7 +159,10 @@ func filterAvailableLocales(available, allowlist []string) []string {
 			if locale == "" || locale == undefinedLocale {
 				continue
 			}
-			allowed[locale] = true
+			for locale != "" {
+				allowed[locale] = true
+				locale = parentLocale(locale)
+			}
 		}
 	}
 	seen := map[string]bool{undefinedLocale: true}

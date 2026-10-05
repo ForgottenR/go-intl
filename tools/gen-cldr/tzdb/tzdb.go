@@ -15,14 +15,11 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/agentable/go-intl/tools/internal/datapin"
 )
 
-type Pin struct {
-	Version string `json:"version"`
-	URL     string `json:"url"`
-	SHA256  string `json:"sha256"`
-	License string `json:"license"`
-}
+type Pin = datapin.TZData
 
 type Record struct {
 	Identifier string
@@ -41,20 +38,7 @@ type Registry struct {
 	Regions []Region
 }
 
-func ReadPin(path string) (Pin, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return Pin{}, fmt.Errorf("read tzdb pin %s: %w", path, err)
-	}
-	var pin Pin
-	if err := json.Unmarshal(data, &pin); err != nil {
-		return Pin{}, fmt.Errorf("parse tzdb pin %s: %w", path, err)
-	}
-	if pin.Version == "" || pin.URL == "" || len(pin.SHA256) != 64 || pin.License != "public-domain" {
-		return Pin{}, fmt.Errorf("parse tzdb pin %s: incomplete or unsupported pin", path)
-	}
-	return pin, nil
-}
+func ReadPin(path string) (Pin, error) { return datapin.ReadTZData(path) }
 
 func LoadArchive(path string, pin Pin, primaryAliases map[string]string) (Registry, error) {
 	data, err := os.ReadFile(path)

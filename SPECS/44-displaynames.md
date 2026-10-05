@@ -106,7 +106,7 @@ Generation MUST:
 
 1. Live in `tools/gen-cldr/cldr/displaynames.go`, `tools/gen-cldr/extract/displaynames.go`, and `tools/gen-cldr/codegen/displaynames.go`.
 2. Use the project-wide locale profile (`tools/locale-profile.json` → `locales`).
-3. Emit a single generated file at `internal/cldr/displaynames/data.go` that wires `displayNamesData()` and `displayNamesSupportedLocales()` through a `sync.Once` lazy initializer.
+3. Emit const-only `internal/cldr/displaynames/data.go`. The hand-written decode layer owns per-kind lazy gates; language composition additionally reads script/territory/variant payloads as needed. The supported-locale accessor uses its narrow generated index.
 
 ---
 
@@ -156,3 +156,5 @@ Language code canonicalization shares x/text's default parse followed by
 preserving the `no`/`nb` distinction. DisplayNames retains its narrower
 language-identifier grammar and fallback handling for legitimate unrecognized
 codes; extensions and private use remain invalid for `Of`.
+
+Composition normalizes parentheses only in the joined remainder before inserting it into the locale pattern, following ICU `locdspnm.cpp`: a fullwidth opening parenthesis in the outer pattern selects fullwidth brackets; otherwise ASCII parentheses become ASCII brackets. Bare names and standalone region names retain their original spelling. `composition-parentheses.json` covers en/zh/fr, both language display modes, and standalone regions.

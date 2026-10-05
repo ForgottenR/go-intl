@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"io/fs"
@@ -249,23 +250,59 @@ func requireSameStrings(t *testing.T, name string, got, want []string) {
 func requireSupportedByProfile(t *testing.T, name string, supported, profile []string) {
 	t.Helper()
 
-	if len(supported) == 0 {
-		t.Fatalf("%s is empty", name)
-	}
 	testcontract.AssertStringSliceSortedUnique(t, name, supported)
+	if err := validateProfilePayload(supported, profile); err != nil {
+		t.Fatalf("%s: %v", name, err)
+	}
+}
 
-	profileSet := map[string]bool{}
-	for _, locale := range profile {
-		profileSet[locale] = true
+func validateProfilePayload(supported, profile []string) error {
+	if len(supported) == 0 {
+		return fmt.Errorf("supported locales are empty")
 	}
 	for _, locale := range supported {
-		if !profileSet[locale] {
-			t.Fatalf("%s contains %q outside Manifest().LocaleProfile", name, locale)
+		if !slices.ContainsFunc(profile, func(requested string) bool {
+			return requested == locale || strings.HasPrefix(requested, locale+"-")
+		}) {
+			return fmt.Errorf("payload %q is outside the profile lookup chains", locale)
+		}
+		if _, ok := cldrlocale.ResolveLocale(locale); !ok {
+			return fmt.Errorf("payload %q has no generated kernel index", locale)
 		}
 	}
 	for _, locale := range profile {
 		if localematcher.BestAvailableLocale(supported, locale) == "" {
-			t.Fatalf("%s cannot support profile locale %q through ECMA-402 lookup", name, locale)
+			return fmt.Errorf("cannot support profile locale %q through ECMA-402 lookup", locale)
 		}
+	}
+	return nil
+}
+
+func TestProfilePayloadCoverage(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name               string
+		supported, profile []string
+		wantError          string
+	}{
+		{"parent", []string{"en"}, []string{"en-US"}, ""},
+		{"exact", []string{"en"}, []string{"en"}, ""},
+		{"unrelated payload", []string{"en", "fr"}, []string{"en-US"}, "outside"},
+		{"child is not parent", []string{"en-US"}, []string{"en"}, "outside"},
+		{"missing coverage", []string{"en"}, []string{"en-US", "fr"}, "cannot support"},
+		{"missing kernel index", []string{"zz"}, []string{"zz"}, "no generated kernel index"},
+		{"empty payload", nil, []string{"en-US"}, "empty"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := validateProfilePayload(tc.supported, tc.profile)
+			if tc.wantError == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), tc.wantError) {
+				t.Errorf("validateProfilePayload() = %v, want %q", err, tc.wantError)
+			}
+		})
 	}
 }

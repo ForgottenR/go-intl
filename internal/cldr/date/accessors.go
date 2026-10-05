@@ -246,7 +246,8 @@ func hourCyclePreferences(locale string) []string {
 	if region == "" {
 		region = localeRegion(cldrlocale.Maximize(locale))
 	}
-	return cldrlocale.HourCyclePreference(region)
+	language, _, _ := strings.Cut(locale, "-")
+	return cldrlocale.HourCyclePreference(language, region)
 }
 
 func localeRegion(locale string) string {

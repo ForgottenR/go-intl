@@ -1,6 +1,7 @@
 package pluralrules
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/agentable/go-intl/internal/ecma402"
 	ecma402nf "github.com/agentable/go-intl/internal/ecma402/numberformat"
 	"github.com/agentable/go-intl/internal/localematcher"
+	cldrpattern "github.com/agentable/go-intl/internal/pattern"
 	pluralop "github.com/agentable/go-intl/internal/plural"
 	"github.com/agentable/go-intl/locale"
 )
@@ -72,10 +74,14 @@ func New(locales locale.List, opts Options) (*PluralRules, error) {
 	if err != nil {
 		return nil, err
 	}
+	compact, err := compactExponentsForPluralRules(ecma402.ResolveDataLocale(resolution, cldrnumber.ResolveLocale), cfg)
+	if err != nil {
+		return nil, err
+	}
 	return &PluralRules{
 		dataLocale:      dataLocale,
 		digitOptions:    resolvedDigits,
-		compact:         compactExponentsForPluralRules(ecma402.ResolveDataLocale(resolution, cldrnumber.ResolveLocale), cfg),
+		compact:         compact,
 		integerOperands: resolvedDigits.CanUseIntegerOperands(cfg.notation),
 		rule:            rule,
 		resolved:        resolvedOptionsForPluralRules(resolution.Locale, cfg, resolvedDigits, dataLocale),
@@ -146,9 +152,9 @@ type compactExponentEntry struct {
 	exponent  int
 }
 
-func compactExponentsForPluralRules(loc cldrnumber.Locale, cfg config) compactExponentSet {
+func compactExponentsForPluralRules(loc cldrnumber.Locale, cfg config) (compactExponentSet, error) {
 	if cfg.notation != string(CompactNotation) {
-		return compactExponentSet{}
+		return compactExponentSet{}, nil
 	}
 	entries := make([]compactExponentEntry, 0, ecma402nf.MaxCompactMagnitude-ecma402nf.MinCompactMagnitude+1)
 	for exponent := ecma402nf.MaxCompactMagnitude; exponent >= ecma402nf.MinCompactMagnitude; exponent-- {
@@ -156,12 +162,16 @@ func compactExponentsForPluralRules(loc cldrnumber.Locale, cfg config) compactEx
 		if other == "" {
 			continue
 		}
+		parsed, err := cldrpattern.ParseCompact(exponent, other)
+		if err != nil {
+			return compactExponentSet{}, fmt.Errorf("pluralrules: compact pattern display %s magnitude %d: %w", cfg.compactDisplay, exponent, err)
+		}
 		entries = append(entries, compactExponentEntry{
 			magnitude: exponent,
-			exponent:  ecma402nf.CompactExponentForPattern(exponent, other),
+			exponent:  parsed.Exponent,
 		})
 	}
-	return compactExponentSet{entries: entries}
+	return compactExponentSet{entries: entries}, nil
 }
 
 func (p compactExponentSet) exponentForMagnitude(magnitude int) (int, bool) {

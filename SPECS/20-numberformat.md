@@ -334,6 +334,26 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 3. `exponent` is the compact exponent selected from generated compact pattern data, including the rounded-carry case where a value moves into the next compact magnitude.
 4. NumberFormat **MUST** resolve the exact generated cardinal rule for its constructor data locale in `New`. A missing rule is a constructor/data error; runtime formatting must not substitute English or an always-`other` rule. NumberFormat must not parse the plural DSL, copy generated plural rules, or hold a public `pluralrules.PluralRules` instance.
 5. Public `pluralrules.PluralRules` compact notation is a different observable operation: it selects the public plural category from the source decimal string plus the compact exponent. That contract is owned by [SPEC 40 §Compact Operand Contract](./40-pluralrules.md#compact-operand-contract).
+6. Compact exponent extraction and NumberFormat affix compilation consume the same `internal/pattern.ParseCompact` result. LDML quotes protect literal digits and semicolons; doubled apostrophes emit one apostrophe. The positive subpattern supplies the compact affix; the existing sign partition supplies the sign. A plural pattern may omit the number field (for example Italian `mille`); formatting then retains the compact word and sign without inserting the numeric mantissa. The generator rejects unclosed quotes with the source locale, display and row key, and constructors propagate unexpected malformed embedded data rather than silently using an empty affix.
+7. The constructor selects one complete compact pattern family in this order: requested numbering system/display, `latn` with that display, requested numbering system/short, `latn`/short. The first nonempty family supplies all magnitudes and plural rows; missing individual magnitudes do not borrow rows from another family. This template fallback does not change resolved `numberingSystem` or `compactDisplay`, and does not choose number symbols. An invalid pattern in the selected family remains a constructor error.
+8. Non-name currency compact formatting consumes the generated currency compact family; decimal, percent, unit and currency-name formatting consume the decimal family. A currency compact row is a complete pattern: `¤` becomes a `currency` part, compact words remain `compact`, and whitespace remains `literal`. Its sign is supplied by the canonical sign partition outside the compiled pattern. When a complete currency compact pattern has already supplied a currency part, neither single-value nor range style assembly wraps it in another standard/accounting pattern. Missing compact entries and the raw `0` sentinel use the normal currency pattern.
+
+Evidence: `numberformat/compact_pattern_test.go`,
+`numberformat/testdata/conformance/manual/compact-patterns.json`, and
+`tools/gen-cldr/cldr/numbers_test.go`. The manual uk/it text, complete parts and
+resolved records, and the en-US/arab short/long template-fallback records, were
+cross-checked with Node v26.10.0 / ICU 78.3 / CLDR 48.0;
+they are not generated witnesses for the pinned Node v26.0.0 lane.
+The family fallback follows
+`.references/node/deps/icu-small/source/i18n/number_compact.cpp`
+(`CompactData::populate`), while scaling remains the ECMA-402
+`ComputeExponentForMagnitude` operation.
+The USD currency long/accounting/numbering-fallback records use the same native
+probe. The cross-K/M currency range record instead keeps pinned CLDR 48.1.0 en
+`{0}–{1}` and the package's existing separator strategy: `$10K–$2M` with
+endpoint currency/compact parts and a shared en dash. ICU's padding around
+that separator is an allowed display difference, not a currency-compilation
+requirement.
 
 > **Why**: Compact suffix selection is a NumberFormat-internal formatting step. The stable boundary is "display decimal + compact exponent + generated CLDR rule"; public PluralRules has its own native-observable compact selection semantics.
 >
@@ -345,11 +365,51 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 
 1. `signDisplay = "negative"` and `"exceptZero"` are added in ES 2024 and must be implemented.
 2. `currencyDisplay = "narrowSymbol"` **MUST** fall back to `"symbol"` when CLDR data lacks narrow form.
-3. `currencySign = "accounting"` **MUST** use the CLDR accounting pattern; when the negative sub-pattern exists, the minus sign is consumed by the pattern, and when it does not exist, the explicit sign part is retained.
+3. When no complete currency compact row applies, `currencySign = "accounting"` **MUST** use the CLDR accounting pattern; when the negative sub-pattern exists, the minus sign is consumed by the pattern, and when it does not exist, the explicit sign part is retained. A complete currency compact row keeps its own pattern and the explicit sign: en-US USD compact formats `-10000` as `-$10K`, while `-12` remains `($12)`.
 4. `currencyDisplay = "name"` **MUST** use the same plural category for both the localized currency name and its generated `unitPattern-count-*` placement; unit patterns consume the same style category. The category comes from the unlocalized formatted decimal, not `Rounded.String()`: standard notation retains digit-option zeros such as `1.00`, while scientific, engineering, and compact mantissas are restored to their full magnitude with the selected exponent before operand construction. Compact suffix selection remains the separate scaled-mantissa contract in §4.1. A missing category falls back to `other`; a missing numbering-system row falls back to the validated default row inside the same locale. The constructor compiles all reachable placements once; formatting inserts the complete number partition at `{0}` and the selected localized name (or unknown code) at `{1}`.
 5. A currency-name pattern **MUST NOT** apply the currency-symbol accounting sub-pattern. The number partition retains its own sign, and any ALM/LRM/RLM carried around the CLDR sign symbol is emitted as adjacent `literal` parts so `FormatToParts` preserves native part boundaries.
-6. Compact suffix selection **MUST** first determine the plural category according to §4.1, and then check CLDR `numbers.json` `decimalFormats.{short|long}.decimalFormat[length].decimal-format-pattern.<category>`; when category is missing, fall back to `other`.
+6. Compact pattern selection **MUST** determine the plural category according to §4.1 within the constructor-selected decimal or currency family; when the category is missing, fall back to `other`. Non-name currency formatting must not substitute a decimal long word for a currency compact row.
 7. Grouping is decided from displayed integer digits after rounding. `auto` uses CLDR `minimumGroupingDigits`, `min2` uses `max(2, minimumGroupingDigits)` as ICU does, and `always` uses a minimum of one. The threshold is primary group size plus that minimum; `false` disables grouping. The constructor freezes this strategy alongside primary and secondary sizes.
+
+Explicit numbering-system patterns retain their style-specific grouping.
+The pinned gu/gujr decimal pattern has Indian grouping, while its percent and
+standard currency patterns use groups of three. For `1234567.89`, public
+percent and USD currency output is `૧૨૩,૪૫૬,૭૮૯%` and `US$૧,૨૩૪,૫૬૭.૮૯`.
+`numberformat/testdata/conformance/manual/number-format-families.json`
+verifies complete text, parts and resolved JSON, with gujr decimal and latn
+style controls. Its Node v26.10.0 / ICU 78.3 / CLDR 48.0 observations agree
+with these CLDR 48.1.0 source patterns; they are not pinned Node witnesses.
+
+Currency style freezes monetary separators at construction: each nonempty
+`CurrencyDecimal` / `CurrencyGroup` override replaces the ordinary decimal /
+group symbol; omission or an empty override retains the ordinary symbol.
+Other styles use ordinary symbols. The pinned de-AT row has ordinary group
+NBSP and currency group `.`, while fr-CH has ordinary decimal `,` and currency
+decimal `.`. fr-CH proves source extraction; it is outside the default profile.
+Evidence: `numberformat/numberformat.go`,
+`numberformat/testdata/conformance/manual/monetary-separators.json`, and
+`tools/gen-cldr/cldr/numbers_test.go` (independent pinned-source assertions).
+The fixture uses pinned CLDR 48.1.0 data and a Node v26.10.0 / ICU 78.3 /
+CLDR 48.0 cross-check, not the pinned Node v26.0.0 witness lane.
+
+Non-name currency spacing uses the validated CLDR `currencySpacing` insertion
+texts. Construction classifies the currency's first/last code points against
+the pinned non-S/non-Z condition and freezes the applicable texts. Standard,
+accounting, compact, and range endpoints share the same parts operation after
+digit localization: insert a `literal` only at an adjacent Nd digit. This
+preserves existing pattern whitespace, bidi controls, and non-finite boundaries;
+hanidec characters do not match Nd. Currency-name placement keeps its separate
+plural-sensitive owner. Formatting does not reload spacing data or parse rules.
+
+Evidence: `numberformat/currency_spacing_test.go` and
+`numberformat/testdata/conformance/manual/currency-spacing.json`, pinned
+CLDR 48.1.0 en/bn/ar-EG/de-DE number patterns, FormatJS
+`ecma402-abstract/NumberFormat/format_to_parts.ts`, and ICU
+`i18n/number_modifiers.cpp`. Single-value fixture records were witnessed with
+Node v26.10.0 / ICU 78.3 / CLDR 48.0. Range records keep the package's pinned
+separator and shared-affix strategy: spacing accompanying shared currency is
+`shared`, while numeric endpoint parts retain their endpoint source. Native
+range padding/source choices do not define this implementation's ILND strategy.
 
 ---
 
@@ -360,7 +420,7 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 1. `FormatRange(a, b)` and `FormatRangeToParts(a, b)` **MUST** consume one package-private number-range partition. That partition alone formats both endpoints, decides the approximate branch from visible endpoint text, selects the range separator, collapses shared affixes, and assigns sources. `FormatRange` only joins its `Value` fields; `FormatRangeToParts` returns the partition without recomputing range decisions.
 2. Approximate range equality **MUST** compare the final visible endpoint text produced by the NumberFormat partition pipeline. A rounded-decimal shortcut is forbidden because notation, exponent, sign, currency, unit, compact, and literal parts can make two equal rounded numeric values visibly different.
 3. `CollapseNumberRange` **MUST** consume the `NumberFormatPart{Type, Value}` sequence after approximate equality has failed. Prefix/suffix collapse remains package-local; **BANNED** sharing an abstract generic `CollapseRange[T]` with DateTimeFormat.
-4. The shared range literal **MUST** come from the constructor-resolved CLDR number symbols `rangeSign`; formatter code must not hard-code the English en dash. Separator spacing considers the remaining endpoint sign after skipping leading bidi literals. A leading bidi literal from the end endpoint joins the shared separator; its sign remains `endRange` unless the complete compatible affix pair collapses.
+4. The shared range literal **MUST** come from the constructor-resolved CLDR number symbols `rangeSign`; formatter code must not hard-code the English en dash. The loader retains the complete middle text of `{0}<separator>{1}`; pinned pt-PT supplies ` - `. Separator spacing considers the remaining endpoint sign after skipping leading bidi literals, adding whitespace only on a side that lacks it. A leading bidi literal from the end endpoint joins the shared separator; its sign remains `endRange` unless the complete compatible affix pair collapses.
 5. Range source **MUST** be limited to ECMA-402 three values: `"startRange" | "shared" | "endRange"`;`approximatelySign` is a part type, not a source.
 6. `FormatRange` / `FormatRangeToParts` **MUST** return `ErrInvalidValue` for `NaN` endpoints instead of signaling errors with empty strings or nil parts. Positive and negative infinity remain valid ECMA-402 mathematical values and must format through the normal parts pipeline.
 7. `a > b` **MUST NOT** be locally normalized, transposed, rejected, or added `~`; numeric ranges are formatted in input order and then collapsed.
@@ -387,6 +447,13 @@ output; it does not call a public `pluralrules.PluralRules` instance.
 > **Rejected**: Abstract general `CollapseRange[T Part]` generic function - one more layer of indirection, and the "equivalence" semantics of `T` are different between the two packages.
 
 ---
+
+Range separator evidence: `tools/gen-cldr/cldr/numbers_test.go`,
+`numberformat/range_test.go`, and
+`numberformat/testdata/conformance/manual/range-separators.json`.
+The source is pinned CLDR 48.1.0 pt-PT `numbers.json`; Node v26.10.0 /
+ICU 78.3 / CLDR 48.0 confirms the displayed separator but does not define this
+package's legal collapse or source attribution strategy.
 
 ## 6. Input type support
 
@@ -469,7 +536,7 @@ green.
 
 | Contract | Evidence | Status |
 |----------|----------|--------|
-| FormatJS `format`, `formatToParts`, `formatRange`, and `formatRangeToParts` fixtures are byte-equal except accepted divergence/XFAIL records. | `numberformat/conformance_unified_test.go`; `numberformat/testdata/conformance/formatjs/*.json`; `task conformance:verify` | Satisfied |
+| FormatJS `format`, `formatToParts`, `formatRange`, and `formatRangeToParts` fixtures are byte-equal except accepted divergence/XFAIL records. | `numberformat/conformance_unified_test.go`; `numberformat/testdata/conformance/formatjs/*.json`; `task conformance:verify` | Required callback verification; the structural gate alone does not prove this |
 | Compact `zh-TW` output stays source-owned by the generated FormatJS lane, including `format(98765) == "9.9\u842c"`. | `numberformat/testdata/conformance/formatjs/notation-compact-zh-tw-test-ts.json` | Satisfied |
 | Constructor, invalid option, NaN, decimal parse, accounting sign, compact long, and rounding-priority behavior are covered by package tests and Node/manual fixtures. | `numberformat/format_test.go`; `numberformat/resolved_options_test.go`; `numberformat/range_test.go`; `numberformat/testdata/conformance/node-v26/*.json`; `numberformat/testdata/conformance/manual/*.json` | Satisfied |
 | Number ranges select shared unit and currency-name morphology from the cardinal range category, and paired sign/percent affixes preserve native text, parts, and sources. | `numberformat/range_test.go`; `numberformat/testdata/conformance/node-v26/edge.json`; `tools/node-witness/main.go`; `tools/conformance/product_contract_test.go`; `task conformance:verify` | Satisfied |
@@ -487,6 +554,17 @@ implementation mechanics rather than ECMA-402-observable behavior.
 ---
 
 ## 11.1 Verification Evidence Boundary
+
+`numberformat/testdata/divergences.md` records accepted FormatJS differences
+for compact-percent data/parts, very large compact grouping, and same-sign
+currency ranges. Original source expectations are retained and skipped by the
+existing runner. `testdata/conformance/manual/adopted-number-patterns.json`
+independently executes the selected library contract with complete text,
+parts/range sources, and resolved JSON. Its values follow the normative percent
+partition, pinned locale data, and legal grouping/collapse choices. Host
+Node v26.10.0 / ICU 78.3 / CLDR 48.0 comparison is distinct from the pinned
+v26.0.0 witness lane; native percent part types and range sources are not copied
+when they conflict with the adopted contract.
 
 The scientific/engineering rounding-overflow carry (single `computeExponent`,
 §4 rule 5) and the `roundingPriority` `RoundingMagnitude` tie-break (§2.2 rule
@@ -538,8 +616,27 @@ Evidence: `numberformat/percent_test.go`, CLDR numbers.json percentFormats,
 and `.references/node/deps/icu-small/source/i18n/number_patternmodifier.cpp`.
 Pinned CLDR 48.1 percent spacing remains the source of truth, including NBSP
 in French compact-percent output; a newer/different ICU witness may use ASCII
-space there. The test uses ar-EG for generated arab symbols and ar for latn;
-this does not widen the existing default-plus-latn generated symbol profile.
+space there. The percent test uses ar-EG for arab symbols and ar for latn.
+
+### Numbering-system symbol sources
+
+The constructor consumes the complete generated symbols record for its resolved
+numbering system. Generation preserves explicit locale symbols independently
+of format families, then fills absent concrete root rows from the same CLDR
+release. A validated root alias uses that locale's latn symbols; an omitted
+numbering system still selects the locale default. Digits and resolved options
+retain the requested system. Symbols never borrow an unrelated locale's NaN,
+exponent separator or signs.
+
+`numberformat/testdata/conformance/manual/number-symbols.json` verifies root
+arab/arabext, the ar and ur overrides, scientific separators, NaN and percent
+bidi parts. Its complete observations were independently checked with Node
+v26.10.0 / ICU 78.3 / CLDR 48.0 and corroborated by pinned CLDR 48.1.0 inputs;
+they are not generated witnesses for the pinned Node lane. The original
+FormatJS misc 015 fixture remains unchanged. `manual/symbols-alias.json`
+verifies ar-EG/deva's locale-latn alias with complete text, parts and resolved
+JSON. Source provenance and generator/runtime verification belong to
+[SPEC 50](./50-cldr-data.md#number-root-symbols-source).
 
 All numeric styles and scientific/engineering exponent signs use the same
 private symbol partition: ALM/LRM/RLM surrounding a sign are `literal` parts,

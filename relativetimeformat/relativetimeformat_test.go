@@ -246,18 +246,6 @@ func TestCompileRelativeTimePatternSetFillsMissingCategoriesFromOther(t *testing
 	}
 }
 
-func TestRelativeTimePatternText(t *testing.T) {
-	t.Parallel()
-
-	pattern, err := compileRelativeTimePattern("in {0} days")
-	if err != nil {
-		t.Fatalf("compileRelativeTimePattern() error = %v", err)
-	}
-	if got := relativeTimePatternText(pattern, "1.5"); got != "in 1.5 days" {
-		t.Fatalf("relativeTimePatternText() = %q, want %q", got, "in 1.5 days")
-	}
-}
-
 func TestRelativeTimeFormatNumericAutoLiteral(t *testing.T) {
 	t.Parallel()
 

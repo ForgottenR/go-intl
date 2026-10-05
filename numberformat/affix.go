@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	cldrcurrency "github.com/agentable/go-intl/internal/cldr/currency"
 	cldrlocale "github.com/agentable/go-intl/internal/cldr/locale"
@@ -14,6 +15,9 @@ import (
 )
 
 func applyCurrencyPatternForPlural(parts []Part, plural pluralop.Category, resolved ResolvedOptions, currencyLoc cldrcurrency.Locale, currency currencyPatternSet) []Part {
+	if containsPartType(parts, PartCurrency) {
+		return parts
+	}
 	if ecma402.ResolvedScalarValue(resolved.CurrencyDisplay) == CurrencyDisplayName {
 		name := currencyDisplayForNumberFormat(currencyLoc, resolved, plural.String())
 		return currency.name.pattern(plural).append(parts, name)
@@ -104,6 +108,7 @@ type currencyPatternSet struct {
 	negative    numberAffixPattern
 	hasNegative bool
 	name        currencyNamePatternSet
+	spacing     cldrnumber.CurrencySpacing
 }
 
 func currencyPatternsForNumberFormat(loc cldrnumber.Locale, currencyLoc cldrcurrency.Locale, opts ResolvedOptions) currencyPatternSet {
@@ -121,11 +126,56 @@ func currencyPatternsForNumberFormat(loc cldrnumber.Locale, currencyLoc cldrcurr
 	positive, negative, hasNegative := strings.Cut(pattern, ";")
 	affix := Part{Type: PartCurrency, Value: currencyDisplayForNumberFormat(currencyLoc, opts, "other")}
 	set := currencyPatternSet{positive: compileNumberAffixPattern(positive, affix)}
+	set.spacing = loc.CurrencySpacing(opts.NumberingSystem)
+	first, _ := utf8.DecodeRuneInString(affix.Value)
+	last, _ := utf8.DecodeLastRuneInString(affix.Value)
+	if unicode.IsSymbol(first) || unicode.Is(unicode.Z, first) {
+		set.spacing.BeforeCurrency = ""
+	}
+	if unicode.IsSymbol(last) || unicode.Is(unicode.Z, last) {
+		set.spacing.AfterCurrency = ""
+	}
 	if hasNegative {
 		set.negative = compileNumberAffixPattern(negative, affix)
 		set.hasNegative = true
 	}
 	return set
+}
+
+// applySpacing checks localized digits: hanidec characters do not match Nd.
+// Existing pattern literals and non-finite values retain their own boundaries.
+func (p currencyPatternSet) applySpacing(parts []Part) []Part {
+	if p.spacing.BeforeCurrency == "" && p.spacing.AfterCurrency == "" {
+		return parts
+	}
+	for i, part := range parts {
+		if part.Type != PartCurrency {
+			continue
+		}
+		before, after := false, false
+		if i > 0 && p.spacing.BeforeCurrency != "" {
+			r, _ := utf8.DecodeLastRuneInString(parts[i-1].Value)
+			before = unicode.IsDigit(r)
+		}
+		if i+1 < len(parts) && p.spacing.AfterCurrency != "" {
+			r, _ := utf8.DecodeRuneInString(parts[i+1].Value)
+			after = unicode.IsDigit(r)
+		}
+		if !before && !after {
+			return parts
+		}
+		out := make([]Part, 0, len(parts)+2)
+		out = append(out, parts[:i]...)
+		if before {
+			out = appendLiteral(out, p.spacing.BeforeCurrency)
+		}
+		out = append(out, part)
+		if after {
+			out = appendLiteral(out, p.spacing.AfterCurrency)
+		}
+		return append(out, parts[i+1:]...)
+	}
+	return parts
 }
 
 func (p currencyPatternSet) pattern(negative bool) (numberAffixPattern, bool) {

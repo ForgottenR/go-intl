@@ -3,12 +3,56 @@ package main
 import (
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/agentable/go-intl/tools/conformance"
 )
+
+func TestNodeWitnessPreservesObservationPresence(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	nodePath := filepath.Join(root, "node")
+	dir, err := nodeFixtureDir(conformance.ActiveNodeWitnessVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	script := fmt.Sprintf(`#!/bin/sh
+cat <<'JSON'
+{"nodeVersion":%q,"numberFormatSmoke":[
+{"id":"numberformat-%s-empty","source":"node:%s:numberformat","locale":"en","options":{},"input":1,"expected":"","expectedOk":false,"expectedLocales":[],"expectedParts":[],"expectedRange":"","expectedRangeParts":[],"expectedResolvedOptions":{}},
+{"id":"numberformat-%s-absent","source":"node:%s:numberformat","locale":"en","options":{},"input":1,"expected":"1"}
+]}
+JSON
+`, conformance.ActiveNodeWitnessVersion, dir, conformance.ActiveNodeWitnessVersion, dir, conformance.ActiveNodeWitnessVersion)
+	if err := os.WriteFile(nodePath, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := run([]string{"-node", nodePath, "-out", root}); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := conformance.LoadFixtures(filepath.Join(root, "numberformat"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loaded) != 2 {
+		t.Fatalf("LoadFixtures() returned %d records, want 2", len(loaded))
+	}
+	empty, absent := loaded[0], loaded[1]
+	if empty.Expected == nil || *empty.Expected != "" || empty.ExpectedOK == nil || *empty.ExpectedOK ||
+		empty.ExpectedLocales == nil || empty.ExpectedParts == nil || empty.ExpectedRange == nil ||
+		*empty.ExpectedRange != "" || empty.ExpectedRangeParts == nil || string(empty.ExpectedResolved) != "{}" {
+		t.Fatalf("native pipeline lost an empty observation: %+v", empty)
+	}
+	if absent.Expected == nil || *absent.Expected != "1" || absent.ExpectedOK != nil ||
+		absent.ExpectedLocales != nil || absent.ExpectedParts != nil || absent.ExpectedRange != nil ||
+		absent.ExpectedRangeParts != nil || absent.ExpectedResolved != nil {
+		t.Fatalf("native pipeline invented an absent observation: %+v", absent)
+	}
+}
 
 func TestWriteFixturesPreservesEmptyExpectations(t *testing.T) {
 	t.Parallel()

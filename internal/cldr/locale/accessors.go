@@ -137,22 +137,22 @@ func (l Locale) DefaultNumberingSystem() string {
 	return "latn"
 }
 
-// HourCyclePreference returns the region's hour-cycle preference list, falling
-// back to the world ("001") default.
-func HourCyclePreference(region string) []string {
+// HourCyclePreference checks language-region then region data for each preferred
+// region in order. Missing time data uses ECMA-402's h23 fallback.
+func HourCyclePreference(language string, regions ...string) []string {
 	preferenceOnce.Do(loadPreferenceData)
-	if data, ok := hourCyclePreference[region]; ok {
-		return slices.Clone(data)
+	for _, region := range regions {
+		if region == "" {
+			continue
+		}
+		if data := hourCyclePreference[language+"-"+region]; len(data) > 0 {
+			return slices.Clone(data)
+		}
+		if data := hourCyclePreference[region]; len(data) > 0 {
+			return slices.Clone(data)
+		}
 	}
-	return slices.Clone(hourCyclePreference[worldRegion])
-}
-
-// HasHourCyclePreference reports whether the region has an explicit hour-cycle
-// preference.
-func HasHourCyclePreference(region string) bool {
-	preferenceOnce.Do(loadPreferenceData)
-	_, ok := hourCyclePreference[region]
-	return ok
+	return []string{"h23"}
 }
 
 // FirstDayOfWeek returns the region's first day of the week.

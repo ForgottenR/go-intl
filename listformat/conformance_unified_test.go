@@ -36,6 +36,15 @@ func runListConformanceFixture(t *testing.T, fixture conformance.Fixture) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil || fixture.ExpectedOK != nil || fixture.ExpectedLocales != nil {
+		t.Fatal("unsupported listformat observation")
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.Expected == nil && fixture.ExpectedParts == nil {
+		return
+	}
 	input := conformanceStringListInput(t, fixture)
 	if fixture.Expected != nil {
 		if got := format.Format(input); got != *fixture.Expected {

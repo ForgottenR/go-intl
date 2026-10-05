@@ -19,23 +19,51 @@ func TestDurationFormatConformance(t *testing.T) {
 func runDurationConformanceFixture(t *testing.T, fixture conformance.Fixture) {
 	t.Helper()
 
+	if fixture.IsSupportedLocalesOf() {
+		testcontract.AssertSupportedLocalesOfFixture(t, fixture, intltest.LocaleListJSON, func(locales locale.List) (locale.List, error) {
+			return SupportedLocalesOf(locales, conformanceDurationOptions(t, fixture))
+		}, func(code string) error {
+			return conformanceDurationError(t, code)
+		})
+		return
+	}
 	loc := intltest.Locale(t, fixture.Locale)
 	format, err := New(locale.List{loc}, conformanceDurationOptions(t, fixture))
-	if testcontract.AssertErrorCode(t, "New("+fixture.Locale+")", err, fixture.ErrorCode, func(code string) error {
-		return conformanceDurationError(t, code)
-	}) {
+	if fixture.ErrorCode == "invalid_option" || fixture.ErrorCode == "invalid-option" {
+		testcontract.AssertErrorCode(t, "New("+fixture.Locale+")", err, fixture.ErrorCode, func(code string) error {
+			return conformanceDurationError(t, code)
+		})
 		return
 	}
 	if err != nil {
 		t.Fatalf("New(%q) error = %v", fixture.Locale, err)
 	}
+	if fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil || fixture.ExpectedOK != nil || fixture.ExpectedLocales != nil {
+		t.Fatal("unsupported durationformat observation")
+	}
 	if fixture.ExpectedResolved != nil {
 		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
 	}
-	if fixture.Expected == nil && fixture.ExpectedParts == nil {
+	if fixture.ErrorCode == "" && fixture.Expected == nil && fixture.ExpectedParts == nil {
 		return
 	}
 	input := conformanceDurationInput(t, fixture)
+	if fixture.ErrorCode != "" {
+		operation := "Format()"
+		switch fixture.Feature {
+		case "", "format":
+			_, err = format.Format(input)
+		case "formatToParts":
+			operation = "FormatToParts()"
+			_, err = format.FormatToParts(input)
+		default:
+			t.Fatalf("unsupported durationformat feature %q", fixture.Feature)
+		}
+		testcontract.AssertErrorCode(t, operation, err, fixture.ErrorCode, func(code string) error {
+			return testcontract.IntlErrorCode(t, "durationformat runtime", code, "invalid_value")
+		})
+		return
+	}
 	if fixture.Expected != nil {
 		got, err := format.Format(input)
 		if err != nil {

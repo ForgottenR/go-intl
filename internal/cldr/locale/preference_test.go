@@ -9,13 +9,11 @@ import (
 func TestPreferenceAccessors(t *testing.T) {
 	t.Parallel()
 
-	if got, want := HourCyclePreference("US"), []string{"h12", "h23"}; !reflect.DeepEqual(got, want) {
+	if got, want := HourCyclePreference("", "US"), []string{"h12", "h23"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("HourCyclePreference(US) = %#v, want %#v", got, want)
 	}
-	if !HasHourCyclePreference("US") || HasHourCyclePreference("ZZ") {
-		t.Fatalf("HasHourCyclePreference(US/ZZ) = %v/%v, want true/false", HasHourCyclePreference("US"), HasHourCyclePreference("ZZ"))
-	}
-	if got, want := HourCyclePreference("ZZ"), []string{"h23", "h12"}; !reflect.DeepEqual(got, want) {
+
+	if got, want := HourCyclePreference("", "ZZ"), []string{"h23"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("HourCyclePreference(ZZ) = %#v, want %#v", got, want)
 	}
 	if got, want := FirstDayOfWeek("US"), time.Sunday; got != want {

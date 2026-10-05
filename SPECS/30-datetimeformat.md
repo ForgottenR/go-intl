@@ -227,9 +227,9 @@ type Options struct {
    else if Locale.HourCycle() != "":
        resolved.HourCycle := Locale.HourCycle()
    else:
-       resolved.HourCycle := dataLocale default (taken from CLDR `timeData.json` `preferred`)
+       resolved.HourCycle := first allowed cycle for dataLocale in CLDR `timeData.json`
    ```
-2. All four explicit cycles (`h11`, `h12`, `h23`, `h24`) are legal through options and Unicode `hc`; regional preferences determine defaults, not capability. Constructor-selected hour fields execute the resolved cycle while retaining the selected pattern width.
+2. All four explicit cycles (`h11`, `h12`, `h23`, `h24`) are legal through options and Unicode `hc`; language-region preferences determine defaults, not capability. The shared locale kernel checks language-region before region; an inferred region supplies the same query when the data locale omits one. `fr-CA` defaults to h23 while `en-CA` defaults to h12. Constructor-selected hour fields execute the resolved cycle while retaining the selected pattern width.
 3. Style endpoint patterns, interval fields, and distinguishing cross-date fallback programs must use that same resolved cycle. Switching between 12/24-hour families selects the locale’s complete alternative time pattern, including day-period position and literals; style resolved records continue to omit component fields.
 4. When hour12 is present, Unicode hc is excluded from locale negotiation and does not survive in the resolved locale, even if it equals the selected cycle. Japanese tags with or without JP use the pinned JP preference h11 for hour12=true; the inferred region never changes the public locale tag.
 5. The simultaneous existence of `Options{HourCycle: gointl.String(string(H11HourCycle)), Hour12: gointl.Bool(false)}` MUST let `Hour12` take precedence over `HourCycle` (ECMA-402 §13.1.1.1).
@@ -339,8 +339,8 @@ Active generated pattern data currently covers Gregorian/ISO-8601 observable beh
 - IANA link (backwards compatible):`"US/Eastern"` - **MUST** resolve to canonical via [SPEC 32 §CanonicalLink](./32-datetimeformat-tz.md#canonicallink)
 - UTC offset string:`"+05:30"` / `"-08:00"` / `"+00:00"` -- **MUST** be parsed via [SPEC 32 §ParseOffsetString](./32-datetimeformat-tz.md#parseoffsetstring)
 2. **MUST** call `time.LoadLocation` or `internal/tz.Resolve` when `New`, cache `*time.Location` to the internal slot; **It is forbidden** to parse the time zone name during the `Format` call.
-3. Parsing failure **MUST** return `ErrInvalidOption` wrapped error, the message contains the timezone string.
-4. `Options{TimeZone: nil}` has the same semantics as the unpassed option: the host default is used through the ECMA-402 `SystemTimeZoneIdentifier()` branch. `Options{TimeZone: gointl.String("")}` is an explicit empty identifier and **MUST** return an error matching `gointl.ErrUnsupportedOption`.
+3. Time-zone resolution failure **MUST** return a wrapped error matching `gointl.ErrUnsupportedOption`; the message contains the time-zone string.
+4. `Options{TimeZone: nil}` has the same semantics as the unpassed option: the host default is used through the ECMA-402 `SystemTimeZoneIdentifier()` branch. The default can fail resolution when a Go TZ file path has no usable Intl identity; see [SPEC 32 default source boundary](./32-datetimeformat-tz.md#default-source-boundary). `Options{TimeZone: gointl.String("")}` is an explicit empty identifier and **MUST** return an error matching `gointl.ErrUnsupportedOption`.
 5. UTC offset form `*time.Location` **MUST** never be DST (direct fixed-offset zone), aligned with ECMA-402 offset time-zone semantics.
 6. UTC offset strings must accept hours `00` through `23` with minutes `00` through `59`; `+23:59` and `-23:59` are valid, while `+24:00` and `-24:00` are unsupported. Negative zero offsets canonicalize to `+00:00`.
 7. Manual conformance fixtures must keep invalid IANA zones and unsupported offset forms in the `ErrUnsupportedOption` path instead of falling back to the default time zone.

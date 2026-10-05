@@ -24,6 +24,13 @@ func TestListConformanceObservations(t *testing.T) {
 		fixture conformance.Fixture
 		failure string
 	}{
+		{"resolved only", conformance.Fixture{Input: jsontext.Value(`null`), ExpectedResolved: jsontext.Value(`{"locale":"en","type":"conjunction","style":"long"}`)}, ""},
+		{"wrong resolved", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"wrong","type":"conjunction","style":"long"}`)}, "ResolvedOptions"},
+		{"missing resolved field", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"en","style":"long"}`)}, "ResolvedOptions"},
+		{"extra resolved field", conformance.Fixture{ExpectedResolved: jsontext.Value(`{"locale":"en","type":"conjunction","style":"long","extra":true}`)}, "ResolvedOptions"},
+		{"text and wrong resolved", conformance.Fixture{Expected: new("A and B"), ExpectedResolved: jsontext.Value(`{"locale":"wrong"}`)}, "ResolvedOptions"},
+		{"unsupported range", conformance.Fixture{ExpectedRange: new("wrong")}, "unsupported listformat observation"},
+		{"unsupported range parts", conformance.Fixture{ExpectedRangeParts: []conformance.RangePart{}}, "unsupported listformat observation"},
 		{"parts only", conformance.Fixture{ExpectedParts: parts}, ""},
 		{"empty parts only", conformance.Fixture{Input: jsontext.Value(`[]`), ExpectedParts: []conformance.Part{}}, ""},
 		{"text and parts", conformance.Fixture{Expected: new("A and B"), ExpectedParts: parts}, ""},

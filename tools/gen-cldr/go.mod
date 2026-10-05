@@ -2,7 +2,7 @@ module github.com/agentable/go-intl/tools/gen-cldr
 
 go 1.27.0
 
-require github.com/agentable/go-intl v0.4.12
+require github.com/agentable/go-intl v0.4.13
 
 require golang.org/x/text v0.42.0 // indirect
 

@@ -137,6 +137,8 @@ var dataManifest = DataManifest{
 		{Name: "tools/locale-profile.json", SHA256: "822923d77a510a142df2821429a34cbb22ebac3157a984cba28864605ab21c57"},
 		{Name: "tools/gen-cldr/tzdata.json", SHA256: "fa31ba261f6927ba22f9f474e7944fef8d979a2968f163639c8fbe688e56b91b"},
 		{Name: "iana/tzdata2025b.tar.gz", SHA256: "11810413345fc7805017e27ea9fa4885fd74cd61b2911711ad038f5d28d71474"},
+		{Name: "tools/gen-cldr/cldr/number-root/root.xml", SHA256: "c16e0df1d410c8f481fcb9c4dd195709e08ec9f8a6519d2d9905078e32990f17"},
+		{Name: "tools/gen-cldr/cldr/number-root/source.json", SHA256: "53ffb49bba009de1b21f98e56a4cb7722ebbecd14c6db90bf2da0ec25e74741f"},
 		{Name: "cldr-json/cldr-bcp47/package.json", SHA256: "f0f7f7a9dde03427ad62691d85dab5742d2a9b32aefd310e225e93fa81ce1590"},
 		{Name: "cldr-json/cldr-core/package.json", SHA256: "011bbe1bbef323918db142e04e5c944d8cd498a4ac1023b600e1e8c3bc75fca4"},
 		{Name: "cldr-json/cldr-dates-full/package.json", SHA256: "88934d4889c4ecc2b2acdf6ebbee6dd15067def36d015deaaae4473ca04a6e7f"},

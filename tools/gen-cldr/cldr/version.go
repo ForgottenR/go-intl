@@ -8,44 +8,15 @@ import (
 	"encoding/json/v2"
 	"fmt"
 	"path/filepath"
-	"strings"
+
+	"github.com/agentable/go-intl/tools/internal/datapin"
 )
 
 // Versions captures the CLDR / ICU / tzdata pin from internal/cldr/VERSION.
-type Versions struct {
-	CLDR   string
-	ICU    string
-	TZData string
-}
+type Versions = datapin.Versions
 
-// ReadVersionFile parses the three-line pin file. Unknown lines are ignored;
-// any of the required keys (cldr/icu/tzdata) being absent is an error so the
-// generator never runs with a partially-specified pin.
-func ReadVersionFile(path string) (Versions, error) {
-	raw, err := readRequiredFile(path)
-	if err != nil {
-		return Versions{}, err
-	}
-	var v Versions
-	for line := range strings.SplitSeq(string(raw), "\n") {
-		key, val, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-		switch strings.TrimSpace(key) {
-		case "cldr":
-			v.CLDR = strings.TrimSpace(val)
-		case "icu":
-			v.ICU = strings.TrimSpace(val)
-		case "tzdata":
-			v.TZData = strings.TrimSpace(val)
-		}
-	}
-	if v.CLDR == "" || v.ICU == "" || v.TZData == "" {
-		return Versions{}, fmt.Errorf("incomplete pin in %s: %+v", path, v)
-	}
-	return v, nil
-}
+// ReadVersionFile reads the shared strict VERSION grammar.
+func ReadVersionFile(path string) (Versions, error) { return datapin.ReadVersions(path) }
 
 // CrossCheck verifies every CLDR package consumed by the generator against
 // the pinned package identity before any output is written.

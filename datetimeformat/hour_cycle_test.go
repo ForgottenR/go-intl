@@ -2,6 +2,7 @@ package datetimeformat
 
 import (
 	"encoding/json"
+	"encoding/json/jsontext"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,11 +10,12 @@ import (
 	"time"
 
 	"github.com/agentable/go-intl/internal/intltest"
+	"github.com/agentable/go-intl/internal/testcontract"
 )
 
 func TestStyleHourCycles(t *testing.T) {
 	t.Parallel()
-	for _, loc := range []string{"en-US", "en-GB", "ja-JP"} {
+	for _, loc := range []string{"en-US", "en-GB", "ja-JP", "fr-CA"} {
 		for _, cycle := range []string{"h11", "h12", "h23", "h24"} {
 			for _, style := range []string{"short", "medium"} {
 				for _, dateStyle := range []bool{false, true} {
@@ -109,7 +111,7 @@ func assertCycleRange(t *testing.T, f *DateTimeFormat, cycle string, start, end 
 
 func TestExplicitHourCycles(t *testing.T) {
 	t.Parallel()
-	for _, loc := range []string{"en-US", "en-GB"} {
+	for _, loc := range []string{"en-US", "en-GB", "fr-CA"} {
 		for _, cycle := range []string{"h11", "h12", "h23", "h24"} {
 			for _, matcher := range []string{"basic", "best fit"} {
 				for _, extension := range []bool{false, true} {
@@ -158,7 +160,7 @@ func TestLocaleHour12Preference(t *testing.T) {
 		hour12 bool
 		cycle  string
 	}{
-		{"ja", true, "h11"}, {"ja-JP", true, "h11"}, {"en-US", true, "h12"},
+		{"fr-CA", true, "h12"}, {"fr-CA", false, "h23"}, {"ja", true, "h11"}, {"ja-JP", true, "h11"}, {"en-US", true, "h12"},
 		{"ja", false, "h23"}, {"en-US", false, "h23"}, {"fr-FR", false, "h23"},
 	} {
 		for _, style := range []bool{false, true} {
@@ -236,5 +238,32 @@ func assertHourCycle(t *testing.T, f *DateTimeFormat, cycle string, instant time
 	}
 	if text, err := f.Format(instant); err != nil || text != joined {
 		t.Errorf("text %q, %v differs from parts %q", text, err, joined)
+	}
+}
+
+func TestLanguageRegionDefaultHourCycle(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, tag, cycle, resolved string
+		options                    Options
+	}{
+		{"French components", "fr-CA", "h23", `{"locale":"fr-CA","calendar":"gregory","numberingSystem":"latn","timeZone":"UTC","hourCycle":"h23","hour12":false,"hour":"2-digit"}`, Options{Hour: new("numeric")}},
+		{"English components", "en-CA", "h12", `{"locale":"en-CA","calendar":"gregory","numberingSystem":"latn","timeZone":"UTC","hourCycle":"h12","hour12":true,"hour":"numeric"}`, Options{Hour: new("numeric")}},
+		{"French style", "fr-CA", "h23", `{"locale":"fr-CA","calendar":"gregory","numberingSystem":"latn","timeZone":"UTC","hourCycle":"h23","hour12":false,"timeStyle":"short"}`, Options{TimeStyle: new("short")}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			opts := tc.options
+			opts.TimeZone = new("UTC")
+			f, err := New(intltest.LocaleList(t, tc.tag), opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			testcontract.AssertResolvedOptionsJSON(t, f.ResolvedOptions(), jsontext.Value(tc.resolved))
+			midnight := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+			assertHourCycle(t, f, tc.cycle, midnight)
+			assertCycleRange(t, f, tc.cycle, midnight, midnight.Add(3*time.Hour))
+			assertCycleRange(t, f, tc.cycle, midnight, midnight.Add(27*time.Hour))
+		})
 	}
 }

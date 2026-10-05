@@ -18,17 +18,27 @@ type Part struct {
 }
 
 func (f *RelativeTimeFormat) Format(value Value, unit Unit) (string, error) {
-	selection, err := resolveRelativeTimePattern(value, unit, f)
+	parts, err := f.partition(value, unit)
 	if err != nil {
 		return "", err
 	}
-	if selection.literal != "" {
-		return selection.literal, nil
+	size := 0
+	for _, part := range parts {
+		size += len(part.Value)
 	}
-	return relativeTimePatternText(selection.pattern, f.number.Format(value.numberFormatValue())), nil
+	var text strings.Builder
+	text.Grow(size)
+	for _, part := range parts {
+		text.WriteString(part.Value)
+	}
+	return text.String(), nil
 }
 
 func (f *RelativeTimeFormat) FormatToParts(value Value, unit Unit) ([]Part, error) {
+	return f.partition(value, unit)
+}
+
+func (f *RelativeTimeFormat) partition(value Value, unit Unit) ([]Part, error) {
 	selection, err := resolveRelativeTimePattern(value, unit, f)
 	if err != nil {
 		return nil, err
@@ -212,29 +222,6 @@ func relativeTimePatternParts(pattern ecma402.Pattern, unit Unit, numberParts []
 		}
 	}
 	return out
-}
-
-func relativeTimePatternText(pattern ecma402.Pattern, number string) string {
-	size := 0
-	for _, part := range pattern {
-		switch part.Type {
-		case ecma402.PatternPartLiteral:
-			size += len(part.Value)
-		case ecma402.PatternPartPlaceholder0:
-			size += len(number)
-		}
-	}
-	var b strings.Builder
-	b.Grow(size)
-	for _, part := range pattern {
-		switch part.Type {
-		case ecma402.PatternPartLiteral:
-			b.WriteString(part.Value)
-		case ecma402.PatternPartPlaceholder0:
-			b.WriteString(number)
-		}
-	}
-	return b.String()
 }
 
 func singularUnit(unit Unit) (Unit, bool) {

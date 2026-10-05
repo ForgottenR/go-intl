@@ -281,7 +281,7 @@ func TestRunGeneratesPluralRuleFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !containsAll(string(rangeRules), `"cmp"`, `"slices"`, "type rangeRecord struct", "func CardinalRange(loc string, start, end pluralop.Category)", "slices.BinarySearchFunc(cardinalRanges[:]", "var cardinalRanges = [...]rangeRecord", `{loc: "en", start: pluralop.One, end: pluralop.Other, result: pluralop.Other}`) {
+	if !containsAll(string(rangeRules), `"cmp"`, `"slices"`, "type rangeRecord struct", "func Range(loc string, start, end pluralop.Category)", "slices.BinarySearchFunc(rangeRecords[:]", "var rangeRecords = [...]rangeRecord", `{loc: "en", start: pluralop.One, end: pluralop.Other, result: pluralop.Other}`) {
 		t.Fatalf("range_rules.go missing fixed range table:\n%s", rangeRules)
 	}
 	if strings.Contains(string(rangeRules), "map[string]map[") {

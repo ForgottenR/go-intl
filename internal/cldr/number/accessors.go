@@ -56,15 +56,15 @@ func mergeSupportedNumberingSystems(extras []string) []string {
 	return out
 }
 
-// NumberSymbols returns the symbols for the given numbering system, defaulting
-// to the locale's default numbering system when numberingSystem is empty or has
-// no generated symbol row.
+// NumberSymbols returns explicit or inherited symbols. Missing rows follow the
+// validated root alias to this locale's latn symbols; an empty numberingSystem
+// selects the locale default.
 func (l Locale) NumberSymbols(numberingSystem string) NumberSymbols {
 	data, resolvedNumberingSystem := l.dataForResolvedNumberingSystem(numberingSystem)
 	if symbols, ok := data.symbols[resolvedNumberingSystem]; ok {
 		return withNumberSymbolDefaults(symbols)
 	}
-	return withNumberSymbolDefaults(data.symbols[data.defaultNumberingSystem])
+	return withNumberSymbolDefaults(data.symbols["latn"])
 }
 
 func withNumberSymbolDefaults(symbols NumberSymbols) NumberSymbols {
@@ -106,6 +106,16 @@ func (l Locale) CurrencyPattern(numberingSystem, sign string) string {
 		return pattern
 	}
 	return defaultCurrencyPattern
+}
+
+// CurrencySpacing returns the validated insertion text, using the locale's
+// default numbering-system row when the requested row is absent.
+func (l Locale) CurrencySpacing(numberingSystem string) CurrencySpacing {
+	data, resolvedNumberingSystem := l.dataForResolvedNumberingSystem(numberingSystem)
+	if spacing, ok := data.currencySpacing[resolvedNumberingSystem]; ok {
+		return spacing
+	}
+	return data.currencySpacing[data.defaultNumberingSystem]
 }
 
 // CurrencyNamePattern returns the currency-name placement pattern for the
@@ -152,23 +162,32 @@ func numberPattern(patterns numberPatternsByNumberingSystem, numberingSystem, de
 // numbering system defaults to the locale's default numbering system.
 func (l Locale) CompactPattern(numberingSystem, display string, exponent int, plural string) string {
 	data, resolvedNumberingSystem := l.dataForResolvedNumberingSystem(numberingSystem)
-	patterns := compactPatternRecord(data, resolvedNumberingSystem, display, exponent)
+	patterns := compactPatternRecord(data.compact, resolvedNumberingSystem, display, exponent)
 	if pattern := patterns[plural]; pattern != "" {
 		return pattern
 	}
 	return patterns["other"]
 }
 
-func compactPatternRecord(data numberData, numberingSystem, display string, exponent int) compactPluralPatterns {
-	byDisplay := data.compact[numberingSystem]
-	if byDisplay == nil {
-		return nil
+// CurrencyCompactPattern returns a currency compact row, with an optional
+// alphaNextToNumber variant. Missing categories fall back to other within the
+// selected variant. Missing tuples, including missing alternate rows, stay empty.
+func (l Locale) CurrencyCompactPattern(numberingSystem, display string, exponent int, plural string, alphaNextToNumber bool) string {
+	data, resolvedNumberingSystem := l.dataForResolvedNumberingSystem(numberingSystem)
+	patterns := compactPatternRecord(data.currencyCompact, resolvedNumberingSystem, display, exponent)
+	other := "other"
+	if alphaNextToNumber {
+		plural += "-alt-alphaNextToNumber"
+		other += "-alt-alphaNextToNumber"
 	}
-	byExponent := byDisplay[display]
-	if byExponent == nil {
-		return nil
+	if pattern := patterns[plural]; pattern != "" {
+		return pattern
 	}
-	return byExponent[exponent]
+	return patterns[other]
+}
+
+func compactPatternRecord(data compactPatternsByNumberingSystem, numberingSystem, display string, exponent int) compactPluralPatterns {
+	return data[numberingSystem][display][exponent]
 }
 
 // DefaultNumberingSystem returns the locale's default numbering system from the

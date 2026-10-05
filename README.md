@@ -440,6 +440,12 @@ if err != nil {
 fmt.Println(rangeText)
 ```
 
+Omitting `TimeZone` uses the host default. A Go `TZ` file path such as
+`/usr/share/zoneinfo/America/New_York` may lack a usable Intl time-zone
+identifier, so `New` can return `gointl.ErrUnsupportedOption` even when Go can
+load that file. Set `TimeZone: gointl.String("America/New_York")`, as above,
+to select a named zone explicitly.
+
 ### Choose Hour Cycles and Fractional Seconds
 
 Set `HourCycle` when the clock's numeric range matters. `h11` uses 0–11,

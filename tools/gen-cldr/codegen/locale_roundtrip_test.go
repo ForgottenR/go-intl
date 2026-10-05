@@ -93,11 +93,9 @@ func TestLocaleKernelRoundTrip(t *testing.T) {
 
 	// Preference rows.
 	for region, values := range preferences.HourCycle {
-		got := cldrlocale.HourCyclePreference(region)
+		got := cldrlocale.HourCyclePreference("", region)
 		checkStringSliceEqual(t, "HourCyclePreference("+region+")", got, values)
-		if !cldrlocale.HasHourCyclePreference(region) {
-			t.Errorf("HasHourCyclePreference(%q) = false, want true", region)
-		}
+
 	}
 	for region, values := range preferences.Calendar {
 		got := cldrlocale.CalendarPreference(region)

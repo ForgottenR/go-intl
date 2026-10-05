@@ -1,0 +1,67 @@
+[
+  {
+    "id": "durationformat-manual-symbols-root-time-separator",
+    "source": "manual:cldr-48.1.0:number-symbols",
+    "locale": "en",
+    "options": {
+      "style": "digital",
+      "numberingSystem": "arabext"
+    },
+    "input": {
+      "hours": 1,
+      "minutes": 2,
+      "seconds": 3
+    },
+    "expected": "۱٫۰۲٫۰۳",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "۱",
+        "unit": "hour"
+      },
+      {
+        "type": "literal",
+        "value": "٫"
+      },
+      {
+        "type": "integer",
+        "value": "۰۲",
+        "unit": "minute"
+      },
+      {
+        "type": "literal",
+        "value": "٫"
+      },
+      {
+        "type": "integer",
+        "value": "۰۳",
+        "unit": "second"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en",
+      "numberingSystem": "arabext",
+      "style": "digital",
+      "years": "short",
+      "yearsDisplay": "auto",
+      "months": "short",
+      "monthsDisplay": "auto",
+      "weeks": "short",
+      "weeksDisplay": "auto",
+      "days": "short",
+      "daysDisplay": "auto",
+      "hours": "numeric",
+      "hoursDisplay": "always",
+      "minutes": "2-digit",
+      "minutesDisplay": "always",
+      "seconds": "2-digit",
+      "secondsDisplay": "always",
+      "milliseconds": "numeric",
+      "millisecondsDisplay": "auto",
+      "microseconds": "numeric",
+      "microsecondsDisplay": "auto",
+      "nanoseconds": "numeric",
+      "nanosecondsDisplay": "auto"
+    }
+  }
+]

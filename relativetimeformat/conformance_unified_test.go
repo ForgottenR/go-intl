@@ -38,20 +38,50 @@ func runRelativeConformanceFixture(t *testing.T, fixture conformance.Fixture) {
 		t.Fatal(err)
 	}
 
-	input := conformanceRelativeInput(t, fixture)
-	got, parts, err := conformanceRelativeOutput(t, format, input)
-	if testcontract.AssertErrorCode(t, "Format()", err, fixture.ErrorCode, func(code string) error {
-		return conformanceRelativeFormatError(t, code)
-	}) {
+	if fixture.ExpectedRange != nil || fixture.ExpectedRangeParts != nil || fixture.ExpectedOK != nil || fixture.ExpectedLocales != nil {
+		t.Fatal("unsupported relativetimeformat observation")
+	}
+	if fixture.ExpectedResolved != nil {
+		testcontract.AssertResolvedOptionsJSON(t, format.ResolvedOptions(), fixture.ExpectedResolved)
+	}
+	if fixture.ErrorCode == "" && fixture.Expected == nil && fixture.ExpectedParts == nil {
 		return
 	}
-	if err != nil {
+	input := conformanceRelativeInput(t, fixture)
+	var value float64
+	if err := json.Unmarshal(input.Value, &value); err != nil {
 		t.Fatal(err)
 	}
-	if fixture.Expected != nil && got != *fixture.Expected {
-		t.Fatalf("Format(%v, %q) = %q, want %q", input.Value, input.Unit, got, *fixture.Expected)
+	if fixture.ErrorCode != "" {
+		operation := "Format()"
+		switch fixture.Feature {
+		case "", "format":
+			_, err = format.Format(Float(value), input.Unit)
+		case "formatToParts":
+			operation = "FormatToParts()"
+			_, err = format.FormatToParts(Float(value), input.Unit)
+		default:
+			t.Fatalf("unsupported relativetimeformat feature %q", fixture.Feature)
+		}
+		testcontract.AssertErrorCode(t, operation, err, fixture.ErrorCode, func(code string) error {
+			return conformanceRelativeFormatError(t, code)
+		})
+		return
+	}
+	if fixture.Expected != nil {
+		got, err := format.Format(Float(value), input.Unit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != *fixture.Expected {
+			t.Fatalf("Format(%v, %q) = %q, want %q", input.Value, input.Unit, got, *fixture.Expected)
+		}
 	}
 	if fixture.ExpectedParts != nil {
+		parts, err := format.FormatToParts(Float(value), input.Unit)
+		if err != nil {
+			t.Fatal(err)
+		}
 		testcontract.AssertParts(t, "FormatToParts", parts, fixture.ExpectedParts, conformanceRelativePart)
 	}
 }
@@ -95,21 +125,6 @@ func conformanceRelativeInput(t *testing.T, fixture conformance.Fixture) relativ
 		t.Fatal("relative time fixture input value is required")
 	}
 	return input
-}
-
-func conformanceRelativeOutput(t *testing.T, format *RelativeTimeFormat, input relativeFixtureInput) (string, []Part, error) {
-	t.Helper()
-
-	var value float64
-	if err := json.Unmarshal(input.Value, &value); err != nil {
-		t.Fatal(err)
-	}
-	got, err := format.Format(Float(value), input.Unit)
-	if err != nil {
-		return "", nil, err
-	}
-	parts, err := format.FormatToParts(Float(value), input.Unit)
-	return got, parts, err
 }
 
 func conformanceRelativeOptions(t *testing.T, fixture conformance.Fixture) Options {

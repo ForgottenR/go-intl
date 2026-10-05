@@ -1,0 +1,5 @@
+[
+  {"id":"ordinal-range-en-sparse","source":"manual:icu-ordinal-range","locale":"en","feature":"selectRange","options":{"type":"ordinal"},"input":{"start":1,"end":2},"expected":"other"},
+  {"id":"ordinal-range-cy-explicit","source":"manual:icu-ordinal-range","locale":"cy","feature":"selectRange","options":{"type":"ordinal"},"input":{"start":1,"end":2},"expected":"two"},
+  {"id":"ordinal-range-cy-sparse","source":"manual:icu-ordinal-range","locale":"cy","feature":"selectRange","options":{"type":"ordinal"},"input":{"start":3,"end":2},"expected":"other"}
+]

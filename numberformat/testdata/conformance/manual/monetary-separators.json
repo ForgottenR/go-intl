@@ -1,0 +1,169 @@
+[
+  {
+    "id": "numberformat-manual-monetary-group-override",
+    "source": "manual:cldr:monetary-separators",
+    "locale": "de-AT",
+    "options": {
+      "style": "currency",
+      "currency": "EUR"
+    },
+    "input": 12345678,
+    "expected": "€ 12.345.678,00",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "€"
+      },
+      {
+        "type": "literal",
+        "value": " "
+      },
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "group",
+        "value": "."
+      },
+      {
+        "type": "integer",
+        "value": "345"
+      },
+      {
+        "type": "group",
+        "value": "."
+      },
+      {
+        "type": "integer",
+        "value": "678"
+      },
+      {
+        "type": "decimal",
+        "value": ","
+      },
+      {
+        "type": "fraction",
+        "value": "00"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "de-AT",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "EUR",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-monetary-decimal-control",
+    "source": "manual:cldr:monetary-separators",
+    "locale": "de-AT",
+    "options": {},
+    "input": 12345678,
+    "expected": "12 345 678",
+    "expectedParts": [
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "group",
+        "value": " "
+      },
+      {
+        "type": "integer",
+        "value": "345"
+      },
+      {
+        "type": "group",
+        "value": " "
+      },
+      {
+        "type": "integer",
+        "value": "678"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "de-AT",
+      "numberingSystem": "latn",
+      "style": "decimal",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 0,
+      "maximumFractionDigits": 3,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  },
+  {
+    "id": "numberformat-manual-monetary-currency-default",
+    "source": "manual:cldr:monetary-separators",
+    "locale": "en-US",
+    "options": {
+      "style": "currency",
+      "currency": "USD"
+    },
+    "input": 12345.6,
+    "expected": "$12,345.60",
+    "expectedParts": [
+      {
+        "type": "currency",
+        "value": "$"
+      },
+      {
+        "type": "integer",
+        "value": "12"
+      },
+      {
+        "type": "group",
+        "value": ","
+      },
+      {
+        "type": "integer",
+        "value": "345"
+      },
+      {
+        "type": "decimal",
+        "value": "."
+      },
+      {
+        "type": "fraction",
+        "value": "60"
+      }
+    ],
+    "expectedResolvedOptions": {
+      "locale": "en-US",
+      "numberingSystem": "latn",
+      "style": "currency",
+      "currency": "USD",
+      "currencyDisplay": "symbol",
+      "currencySign": "standard",
+      "minimumIntegerDigits": 1,
+      "minimumFractionDigits": 2,
+      "maximumFractionDigits": 2,
+      "useGrouping": "auto",
+      "notation": "standard",
+      "signDisplay": "auto",
+      "roundingIncrement": 1,
+      "roundingMode": "halfExpand",
+      "roundingPriority": "auto",
+      "trailingZeroDisplay": "auto"
+    }
+  }
+]

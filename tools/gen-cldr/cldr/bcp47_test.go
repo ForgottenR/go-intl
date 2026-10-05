@@ -1,6 +1,7 @@
 package cldr
 
 import (
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -86,6 +87,29 @@ func TestLoadUnicodeTypeAliasesRejectsInvalidGraphs(t *testing.T) {
 			mustWriteFile(t, filepath.Join(root, "cldr-bcp47", "bcp47", "fixture.json"), raw)
 			if _, err := loadUnicodeTypeAliases(root); err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("loadUnicodeTypeAliases() error = %v, want containing %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestLoadUnicodeTypeAliasesKeyGrammar(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		key   string
+		valid bool
+	}{{"00", false}, {"a0", false}, {"0a", true}, {"aa", true}} {
+		t.Run(tc.key, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			path := filepath.Join(root, "cldr-bcp47", "bcp47", "keys.json")
+			mustWriteFile(t, path, fmt.Sprintf(`{"keyword":{"u":{%q:{"foobar":{}}}}}`, tc.key))
+			_, err := loadUnicodeTypeAliases(root)
+			if tc.valid {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), path) || !strings.Contains(err.Error(), "invalid key") {
+				t.Fatalf("loadUnicodeTypeAliases error = %v, want source and invalid key", err)
 			}
 		})
 	}
